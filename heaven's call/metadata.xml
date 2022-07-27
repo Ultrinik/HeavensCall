@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>Heaven's Call (Astral Challenge Room)</name>
+    <directory>heaven's call</directory>
+    <id>2839972756</id>
+    <description>
+	Be sure to leave your feedback about how tanky the bosses should be, It's still a hot topic of discussion!
+[h1] What is this mod [/h1]
+This mod add a new type of room called the [i] Astral Challenge Room [/i], it can spawn between Caves 1 and Depths 2 (and the equivalents alt floors), it can spawn in Womb if you have ‘Telescope Lens’, it spawns with a 20% chance, once per run (The chance drops to 0% when you [b] enter [/b] the room).
+
+The room contains a random  [b] planetarium or zodiac [/b] collectible, you can pick it up or blow up the nothing suspicious glass statue in the room to transform it into some pickups.
+
+Once the collectible was picked up or turned into pickups, a boss will spawn and you will have to defeat it to leave the room.
+
+[h1] What bosses [/h1]
+At the moment, the mod it’s on its first release and only has the four gas giants (Jupiter, Saturn, Uranus and Neptune), each has the same chances of being chosen. Future bosses will be a little bit different. ;)
+
+[h3] Jupiter [/h3]
+The biggest and tankiest, with a set of attacks based around toxic gas and lightings. [spoiler]Keep an eye near him and stand still when he does the ring of lightings attack.[/spoiler]
+
+[h3] Saturn [/h3]
+What could be behind that mask? only she knows!, her attacks are based around pick ups, but she has an ace up her sleeve[spoiler], what could it be?[/spoiler]
+
+[h3] Uranus [/h3]
+Seems like Ultra Greed and Colostomia have a new challenger for having the best butt title, this constipated snowball has ice and poop based attacks, careful with the ice! It’s slippery [spoiler], will you help him with his constipation?[/spoiler]
+
+[h3] Neptune [/h3]
+This abyssal creature has a set of attacks around water and darkness, don’t lose track of it, or it will bite your ass. [spoiler] Fight the current.[/spoiler]
+
+[h1] Compatibility [/h1]
+[h2] Mods that are compatible [/h2]
+[list]
+    [*] [b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1978904635] MiniMAPI [/url]: Highly recommended, without it the room will still spawn and function properly, but it won’t show correctly on the map. [/b]
+    [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2635267643] Enhanced Boss Bars [/url]: Bosses have custom icons and health bars.
+    [*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2487535818] Mod Config Menu [/url]: Has the options to deactivate Neptune’s and Uranus weathers (they might cause fps drops) and change the spawn chances of the room.
+[/list]
+
+[h2] Make an item compatible with this mod [/h2]
+
+The room has a 65% chance of grabbing an item from the Planetarium item pool, so any items that are added to it (let’s say the ones from [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2722017893]Andromeda[/url]) are going to spawn here as well!
+
+If the game doesn’t takes an item from the Planetarium pool, it will take it from a custom pool, to add items to it write the following code somewhere in the .lua of your mod:
+
+[code]
+if HeavensCall then
+    HeavensCall:AddItemToPool( *** )
+end
+[/code]
+
+Where *** is your item [b]id[/b]
+
+[h1] Considerations [/h1]
+
+To access the rooms via debug console, write: [i]goto s.dice.8500[/i], [i]goto s.dice.8501[/i], [i]goto s.dice.8502[/i] or [i]goto s.dice.8503[/i].
+[b] WARNING: If you  [u]exit and continue[/u] the run after visiting one of the rooms via [u] debug console [/u] (Even if you are already outside!!!), there are high chances that the game may crash and you will lose that run, you were warned!!! [/b]
+
+Some music mods appear to make the boss music not play, however, you are not losing much, it's only the The Lamb Theme, I won’t do a custom theme for them, I don't even know what a music note is.
+
+The mod currently has no new items, and probably won’t have many, I’m not really interested in creating items, and also my creativity for them is zero.
+
+If the room doesn't spawn, even when the chance is set to 100%, try restarting your game.
+
+[h1] About me? [/h1]
+This is my first “decent” mod, I had done some other mods, basically all around 2017 (of which only two survive and were updated for being acceptable enough), so this is my first mod in 5~ years.
+
+Since I started playing this game around 2013 I always especially liked the little creepy-cute creatures of this game, and always wanted to do some myself. I might not be the most skilled spriter or coder, but I’m happy with how the four fellas ended up :D
+
+</description>
+    <version>1.2.3</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Rooms"/>
+    <tag id="Enemies"/>
+    <tag id="Bosses"/>
+</metadata>

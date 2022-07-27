@@ -1,0 +1,106 @@
+<sounds root="sfx/">
+	<sound name="SuperFart">
+		<sample weight="1" path="super_fart.wav" />
+	</sound>
+	<sound name="PreSaw">
+		<sample weight="1" path="saw1.wav" />
+		<sample weight="1" path="saw2.wav" />
+	</sound>
+	<sound name="Saw">
+		<sample weight="1" path="saw3.wav" />
+	</sound>
+	<sound name="Throw">
+		<sample weight="1" path="throw1.wav" />
+		<sample weight="1" path="throw2.wav" />
+		<sample weight="1" path="throw3.wav" />
+	</sound>
+	<sound name="OrbitSpin">
+		<sample weight="1" path="orbitalSpin.wav" />
+	</sound>
+	<sound name="JupiterRoar">
+		<sample weight="1" path="jupiter_roar1.wav" />
+		<sample weight="1" path="jupiter_roar2.wav" />
+		<sample weight="1" path="jupiter_roar3.wav" />
+	</sound>
+	<sound name="JupiterRoarDash">
+		<sample weight="1" path="jupiter_roar_dash1.wav" />
+		<sample weight="1" path="jupiter_roar_dash2.wav" />
+		<sample weight="1" path="jupiter_roar_dash3.wav" />
+	</sound>
+	<sound name="Thunder">
+		<sample weight="1" path="thunder1.wav" />
+		<sample weight="1" path="thunder2.wav" />
+		<sample weight="1" path="thunder3.wav" />
+	</sound>
+	<sound name="SuperExplosion">
+		<sample weight="1" path="super_explosion1.wav" />
+		<sample weight="1" path="super_explosion2.wav" />
+		<sample weight="1" path="super_explosion3.wav" />
+	</sound>
+	<sound name="HailBreak">
+		<sample weight="1" path="hail_break1.wav" />
+		<sample weight="1" path="hail_break2.wav" />
+		<sample weight="1" path="hail_break3.wav" />
+	</sound>
+	<sound name="IceBreak">
+		<sample weight="1" path="ice_break.wav" />
+	</sound>
+	<sound name="IceCrash">
+		<sample weight="1" path="ice_crash1.wav" />
+		<sample weight="1" path="ice_crash2.wav" />
+		<sample weight="1" path="ice_crash3.wav" />
+	</sound>
+	<sound name="PreThunder">
+		<sample weight="1" path="pre_thunder1.wav" />
+		<sample weight="1" path="pre_thunder2.wav" />
+		<sample weight="1" path="pre_thunder3.wav" />
+	</sound>
+	<sound name="Chomp">
+		<sample weight="1" path="chomp1.wav" />
+		<sample weight="1" path="chomp2.wav" />
+	</sound>
+	<sound name="KnifeThrow">
+		<sample weight="1" path="knifeThrow1.wav" />
+		<sample weight="1" path="knifeThrow2.wav" />
+		<sample weight="1" path="knifeThrow3.wav" />
+	</sound>
+	<sound name="KnifeReposition">
+		<sample weight="1" path="knifeReposition.wav" />
+	</sound>
+	<sound name="KnifeSummon">
+		<sample weight="1" path="knifeSummon.wav" />
+	</sound>
+	<sound name="TikTok">
+		<sample weight="1" path="tikTok.wav" />
+	</sound>
+	<sound name="TimeStop">
+		<sample weight="1" path="timeStop.wav" />
+	</sound>
+	<sound name="TimeResume">
+		<sample weight="1" path="timeResume.wav" />
+	</sound>
+	<sound name="TouhouDeath">
+		<sample weight="1" path="touhouDeath.wav" />
+	</sound>
+	<sound name="WaterSplash">
+		<sample weight="1" path="waterSplash.wav" />
+	</sound>
+	<sound name="WetSplat">
+		<sample weight="1" path="wetSplat.wav" />
+	</sound>
+	<sound name="Inflation">
+		<sample weight="1" path="inflation.wav" />
+	</sound>
+	<sound name="TrapdoorOC">
+		<sample weight="1" path="trapdoorOC.wav" />
+	</sound>
+	<sound name="UranusScream">
+		<sample weight="1" path="uranusScream.wav" />
+	</sound>
+	<sound name="UranusRelax">
+		<sample weight="1" path="uranusRelax.wav" />
+	</sound>
+	<sound name="Pop">
+		<sample weight="1" path="pop.wav" />
+	</sound>
+</sounds>
