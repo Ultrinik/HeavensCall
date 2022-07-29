@@ -100,76 +100,84 @@ mod.JConst = {--Some constant variables of Jupiter
 }
 
 function mod:JupiterUpdate(entity)
-	local data = entity:GetData()
-	local sprite = entity:GetSprite()
-	local target = entity:GetPlayerTarget()
-	local room = game:GetRoom()
-	
-	--Custom data:
-	if data.State == nil then data.State = 0 end
-	if data.StateFrame == nil then data.StateFrame = 0 end
-	if data.MoveTowards == nil then data.MoveTowards = false end
-	if data.CurrentAngle == nil then data.CurrentAngle = -90 end
-	if data.LaserFlag == nil then data.LaserFlag = false end
-	
-	--Frame
-	data.StateFrame = data.StateFrame + 1
-	
-	if data.State == mod.JMSState.APPEAR then
-		if data.StateFrame == 1 then
-			mod:AppearPlanet(entity)
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-		elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-			data.State = mod:MarkovTransition(data.State, mod.chainJ)
-			data.StateFrame = 0
-		elseif sprite:IsEventTriggered("EndAppear") then
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+	if entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR and entity.SubType == mod.EntityInf[mod.Entity.Jupiter].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then data.State = 0 end
+		if data.StateFrame == nil then data.StateFrame = 0 end
+		if data.MoveTowards == nil then data.MoveTowards = false end
+		if data.CurrentAngle == nil then data.CurrentAngle = -90 end
+		if data.LaserFlag == nil then data.LaserFlag = false end
+		
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == mod.JMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod:MarkovTransition(data.State, mod.chainJ)
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+			end
+			
+		elseif data.State == mod.JMSState.IDLE then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			elseif sprite:IsFinished("Idle") then
+				--Poison cloud:
+				local angle = 360*rng:RandomFloat()
+				local gas = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SMOKE_CLOUD, 0, entity.Position + Vector(65,0):Rotated(angle), Vector.Zero, entity):ToEffect()
+				gas.Timeout = mod.JConst.idleGasTime
+				
+				data.State = mod:MarkovTransition(data.State, mod.chainJ)
+				data.StateFrame = 0
+				
+			else
+				mod:JupiterMove(entity, data, room, target)
+			end
+			
+		elseif data.State == mod.JMSState.CHARGE1 then
+			mod:JupiterCharge1(entity, data, sprite, target,room)
+			
+		elseif data.State == mod.JMSState.CHARGE2 then
+			mod:JupiterCharge2(entity, data, sprite, target,room)
+		
+		elseif data.State == mod.JMSState.THUNDER then
+			mod:JupiterThunder(entity, data, sprite, target,room)
+		
+		elseif data.State == mod.JMSState.SHOT then
+			mod:JupiterShot(entity, data, sprite, target,room)
+		
+		elseif data.State == mod.JMSState.CLOUD then
+			mod:JupiterCloud(entity, data, sprite, target,room)
+		
+		elseif data.State == mod.JMSState.LASER then
+			mod:JupiterLaser(entity, data, sprite, target,room)
 		end
 		
-	elseif data.State == mod.JMSState.IDLE then
-		if data.StateFrame == 1 then
-			sprite:Play("Idle",true)
-		elseif sprite:IsFinished("Idle") then
-			--Poison cloud:
-			local angle = 360*rng:RandomFloat()
-			local gas = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SMOKE_CLOUD, 0, entity.Position + Vector(65,0):Rotated(angle), Vector.Zero, entity):ToEffect()
-			gas.Timeout = mod.JConst.idleGasTime
-			
-			data.State = mod:MarkovTransition(data.State, mod.chainJ)
-			data.StateFrame = 0
-			
+		if data.MoveTowards then
+			mod:MoveTowards(entity, data, room:GetCenterPos(), mod.JConst.goCenterSpeed)
+		end
+		
+		--Eye things
+		if data.TargetPosition_aim ~= nil and data.State ~= mod.JMSState.CHARGE1 then
+			mod:JupiterLook(entity, data, data.TargetPosition_aim, sprite)
 		else
-			mod:JupierMove(entity, data, room, target)
+			mod:JupiterLook(entity, data, target.Position, sprite)
 		end
-		
-	elseif data.State == mod.JMSState.CHARGE1 then
-		mod:JupiterCharge1(entity, data, sprite, target,room)
-		
-	elseif data.State == mod.JMSState.CHARGE2 then
-		mod:JupiterCharge2(entity, data, sprite, target,room)
-	
-	elseif data.State == mod.JMSState.THUNDER then
-		mod:JupiterThunder(entity, data, sprite, target,room)
-	
-	elseif data.State == mod.JMSState.SHOT then
-		mod:JupiterShot(entity, data, sprite, target,room)
-	
-	elseif data.State == mod.JMSState.CLOUD then
-		mod:JupiterCloud(entity, data, sprite, target,room)
-	
-	elseif data.State == mod.JMSState.LASER then
-		mod:JupiterLaser(entity, data, sprite, target,room)
-	end
-	
-	if data.MoveTowards then
-		mod:MoveTowards(entity, data, room:GetCenterPos(), mod.JConst.goCenterSpeed)
-	end
-	
-	if data.TargetPosition_aim ~= nil and data.State ~= mod.JMSState.CHARGE1 then
-		mod:JupiterLook(entity, data, data.TargetPosition_aim, sprite)
-	else
-		mod:JupiterLook(entity, data, target.Position, sprite)
+
+		--No poison (Doesnt work lol)
+		--if entity:HasEntityFlags(EntityFlag.FLAG_POISON) then
+		--	entity:ClearEntityFlags(EntityFlag.FLAG_POISON) 
+		--end
 	end
 end
 function mod:JupiterCharge1(entity, data, sprite, target,room)
@@ -247,7 +255,7 @@ function mod:JupiterThunder(entity, data, sprite, target,room)
 		sprite:Play("Thunder",true)
 
 		entity.Velocity = Vector.Zero
-		local aurora = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.AURORA, 0, entity.Position + Vector(0,-110), Vector(0,0), entity):ToEffect()
+		local aurora = mod:SpawnEntity(mod.Entity.Aurora, entity.Position + Vector(0,-110), Vector(0,0), entity):ToEffect()
 		aurora.SpriteScale = Vector(0.85,0.8)
 		aurora.DepthOffset = 300
 		aurora:FollowParent (entity)
@@ -263,8 +271,7 @@ function mod:JupiterThunder(entity, data, sprite, target,room)
 			local angle = 360*rng:RandomFloat()
 			local position_aim = target.Position + Vector(90,0):Rotated(angle)
 			--I swear I know whats the difference between thunder and lighting
-			local thunder = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CRACK_THE_SKY, 1, position_aim, Vector(0,0), entity)
-			thunder:GetData().isThunder = true
+			local thunder = mod:SpawnEntity(mod.Entity.Thunder,position_aim, Vector(0,0), entity)
 			if mod:RandomInt(0,1)==0 then 
 				thunder:GetSprite().FlipX = true
 			end
@@ -417,7 +424,7 @@ function mod:JupiterLaser(entity, data, sprite, target,room)
 end
 
 --Move
-function mod:JupierMove(entity, data, room, target)
+function mod:JupiterMove(entity, data, room, target)
 	--idle move taken from 'Alt Death' by hippocrunchy
 	--It just basically stays around the center of the room
 	
@@ -469,6 +476,10 @@ end
 
 --ded
 function mod:JupiterDeath(entity)
+	--Particles
+	game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13, mod.Colors.boomColor)
+	local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+	bloody:GetSprite().Color = mod.Colors.boomColor
 	--Fart:
 	local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
 	fart:GetSprite().Scale = mod.JConst.deathFartScale*Vector(1,1)
@@ -522,7 +533,7 @@ function mod:CloudJupiterProjectile(tear,collided)
 		
 		--Explosion damage
 		for i, entity in ipairs(Isaac.FindInRadius(tear.Position, mod.JConst.cloudExplosionRadius)) do
-			if entity.Type ~= EntityType.ENTITY_PLAYER and entity.Type ~= EntityType.JUPITER then
+			if entity.Type ~= EntityType.ENTITY_PLAYER and entity.Type ~= mod.EntityInf[mod.Entity.Jupiter].ID then
 				entity:TakeDamage(mod.JConst.cloudDamage, DamageFlag.DAMAGE_EXPLOSION, EntityRef(tear), 0)
 			end
 		end
@@ -556,8 +567,8 @@ end
 
 --Callbacks
 --Jupiter updates
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.JupiterUpdate, EntityType.JUPITER)
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.JupiterDeath, EntityType.JUPITER)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.JupiterUpdate, mod.EntityInf[mod.Entity.Jupiter].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.JupiterDeath, mod.EntityInf[mod.Entity.Jupiter].ID)
 
 --Projectile updates
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
@@ -629,6 +640,7 @@ mod.chainS = {
 	[mod.SMSState.APPEAR] = 	{0, 1,    0,    0,    0,    0,    0,    0  , 0},
 	[mod.SMSState.IDLE] = 		{0, 0.35, 0.3, 0,    0,    0,    0,    0.13,0.22},
 	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    0,    0,    0,    1  , 0},
+	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    0,    0,    0,    0  , 1},
 	[mod.SMSState.HIDERING] = 	{0, 0,    0,    0,    0.35, 0.35,  0.3,0,   0},
 	[mod.SMSState.SUMMONRING] = {0, 1,    0,    0,    0,    0,    0,    0  , 0},
 	[mod.SMSState.SPIN] = 		{0, 0,    0,    0.55, 0.45, 0,    0,    0  , 0},
@@ -637,6 +649,7 @@ mod.chainS = {
 	[mod.SMSState.KNIFE] = 		{0, 0,    0,    1,    0,    0,    0,    0  , 0},
 	--[mod.SMSState.KNIFE] = 		{0, 0,    0,    0,    0,    0,    0,    1  , 0},
 	[mod.SMSState.SAW] = 		{0, 0,    1,    0,    0,    0,    0,    0  , 0}
+	--[mod.SMSState.SAW] = 		{0, 0,    0,    0,    0,    0,    0,    0  , 1}
 	
 }
 mod.SConst = {--Some constant variables of Saturn
@@ -673,87 +686,91 @@ mod.SConst = {--Some constant variables of Saturn
 	asteroidScale = 1,
 
 	SawSkips = 1,
-	HealPerHyper = 6
+	HealPerHyper = 10,
+
+	sawDamage = 50,
+	sawRadius = 130
 
 }
 
 function mod:SaturnUpdate(entity)
-	local data = entity:GetData()
-	local sprite = entity:GetSprite()
-	local target = entity:GetPlayerTarget()
-	local room = game:GetRoom()
-	
-	--Custom data:
-	if data.State == nil then data.State = 0 end
-	if data.StateFrame == nil then data.StateFrame = 0 end
-	if data.MoveTowards == nil then data.MoveTowards = false end
-	if data.TimeStoped == nil then data.TimeStoped = false end
-	if data.HealPerHyper == nil then data.HealPerHyper = mod.SConst.HealPerHyper end
-	if data.SawSkips == nil then data.SawSkips = 0 end
-	
-	--Frame
-	data.StateFrame = data.StateFrame + 1
-	
-	if data.State == mod.SMSState.APPEAR then
-		if data.StateFrame == 1 then
-			mod:AppearPlanet(entity)
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-		elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-			data.State = mod:MarkovTransition(data.State, mod.chainS)
-			data.StateFrame = 0
-		elseif sprite:IsEventTriggered("EndAppear") then
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
-		end
-	elseif data.State == mod.SMSState.IDLE then
-		if data.StateFrame == 1 then
-			sprite:Play("Idle",true)
-		elseif sprite:IsFinished("Idle") then
-			data.State = mod:MarkovTransition(data.State, mod.chainS)
-			data.StateFrame = 0
+	if entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR and entity.SubType == mod.EntityInf[mod.Entity.Saturn].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then data.State = 0 end
+		if data.StateFrame == nil then data.StateFrame = 0 end
+		if data.MoveTowards == nil then data.MoveTowards = false end
+		if data.TimeStoped == nil then data.TimeStoped = false end
+		if data.HealPerHyper == nil then data.HealPerHyper = mod.SConst.HealPerHyper end
+		if data.SawSkips == nil then data.SawSkips = 0 end
+		
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == mod.SMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod:MarkovTransition(data.State, mod.chainS)
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+			end
+		elseif data.State == mod.SMSState.IDLE then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			elseif sprite:IsFinished("Idle") then
+				data.State = mod:MarkovTransition(data.State, mod.chainS)
+				data.StateFrame = 0
+				
+			else
+				mod:SaturnMove(entity,data,room,target)
+			end
+		
+		--Hide and summon the rings
+		elseif data.State == mod.SMSState.HIDERING then
+			if data.StateFrame == 1 then
+				sprite:Play("HideRings",true)
+			elseif sprite:IsFinished("HideRings") then
+				data.State = mod:MarkovTransition(data.State, mod.chainS)
+				data.StateFrame = 0
+			end
+		elseif data.State == mod.SMSState.SUMMONRING then
+			if data.StateFrame == 1 then
+				sprite:Play("SummonRings",true)
+			elseif sprite:IsFinished("SummonRings") then
+				data.State = mod:MarkovTransition(data.State, mod.chainS)
+				data.StateFrame = 0
+			end
 			
-		else
-			mod:SaturnMove(entity,data,room,target)
-		end
-	
-	--Hide and summon the rings
-	elseif data.State == mod.SMSState.HIDERING then
-		if data.StateFrame == 1 then
-			sprite:Play("HideRings",true)
-		elseif sprite:IsFinished("HideRings") then
-			data.State = mod:MarkovTransition(data.State, mod.chainS)
-			data.StateFrame = 0
-		end
-	elseif data.State == mod.SMSState.SUMMONRING then
-		if data.StateFrame == 1 then
-			sprite:Play("SummonRings",true)
-		elseif sprite:IsFinished("SummonRings") then
-			data.State = mod:MarkovTransition(data.State, mod.chainS)
-			data.StateFrame = 0
+		--Attacks
+		elseif data.State == mod.SMSState.SPIN then
+			mod:SaturnSpin(entity, data, sprite, target, room)
+			
+		elseif data.State == mod.SMSState.BOMB then
+			mod:SaturnBomb(entity, data, sprite, target, room)
+		
+		elseif data.State == mod.SMSState.SUMMON then
+			mod:SaturnSummon(entity, data, sprite, target, room)
+		
+		elseif data.State == mod.SMSState.KNIFE then
+			mod:SaturnKnife(entity, data, sprite, target, room)
+		
+		elseif data.State == mod.SMSState.SAW then
+			mod:SaturnSaw(entity, data, sprite, target, room)
+			
 		end
 		
-	--Attacks
-	elseif data.State == mod.SMSState.SPIN then
-		mod:SaturnSpin(entity, data, sprite, target, room)
-		
-	elseif data.State == mod.SMSState.BOMB then
-		mod:SaturnBomb(entity, data, sprite, target, room)
-	
-	elseif data.State == mod.SMSState.SUMMON then
-		mod:SaturnSummon(entity, data, sprite, target, room)
-	
-	elseif data.State == mod.SMSState.KNIFE then
-		mod:SaturnKnife(entity, data, sprite, target, room)
-	
-	elseif data.State == mod.SMSState.SAW then
-		mod:SaturnSaw(entity, data, sprite, target, room)
-		
+		if data.MoveTowards then
+			mod:MoveTowards(entity, data, data.MoveObjective, mod.SConst.goToSideSpeed)
+		end
 	end
-	
-	if data.MoveTowards then
-		mod:MoveTowards(entity, data, data.MoveObjective, mod.SConst.goToSideSpeed)
-	end
-	
 end
 function mod:SaturnSpin(entity, data, sprite, target, room)
 	if data.StateFrame == 1 then
@@ -864,7 +881,7 @@ function mod:SaturnSummon(entity, data, sprite, target, room)
 	if data.StateFrame == 1 then
 		
 		--If there are horfs alive dont summon more and do another attack
-		if #(Isaac.FindByType(EntityType.ENTITY_SUB_HORF,1,mod.EntitySubtype.HYPERION,false,true)) > 0 then
+		if #(mod:FindByTypeMod(mod.Entity.Hyperion)) > 0 then
 			data.State = mod.SMSState.HIDERING
 			data.StateFrame = 1
 		else
@@ -877,7 +894,7 @@ function mod:SaturnSummon(entity, data, sprite, target, room)
 	elseif sprite:IsEventTriggered("Summon") then
 		--Summon the sub horfs
 		for i=1, mod.SConst.nHorf do
-			local horf = Isaac.Spawn(EntityType.ENTITY_SUB_HORF, 1, mod.EntitySubtype.HYPERION, entity.Position + Vector.FromAngle(i*360/mod.SConst.nHorf):Resized(60), Vector(0,0), entity)
+			local horf = mod:SpawnEntity(mod.Entity.Hyperion, entity.Position + Vector.FromAngle(i*360/mod.SConst.nHorf):Resized(60), Vector(0,0), entity)
 			horf:GetData().orbitingSaturn = true
 			horf:GetData().orbitIndex = i
 			horf:GetData().orbitTotal = mod.SConst.nHorf
@@ -894,17 +911,13 @@ end
 function mod:SaturnKnife(entity, data, sprite, target, room)
 	if data.StateFrame == 1 then
 		sprite:Play("Knife",true)
-		local keys = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_COIN)
-		for _,k in ipairs(keys) do
-			k:Remove()
-		end
 	elseif sprite:IsFinished("Knife") then
 		entity.Friction = 0.9
 		data.State = mod:MarkovTransition(data.State, mod.chainS)
 		data.StateFrame = 0
 	
 	elseif sprite:IsEventTriggered("Reposition") then
-		local coins = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 0)
+		local coins = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_COIN)
 		for _, c in ipairs(coins) do
 			c:Die()
 		end
@@ -928,7 +941,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		
 		--Keys that will change angle
 		local angle = spin*90
-		local key = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 1, entity.Position, Vector.Zero, entity):ToProjectile()
+		local key = mod:SpawnEntity(mod.Entity.KeyKnifeRed, entity.Position, Vector.Zero, entity):ToProjectile()
 		key:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
 		key:GetSprite().Rotation = angle
 		key:GetSprite():Play("SpecialIdle", true)
@@ -941,7 +954,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		
 		--Normal keys
 		local angle = spin*270
-		local key = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
+		local key = mod:SpawnEntity(mod.Entity.KeyKnife, entity.Position, Vector.Zero, entity):ToProjectile()
 		key:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
 		key:GetSprite().Rotation = angle
 		key:GetSprite():Play("NormalIdle", true)
@@ -962,7 +975,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		if entity.Position.X < room:GetCenterPos().X then
 			currentSide = "left"
 		end
-		local keys = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 1)
+		local keys = mod:FindByTypeMod(mod.Entity.KeyKnifeRed)
 		for i, k in ipairs(keys) do
 			k:Remove()
 		end
@@ -979,7 +992,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 			local position = entity.Position + Vector(pos,0)
 			local velocity = Vector.FromAngle(angle)*mod.SConst.specialKeySpeed
 			
-			local key = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 1, position, velocity, entity):ToProjectile()
+			local key = mod:SpawnEntity(mod.Entity.KeyKnifeRed, position, velocity, entity):ToProjectile()
 			key:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
 			key:GetSprite().Rotation = angle
 			key:GetSprite():Play("BloodIdle", true)
@@ -990,9 +1003,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		end
 		sfx:Play(Isaac.GetSoundIdByName("KnifeThrow"),1)
 
-		
-
-		local timestuck = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TIMESTUCK, 0, entity.Position + Vector(0,-70), Vector.Zero, entity):ToEffect()
+		local timestuck = mod:SpawnEntity(mod.Entity.TimeFreezeSource, entity.Position + Vector(0,-70), Vector.Zero, entity):ToEffect()
 		timestuck:GetSprite().Scale = Vector(1,1)*0.8
 		timestuck.DepthOffset = 999
 		timestuck:FollowParent (entity)
@@ -1003,7 +1014,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		if entity.Position.X < room:GetCenterPos().X then
 			currentSide = "left"
 		end
-		local keys = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 0)
+		local keys = mod:FindByTypeMod(mod.Entity.KeyKnife)
 		for i, k in ipairs(keys) do
 			k:Remove()
 		end
@@ -1019,8 +1030,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 			end
 			local position = entity.Position + Vector(pos,0)
 			local velocity = Vector.FromAngle(angle)*mod.SConst.normalKeySpeed
-			
-			local key = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 0, position, velocity, entity):ToProjectile()
+			local key = mod:SpawnEntity(mod.Entity.KeyKnife, position, velocity, entity):ToProjectile()
 			key:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
 			key:GetSprite().Rotation = angle
 			key:GetSprite():Play("Idle", true)
@@ -1041,13 +1051,13 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 
 		for i=0, game:GetNumPlayers()-1 do
 			local player = Isaac.GetPlayer(i)
-			local timestuck = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TIMESTUCK, 1, player.Position + Vector(0,-10), Vector.Zero, player)
+			local timestuck = mod:SpawnEntity(mod.Entity.TimeFreezeObjective, player.Position + Vector(0,-10), Vector.Zero, player)
 			timestuck:GetSprite().Scale = Vector(1,1)*0.4
 			timestuck.DepthOffset = 999
 		end
 		
 	elseif sprite:IsEventTriggered("KnifeChange") then
-		local keys = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 1)
+		local keys = mod:FindByTypeMod(mod.Entity.KeyKnifeRed)
 		for _, k in ipairs(keys) do
 			local angle = 360*rng:RandomFloat()
 			k:GetSprite().Rotation = angle
@@ -1063,7 +1073,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		mod:SaturnResumeTime()
 
 
-		local keys = Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.KEYKNIFE, 1)
+		local keys = mod:FindByTypeMod(mod.Entity.KeyKnifeRed)
 		for _, k in ipairs(keys) do
 			local angle = k:GetSprite().Rotation
 			k.Velocity = Vector(1,0):Rotated(angle)*(mod.SConst.specialKeySpeed-1)
@@ -1090,24 +1100,62 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 	
 	--Do the pre saw sounds
 	elseif sprite:IsEventTriggered("SawSound") then
-		sfx:Play(Isaac.GetSoundIdByName("PreSaw"), 1)
+		sfx:Play(Isaac.GetSoundIdByName("PreSaw"), 0.5)
 	
 	
 	elseif sprite:IsEventTriggered("Saw") then
 	
-		--Make Saturn only collide with plater things (so it doesnt collide with it's own rigs)
+		--Make Saturn only collide with plater things (so it doesnt collide with it's own rigs) (this is old, but i dont want to remove it xd)
 		entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 		
-		--Summon the invisible giant hitbox that will do damage, and make it collide only with the player (so it doesnt push anything)
-		local IETDD = Isaac.Spawn(EntityType.IETDDATD, 0, 0, entity.Position+Vector(0,-75), Vector(0,0), entity)
-		IETDD.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYERONLY
-		
+
+		local center = entity.Position + Vector(0,-60)
+		--Check damage range v
+		--for i=1, 50 do
+			--Isaac.Spawn(EntityType.ENTITY_TEAR, 0, 0, center + Vector(mod.SConst.sawRadius,0):Rotated(i*360/50),Vector.Zero, nil)
+		--end
+
+		for i, entity_ in ipairs(Isaac.FindInRadius(center, mod.SConst.sawRadius)) do
+			if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Saturn].ID then
+				entity_:TakeDamage(mod.SConst.sawDamage, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
+
+				entity_.Velocity = (entity_.Position-entity.Position):Normalized()*10
+
+			elseif entity_.Type == EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Saturn].ID then
+				entity_:TakeDamage(2, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
+
+				
+				--Summon projectile
+				for i=1, mod.SConst.nHorfMurderTears do
+					
+					local angle = mod:RandomInt(0, 359)
+					local speed = mod:RandomInt(mod.SConst.horfMurderTearSpeed.X, mod.SConst.horfMurderTearSpeed.Y)
+					local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, 0, 0, entity_.Position, Vector(1,0):Rotated(angle)*speed, entity):ToProjectile()
+					tear.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+					tear.FallingSpeed = -1 * mod:RandomInt(1, 500) / 1000
+					tear.FallingAccel = mod:RandomInt(1, 30) / 100
+					tear.Height = -1 *  mod:RandomInt(18, 30)
+				end
+				entity_.Velocity = (entity_.Position-entity.Position):Normalized()*10
+
+				--Sound
+				sfx:Play(Isaac.GetSoundIdByName("SawHit"), 0.4)
+
+				--Heal
+				local healHeart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HEART, 0, entity.Position + Vector(0,-100), Vector.Zero, entity)
+				healHeart.DepthOffset = 200
+				sfx:Play(SoundEffect.SOUND_VAMP_GULP,2)
+
+				entity:AddHealth(50)
+			end
+		end
+
 		--Sound
-		sfx:Play(Isaac.GetSoundIdByName("Saw"), 1)
+		sfx:Play(Isaac.GetSoundIdByName("Saw"), 0.5)
 		
 		--Kill the horfs if there are some alive
 		--(bug) It kills the horfs of other Saturns too, but I dont care, are you really gonna use Meat cleaver???
-		local horfs = Isaac.FindByType(EntityType.ENTITY_SUB_HORF,1,mod.EntitySubtype.HYPERION,false,true)
+		local horfs = mod:FindByTypeMod(mod.Entity.Hyperion)
 		
 		if #horfs > 0 and data.HealPerHyper > 0 then
 			local healHeart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HEART, 0, entity.Position + Vector(0,-100), Vector.Zero, entity)
@@ -1126,7 +1174,7 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 				
 				local angle = mod:RandomInt(0, 359)
 				local speed = mod:RandomInt(mod.SConst.horfMurderTearSpeed.X, mod.SConst.horfMurderTearSpeed.Y)
-				local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, 0, 0, horf.Position, Vector(1,0):Rotated(angle)*speed, tear):ToProjectile()
+				local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, 0, 0, horf.Position, Vector(1,0):Rotated(angle)*speed, entity):ToProjectile()
 				tear.FallingSpeed = -1 * mod:RandomInt(1, 500) / 1000
 				tear.FallingAccel = mod:RandomInt(1, 30) / 100
 				tear.Height = -1 *  mod:RandomInt(18, 30)
@@ -1169,7 +1217,7 @@ function mod:SaturnMove(entity, data,room, target)
 
 	--Do the actual movement
 	local speed = mod.SConst.speed
-	if(#(Isaac.FindByType(EntityType.ENTITY_SUB_HORF,1,mod.EntitySubtype.HYPERION,false,true)) > 0) then
+	if(#( mod:FindByTypeMod(mod.Entity.Hyperion)) > 0) then--Find by type on upate? nide
 		speed = mod.SConst.slowSpeed
 	end
 	entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * speed
@@ -1186,7 +1234,7 @@ end
 function mod:SaturnStopTime()
 	local entities = Isaac.GetRoomEntities()
 	for _, e in ipairs(entities) do
-		if e.Type ~= EntityType.SATURN and not (e.Type == EntityType.ENTITY_EFFECT and e.Variant==EffectVariant.TIMESTUCK) then
+		if e.Type ~= mod.EntityInf[mod.Entity.Saturn].ID and not (e.Type == EntityType.ENTITY_EFFECT and mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR) then
 			local data = e:GetData()
 
 			if e.Type == EntityType.ENTITY_PROJECTILE then
@@ -1361,15 +1409,21 @@ end
 
 --ded
 function mod:SaturnDeath(entity)
-	
 
+
+	--Particles
+	game:SpawnParticles (entity.Position, EffectVariant.IMPACT, 20, 25, Color(3,0,0,1))
+	local ring = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SIREN_RING, 0, entity.Position, Vector.Zero, entity)
+	ring:GetSprite().Color = Color(0.5,0,0,1)
+
+	--remaining bombs
 	for _,b in ipairs(Isaac.FindByType(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL)) do
 		b = b:ToBomb()
 		b.ExplosionDamage = 0
 		b:SetExplosionCountdown(0)
 	end
 
-	sfx:Play(Isaac.GetSoundIdByName("TouhouDeath"), 0.3)
+	sfx:Play(Isaac.GetSoundIdByName("TouhouDeath"), 0.05)
 	mod:NormalDeath(entity)
 
 	
@@ -1378,6 +1432,15 @@ function mod:SaturnDeath(entity)
 		player.ControlsCooldown = 2
 	end
 	mod.ModFlags.globalTimestuck = false
+
+	
+	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.KeyKnife)) do
+		i:Remove()
+	end
+	
+	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.KeyKnifeRed)) do
+		i:Remove()
+	end
 end
 --deding
 function mod:SaturnDying(entity)
@@ -1385,17 +1448,24 @@ function mod:SaturnDying(entity)
 	local sprite = entity:GetSprite()
 	local data = entity:GetData()
 
-	if sprite:IsPlaying("Death") then
-		if sprite:GetFrame() == 1 then
-			sfx:Play(SoundEffect.SOUND_MOM_VOX_HURT,1,2,false,0.85)
+	if data.deathFrame == nil then data.deathFrame = 1 end
+	if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+		if sprite:GetFrame() == 1 then 
+			--sfx:Play(Isaac.GetSoundIdByName("TimeStop"),1)
+			sfx:Play(Isaac.GetSoundIdByName("TikTok"),10)
+			sfx:Play(SoundEffect.SOUND_MOM_VOX_HURT,1,2,false,1.2)
+		elseif sprite:GetFrame() == 20 then 
+			local time = mod:SpawnEntity(mod.Entity.TimeFreezeObjective, entity.Position, Vector.Zero, entity)
+			time:GetSprite().Scale = 0.55*Vector(1,1)
 		end
 	end
 end
 
 --Callbacks
 --Saturn updates
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SaturnUpdate, EntityType.SATURN)
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.SaturnDeath, EntityType.SATURN)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SaturnUpdate, mod.EntityInf[mod.Entity.Saturn].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.SaturnDeath, mod.EntityInf[mod.Entity.Saturn].ID)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, _, _)
 	if entity:GetData().TimeStoped then
 		return false
@@ -1534,65 +1604,66 @@ mod.UConst = {--Some constant variables of Uranus
 }
 
 function mod:UranusUpdate(entity)
-	local data = entity:GetData()
-	local sprite = entity:GetSprite()
-	local target = entity:GetPlayerTarget()
-	local room = game:GetRoom()
-	
-	--Custom data:
-	if data.State == nil then data.State = 0 end
-	if data.StateFrame == nil then data.StateFrame = 0 end
-	if data.HailCount == nil then data.HailCount = 0 end
-	if data.fartCount == nil then data.fartCount = 0 end
-	if data.SpinCount == nil then data.SpinCount = 0 end
-	
-	--Frame
-	data.StateFrame = data.StateFrame + 1
-	
-	if data.State == mod.UMSState.APPEAR then
-		if data.StateFrame == 1 then
-			mod:AppearPlanet(entity)
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-		elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-			data.State = mod:MarkovTransition(data.State, mod.chainU)
-			data.StateFrame = 0
-		elseif sprite:IsEventTriggered("EndAppear") then
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
-		end
-	elseif data.State == mod.UMSState.IDLE then
-		if data.StateFrame == 1 then
-			sprite:Play("Idle",true)
-		elseif sprite:IsFinished("Idle") then
-			data.State = mod:MarkovTransition(data.State, mod.chainU)
-			data.StateFrame = 0
-			mod:SpawnIceCreep(entity.Position, mod.UConst.idleIceSize, entity)
-		else
-			mod:UranusMove(entity, data, room, target)
-		end
+	if entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR and entity.SubType == mod.EntityInf[mod.Entity.Uranus].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
 		
-	
-	elseif data.State == mod.UMSState.TURD then
-		mod:UranusTurd(entity, data, sprite, target, room)
+		--Custom data:
+		if data.State == nil then data.State = 0 end
+		if data.StateFrame == nil then data.StateFrame = 0 end
+		if data.HailCount == nil then data.HailCount = 0 end
+		if data.fartCount == nil then data.fartCount = 0 end
+		if data.SpinCount == nil then data.SpinCount = 0 end
 		
-	elseif data.State == mod.UMSState.PROJECTILE then
-		mod:UranusShot(entity, data, sprite, target, room)
+		--Frame
+		data.StateFrame = data.StateFrame + 1
 		
-	elseif data.State == mod.UMSState.FARTING then
-		mod:UranusFarting(entity, data, sprite, target, room)
-	
-	elseif data.State == mod.UMSState.HAIL then
-		mod:UranusHail(entity, data, sprite, target, room)
+		if data.State == mod.UMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod:MarkovTransition(data.State, mod.chainU)
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+			end
+		elseif data.State == mod.UMSState.IDLE then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			elseif sprite:IsFinished("Idle") then
+				data.State = mod:MarkovTransition(data.State, mod.chainU)
+				data.StateFrame = 0
+				mod:SpawnIceCreep(entity.Position, mod.UConst.idleIceSize, entity)
+			else
+				mod:UranusMove(entity, data, room, target)
+			end
+			
 		
-	elseif data.State == mod.UMSState.PEE then
-		mod:UranusPee(entity, data, sprite, target, room)
+		elseif data.State == mod.UMSState.TURD then
+			mod:UranusTurd(entity, data, sprite, target, room)
+			
+		elseif data.State == mod.UMSState.PROJECTILE then
+			mod:UranusShot(entity, data, sprite, target, room)
+			
+		elseif data.State == mod.UMSState.FARTING then
+			mod:UranusFarting(entity, data, sprite, target, room)
+		
+		elseif data.State == mod.UMSState.HAIL then
+			mod:UranusHail(entity, data, sprite, target, room)
+			
+		elseif data.State == mod.UMSState.PEE then
+			mod:UranusPee(entity, data, sprite, target, room)
 
-	elseif data.State == mod.UMSState.SPIN then
-		mod:UranusThank(entity, data, sprite, target, room)
+		elseif data.State == mod.UMSState.SPIN then
+			mod:UranusThank(entity, data, sprite, target, room)
+		end
+
+		mod:SpawnSnowflake(entity,room)
 	end
-
-	mod:SpawnSnowflake(entity,room)
-	
 end
 function mod:UranusShot(entity, data, sprite, target, room)
 	mod:FaceTarget(entity, target)
@@ -1605,14 +1676,13 @@ function mod:UranusShot(entity, data, sprite, target, room)
 		
 	elseif sprite:IsEventTriggered("Shot") then
 		local player_direction = target.Position - entity.Position
-		local hail = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.ICICLE, 1, entity.Position, player_direction:Normalized()*mod.UConst.shotSpeed, entity):ToProjectile()
+		local hail = mod:SpawnEntity(mod.Entity.BigIcicle, entity.Position, player_direction:Normalized()*mod.UConst.shotSpeed, entity):ToProjectile()
 		hail:GetSprite():Play("Idle")
 		hail:GetSprite().Rotation = player_direction:GetAngleDegrees()
 		hail.FallingAccel  = -0.1
 		hail.FallingSpeed = 0
 		hail:AddScale(mod.UConst.shotScale)
 		--hail:GetSprite().Color = mod.Colors.hailColor
-		hail:GetData().isHail = true
 		hail:GetData().iceSize = mod.UConst.shotIceSize
 		hail:GetData().hailTrace = true
 		hail:GetData().hailSplash = true
@@ -1623,7 +1693,7 @@ end
 function mod:UranusTurd(entity, data, sprite, target, room)
 	if data.StateFrame == 1 then
 		--If there are to many turds, dont summon more
-		local turds = Isaac.FindByType(EntityType.ICETURD,-1,-1,false,true)
+		local turds = mod:FindByTypeMod(mod.Entity.IceTurd)
 		if(#turds<mod.UConst.maxTurds) then
 			mod:FaceTarget(entity, target)
 			sprite:Play("Turd",true)
@@ -1643,7 +1713,7 @@ function mod:UranusTurd(entity, data, sprite, target, room)
 	elseif sprite:IsEventTriggered("Turd3") then
 		--Tactical nuke in comming
 		sfx:Play(SoundEffect.SOUND_BULLET_SHOT,4);
-		local iceTurd = Isaac.Spawn(EntityType.ICETURD, 0, 0, target.Position, Vector.Zero, entity)
+		local iceTurd = mod:SpawnEntity(mod.Entity.IceTurd, target.Position, Vector.Zero, entity)
 		mod:IceTurdInit(iceTurd)
 	
 	--Move a little
@@ -1745,7 +1815,7 @@ function mod:UranusHail(entity, data, sprite, target, room)
 				end
 			end
 			
-			local hail = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.HAIL, 0, position, Vector.Zero, entity):ToProjectile()
+			local hail = mod:SpawnEntity(mod.Entity.Hail, position, Vector.Zero, entity):ToProjectile()
 			
 			local randSize = mod:RandomInt(2,3)
 			hail:GetSprite():Play("Rotate"..tostring(randSize))
@@ -1756,7 +1826,6 @@ function mod:UranusHail(entity, data, sprite, target, room)
 			hail.Scale = mod:RandomInt(16,20)/20
 			--hail.Color = mod.Colors.hailColor
 			
-			hail:GetData().isHail = true
 			hail:GetData().iceSize = mod.UConst.hailIceSize
 			hail:GetData().hailTrace = false
 			hail:GetData().hailSplash = false
@@ -1860,43 +1929,54 @@ end
 function mod:UranusDeath(entity)
 	--Relaxed
 	mod:scheduleForUpdate(function()
-		sfx:Play(Isaac.GetSoundIdByName("UranusRelax"), 1)
+		sfx:Play(Isaac.GetSoundIdByName("UranusRelax"), 0.6)
 	end, 25)
 
 	--Poops
 	for i=1,15 do
-		poop = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1), entity.Position + Vector(0.1,0):Rotated(rng:RandomFloat()*360), Vector.Zero, entity)
+		poop = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1), entity.Position + Vector(0.1,0):Rotated(rng:RandomFloat()*360), Vector((rng:RandomFloat() * 8) + 3.5,0):Rotated(rng:RandomFloat()*360), entity)
 	end
 
 	mod:NormalDeath(entity)
 
 	--Poop rain
-	mod:scheduleForUpdate(function()
-		for i=1, 350 do
-			local angle = 360*rng:RandomFloat()
-			local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,(mod.NConst.rainDropRadius/2)^2)),0):Rotated(angle)
-			--Poop rain projectiles:
-			local poopParams = ProjectileParams()
-			poopParams.Scale = mod:RandomInt(1,100)/100
-			poopParams.FallingAccelModifier = 2
-			poopParams.ChangeTimeout = 3
-			poopParams.HeightModifier = -mod:RandomInt(150,6000)
-			poopParams.Color = mod.Colors.poopColor
-			
-			entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
-		end
+	for i=1, 350 do
 		local angle = 360*rng:RandomFloat()
 		local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,(mod.NConst.rainDropRadius/2)^2)),0):Rotated(angle)
 		--Poop rain projectiles:
 		local poopParams = ProjectileParams()
-		poopParams.Scale = 2
+		poopParams.Scale = mod:RandomInt(1,100)/100
 		poopParams.FallingAccelModifier = 2
 		poopParams.ChangeTimeout = 3
-		poopParams.HeightModifier = -7000
+		poopParams.HeightModifier = -mod:RandomInt(150,6000)
 		poopParams.Color = mod.Colors.poopColor
 		
 		entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
-	end, 10)
+	end
+	local angle = 360*rng:RandomFloat()
+	local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,(mod.NConst.rainDropRadius/2)^2)),0):Rotated(angle)
+	--Poop rain projectiles:
+	local poopParams = ProjectileParams()
+	poopParams.Scale = 2
+	poopParams.FallingAccelModifier = 2
+	poopParams.ChangeTimeout = 3
+	poopParams.HeightModifier = -7000
+	poopParams.Color = mod.Colors.poopColor
+	
+	entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
+
+
+	--Clean room
+	
+	for _, i in ipairs(Isaac.FindByType(EntityType.ENTITY_DIP)) do
+		i:Die()
+	end
+	
+	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.IceTurd)) do
+		i:Remove()
+		sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
+		game:SpawnParticles (i.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
+	end
 end
 --deding
 function mod:UranusDying(entity)
@@ -1904,15 +1984,20 @@ function mod:UranusDying(entity)
 	local sprite = entity:GetSprite()
 	local data = entity:GetData()
 
-	if sprite:IsEventTriggered("Scream") then
-		sfx:Play(Isaac.GetSoundIdByName("UranusScream"), 2)
+	if data.deathFrame == nil then data.deathFrame = 1 end
+
+	if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+		if sprite:IsEventTriggered("Scream") then
+			sfx:Play(Isaac.GetSoundIdByName("UranusScream"), 1)
+		end
 	end
 end
 
 --Ice
 function mod:SpawnIceCreep(position, size, tear)
 	--For some reason spawning this creep makes the FPS slowly die, so my solution is to tell you to not take to much time in the fight
-	local ices = Isaac.FindByType(EntityType.ENTITY_EFFECT,EffectVariant.CREEP_SLIPPERY_BROWN,-1,false,true)
+	local ices = mod:FindByTypeMod(mod.Entity.IceCreep)
 	if #ices <= 150 then
 		mod:SpawnIceCreepSingular(position, tear)
 		
@@ -1926,7 +2011,7 @@ function mod:SpawnIceCreep(position, size, tear)
 	end
 end
 function mod:SpawnIceCreepSingular(position, tear)
-	local ice = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_SLIPPERY_BROWN, 1, position, Vector.Zero, tear):ToEffect()
+	local ice = mod:SpawnEntity(mod.Entity.IceCreep, position, Vector.Zero, tear):ToEffect()
 	ice:GetData().isIce = true
 	ice:GetData().iceCount = 2
 	ice.Timeout = 500
@@ -1950,7 +2035,6 @@ function mod:PeeProjectile(tear,collided)
 		for _, entity in ipairs(Isaac.GetRoomEntities()) do
 			if entity.Type == EntityType.ENTITY_EFFECT and entity.Variant == EffectVariant.CREEP_SLIPPERY_BROWN then
 			if  (entity.Position):Distance(tear.Position) < mod.UConst.peeMeltRadius then
-				--Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DUST_CLOUD, 0, entity.Position, Vector.Zero, tear)
 				entity:Die()
 			end
 			end
@@ -1961,8 +2045,8 @@ end
 
 --Callbacks
 --Uranus updates
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.UranusUpdate, EntityType.URANUS)
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.UranusDeath, EntityType.URANUS)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.UranusUpdate, mod.EntityInf[mod.Entity.Uranus].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.UranusDeath, mod.EntityInf[mod.Entity.Uranus].ID)
 
 --Pee updates
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
@@ -2076,7 +2160,7 @@ mod.NConst = {--Some constant variables of Neptune
 }
 
 function mod:NeptuneUpdate(entity)
-	if entity.Variant == 0 then
+	if entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR and entity.SubType == mod.EntityInf[mod.Entity.Neptune].SUB then
 		local data = entity:GetData()
 		local sprite = entity:GetSprite()
 		local target = entity:GetPlayerTarget()
@@ -2264,7 +2348,7 @@ function mod:NeptuneAbsorb(entity, data, sprite, target, room)
 	elseif sprite:IsFinished("AbsorbBegin") then
 		
 		sprite:Play("Absorb",true)
-		local tornado = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TORNADO, 0, entity.Position+Vector(0,1), Vector.Zero, entity)
+		local tornado = mod:SpawnEntity(mod.Entity.Tornado, entity.Position+Vector(0,1), Vector.Zero, entity)
 		tornado:GetData().Lifespan = 9
 		tornado:GetData().Height = 7
 		tornado:GetData().Scale = 0.9
@@ -2383,7 +2467,7 @@ function mod:NeptuneAmbush(entity, data, sprite, target, room)
 		entity.Position = position
 		
 		for i=1,mod.NConst.nFakers do
-			local faker = Isaac.Spawn(EntityType.NEPTUNE, mod.EntityVariant.FAKER, 0, Isaac.GetRandomPosition(0), Vector.Zero, entity)
+			local faker = mod:SpawnEntity(mod.Entity.NeptuneFaker, Isaac.GetRandomPosition(0), Vector.Zero, entity)
 			local fpsrite = faker:GetSprite()
 			
 			if data.Blood then
@@ -2414,7 +2498,7 @@ function mod:NeptuneAmbush(entity, data, sprite, target, room)
 		
 		sfx:Play(SoundEffect.SOUND_BOSS2INTRO_WATER_EXPLOSION,1);
 		
-		for _, i in ipairs(Isaac.FindByType(EntityType.NEPTUNE, mod.EntityVariant.FAKER)) do
+		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.NeptuneFaker)) do
 			i:Remove()
 		end
 	elseif sprite:IsEventTriggered("Chomp") then
@@ -2443,7 +2527,7 @@ end
 --ded
 function mod:NeptuneDeath(entity)
 
-	for _, i in ipairs(Isaac.FindByType(EntityType.NEPTUNE, mod.EntityVariant.FAKER)) do
+	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.NeptuneFaker)) do
 		i:Remove()
 	end
 	
@@ -2451,9 +2535,7 @@ function mod:NeptuneDeath(entity)
 
 	mod:NormalDeath(entity)
 	
-	mod:scheduleForUpdate(function()
-		mod:SpawnSplash(entity, 5, mod.NConst.upDownSpashFall*1.5)
-	end, 10)
+	mod:SpawnSplash(entity, 5, mod.NConst.upDownSpashFall*1.5)
 
 end
 --deding
@@ -2462,22 +2544,29 @@ function mod:NeptuneDying(entity)
 	local sprite = entity:GetSprite()
 	local data = entity:GetData()
 
-	if sprite:IsEventTriggered("DeathSplash") and rng:RandomFloat() < 0.8 then --Check if its the first time in the sprite frame?? nahhhh, just randomFloat() 
-		mod:DyingSplash(entity)
-		
-		if #(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.PLAYER_CREEP_HOLYWATER))<=1 and not data.Blood then
-			water = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.PLAYER_CREEP_HOLYWATER, 0, entity.Position, Vector.Zero, entity)
+	if data.deathFrame == nil then data.deathFrame = 1 end
+
+	if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+		if sprite:IsEventTriggered("DeathSplash") then 
+			mod:DyingSplash(entity)
+			
+		elseif sprite:IsEventTriggered("DeathCry") then
+			sfx:Play(SoundEffect.SOUND_BOSS_LITE_SLOPPY_ROAR,2,2,false,2)
+			if #(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.PLAYER_CREEP_HOLYWATER))==0 and not data.Blood then
+				water = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.PLAYER_CREEP_HOLYWATER, 0, entity.Position, Vector.Zero, entity)
+			end
 		end
-	elseif sprite:IsEventTriggered("DeathCry") then
-		sfx:Play(SoundEffect.SOUND_BOSS_LITE_SLOPPY_ROAR,2,2,false,2)
 	end
 end
 function mod:DyingSplash(entity)
 	local waterParams = ProjectileParams()
 	waterParams.Variant = entity:GetData().Tear
-	waterParams.FallingAccelModifier = mod.NConst.upDownSpashFall*2
-	local angle = 360*rng:RandomFloat()
-	entity:FireBossProjectiles (1, entity.Position + Vector(1,0):Rotated(angle), 0, waterParams )
+	waterParams.FallingAccelModifier = mod.NConst.upDownSpashFall*3.5
+	for i = 1, 5 do
+		local angle = 360*rng:RandomFloat()
+		entity:FireBossProjectiles (3, entity.Position + Vector(1,0):Rotated(angle), 0, waterParams )
+	end
 end
 
 --Do a splash of water
@@ -2496,6 +2585,6 @@ end
 
 --Callbacks
 --Neptune updates
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.NeptuneUpdate, EntityType.NEPTUNE)
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.NeptuneDeath, EntityType.NEPTUNE)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.NeptuneUpdate, mod.EntityInf[mod.Entity.Neptune].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.NeptuneDeath, mod.EntityInf[mod.Entity.Neptune].ID)
 

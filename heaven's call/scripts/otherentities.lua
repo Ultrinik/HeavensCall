@@ -46,37 +46,52 @@ function mod:SpawnPickup(entity)
 		end
 	end
 
-
-	Isaac.Spawn(EntityType.ENTITY_PICKUP, pickup, pickupSub, entity.Position, Vector((rng:RandomFloat() * 4) + 3.5,0):Rotated(rng:RandomFloat()*360), nil)
+	local pickup = Isaac.Spawn(EntityType.ENTITY_PICKUP, pickup, pickupSub, entity.Position, Vector((rng:RandomFloat() * 4) + 3.5,0):Rotated(rng:RandomFloat()*360), nil)
+	--pickup:GetData().isAstral = true --This was to transform it into pool if "exploit" is used
 end
 
 function mod:StatueUpdate(entity)
-	entity.Velocity = Vector.Zero
-	entity.Position = game:GetRoom():GetCenterPos(0)+Vector(0,-20)
+	
+	if entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
+		entity.Velocity = Vector.Zero
+		entity.Position = game:GetRoom():GetCenterPos(0)+Vector(0,-20)
 
-	if entity:GetData().Initialized == nil then
-		entity:GetData().Initialized = true
-		entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-		entity:AddEntityFlags(EntityFlag.FLAG_NO_STATUS_EFFECTS)
-		entity:AddEntityFlags(EntityFlag.FLAG_NO_TARGET)
-		entity:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE)
-		entity:AddEntityFlags(EntityFlag.FLAG_NO_KNOCKBACK)
-		entity:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK)
-		entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
-		entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
-		entity:GetSprite():Play("Appear",true)
-	end
+		if entity:GetData().Initialized == nil then
+			entity:GetData().Initialized = true
+			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_STATUS_EFFECTS)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_TARGET)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_KNOCKBACK)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+			entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+			entity:GetSprite():Play("Appear",true)
+		end
 
-	if entity:GetSprite():IsFinished("Ded") then
-		entity:Remove()
+		if entity:GetSprite():IsFinished("Ded") then
+			entity:Remove()
+		end
 	end
 end
 function mod:StatueRenderUpdate(entity)
-	--IAM DOING AN Isaac.FindByType EVERY RENDER, AND NOBODY CAN STOP ME!!!!!
-	for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
-		pedestal:Remove()
-		mod:StatueDie(entity)
-		entity:GetSprite():Play("Ded")
+	if entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
+		--IAM DOING AN Isaac.FindByType EVERY RENDER, AND NOBODY CAN STOP ME!!!!!
+		for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
+			pedestal:Remove()
+			mod:StatueDie(entity)
+			entity:GetSprite():Play("Ded")
+
+			--Turn pickups into poop if the items was taken in the same frame... or not, cuz its commented :)
+			--[[mod:scheduleForUpdate(function()
+				for _, pickup in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP)) do
+					if pickup:GetData().isAstral then
+						pickup = pickup:ToPickup()
+						pickup:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1))
+					end
+				end
+			end,0)]]--
+		end
 	end
 end
 
@@ -85,11 +100,11 @@ function mod:StatueDie(entity)
 	local level = game:GetLevel()
 	local roomdesc = level:GetCurrentRoomDesc()
 
-	if mod:IsRoomDescAstralChallenge(roomdesc) and mod.savedata.planetType and #(Isaac.FindByType(mod.savedata.planetType))==0 then
+	if mod:IsRoomDescAstralChallenge(roomdesc) and mod.savedata.planetNum and #(mod:FindByTypeMod(mod.savedata.planetNum))==0 then
 
 		mod.savedata.planetAlive = true --Yes, I know about FLAG_PERSISTENT
 
-		local planet = Isaac.Spawn(mod.savedata.planetType, 0, 0, entity.Position, Vector.Zero, entity)
+		local planet = mod:SpawnEntity(mod.savedata.planetNum, entity.Position, Vector.Zero, entity)
 		planet:GetData().SlowSpawn = true
 
 		mod.savedata.planetHP = planet.HitPoints
@@ -110,10 +125,10 @@ function mod:StatueDie(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.StatueUpdate, EntityType.ASTRALSTATUE)
-mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.StatueRenderUpdate, EntityType.ASTRALSTATUE)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.StatueUpdate, mod.EntityInf[mod.Entity.Statue].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.StatueRenderUpdate, mod.EntityInf[mod.Entity.Statue].ID)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, damageFlag, _, _)
-	if entity.Type == EntityType.ASTRALSTATUE then
+	if entity.Type == mod.EntityInf[mod.Entity.Statue].ID and  entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
 		if (damageFlag & DamageFlag.DAMAGE_EXPLOSION == DamageFlag.DAMAGE_EXPLOSION) and not entity:GetData().Spawnflag then
 			for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE)) do
 				for i=1, mod:RandomInt(PickupPoolMin,PickupPoolMax) do
@@ -132,7 +147,7 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, damageFl
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_, entity)--You can kill it with the Chaos card
-	if entity.Type == EntityType.ASTRALSTATUE then
+	if entity.Type == mod.EntityInf[mod.Entity.Statue].ID and entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
 		game:SpawnParticles (entity.Position, EffectVariant.DIAMOND_PARTICLE, 75, 9)
 		sfx:Play(SoundEffect.SOUND_MIRROR_BREAK,1)
 		mod.savedata.planetKilled = true
@@ -143,7 +158,7 @@ end)
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, function(_,pickup,entity)
 	if pickup.Type == EntityType.ENTITY_PICKUP and pickup.Variant == PickupVariant.PICKUP_COLLECTIBLE then
 		if entity.Type == EntityType.ENTITY_PLAYER then
-			local statues = Isaac.FindByType(EntityType.ASTRALSTATUE)
+			local statues = mod:FindByTypeMod(mod.Entity.Statue)
 			if #statues>0 then
 				mod:StatueDie(statues[1])
 				statues[1]:GetSprite():Play("Ded")
@@ -154,16 +169,18 @@ end)
 
 --IETDDATD (dont ask why this exists)-----------------------------------------------------------------------------------------------
 function mod:DieInstantly(entity)
-	entity:Remove()
+	if entity.Variant == mod.EntityInf[mod.Entity.IETDDATD].VAR then
+		entity:Remove()
+	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.DieInstantly, EntityType.IETDDATD)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.DieInstantly, mod.EntityInf[mod.Entity.IETDDATD].ID)
 
 
 --Hyperion---------------------------------------------------------------------------------------------------------------------------
---Nerfing hyperion
+--Nerfing hyperion (OLD)
 --[[mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, flags, source, frames)
-	if entity.Type == EntityType.ENTITY_PLAYER and source.SpawnerType == EntityType.ENTITY_SUB_HORF and #(Isaac.FindByType(EntityType.SATURN))>0 then
+	if entity.Type == EntityType.ENTITY_PLAYER and source.SpawnerType == EntityType.ENTITY_SUB_HORF and #(Isaac.FindByType(EntityType.SATURN_HC))>0 then
 		mod:scheduleForUpdate(function()
 			entity:TakeDamage (1,flags, source, frames)
 		end, 0, ModCallbacks.MC_POST_UPDATE)
@@ -173,21 +190,23 @@ end)--]]
 
 --Ice turd---------------------------------------------------------------------------------------------------------------------------
 function mod:IceTurdUpdate(entity)
-	--Dont freeze the ice duh
-	entity:ClearEntityFlags(EntityFlag.FLAG_ICE_FROZEN)
-	entity:ClearEntityFlags(EntityFlag.FLAG_ICE)
-	entity.Velocity = Vector.Zero
+	if mod.EntityInf[mod.Entity.IceTurd].VAR == entity.Variant then
+		--Dont freeze the ice duh
+		entity:ClearEntityFlags(EntityFlag.FLAG_ICE_FROZEN)
+		entity:ClearEntityFlags(EntityFlag.FLAG_ICE)
+		entity.Velocity = Vector.Zero
 
-	local data = entity:GetData()
-	if not data.Init then
-		mod:IceTurdInit(entity)
-	end
+		local data = entity:GetData()
+		if not data.Init then
+			mod:IceTurdInit(entity)
+		end
 
-	if(entity:GetSprite():IsFinished("Appear")) then
-		game:ShakeScreen(10);
-		sfx:Play(Isaac.GetSoundIdByName("IceCrash"),1);
-		mod:SpawnIceCreep(entity.Position, mod.UConst.turdIceSize, entity)
-		mod:IceTurdFinishedAppear(entity)
+		if(entity:GetSprite():IsFinished("Appear")) then
+			game:ShakeScreen(10);
+			sfx:Play(Isaac.GetSoundIdByName("IceCrash"),1);
+			mod:SpawnIceCreep(entity.Position, mod.UConst.turdIceSize, entity)
+			mod:IceTurdFinishedAppear(entity)
+		end
 	end
 end
 function mod:IceTurdInit(entity)
@@ -213,9 +232,9 @@ function mod:IceTurdFinishedAppear(entity)
 
 	--Crash damage
 	for i, entity_ in ipairs(Isaac.FindInRadius(entity.Position, mod.UConst.turdRadius)) do
-		if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= EntityType.URANUS then
+		if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Uranus].ID then
 			entity_:TakeDamage(mod.UConst.turdDamage, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
-		elseif entity_.Type == EntityType.ENTITY_PLAYER and entity_.Type ~= EntityType.URANUS then
+		elseif entity_.Type == EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Uranus].ID then
 			entity_:TakeDamage(1, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
 		end
 	end
@@ -230,25 +249,26 @@ function mod:IceTurdFinishedAppear(entity)
 
 end
 function mod:IceTurdDeath(entity)
-	sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
-	game:SpawnParticles (entity.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
-	for i=0, mod.UConst.nTurdIcicles do
-		local angle = i*360/mod.UConst.nTurdIcicles
-		--Ring projectiles:
-		local hail = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.ICICLE, 0, entity.Position, Vector(1,0):Rotated(angle)*mod.UConst.turdIcicleSpeed, entity):ToProjectile()
-		hail:GetSprite():Play("Idle")
-		hail:GetSprite().Rotation = angle
-		--hail:GetSprite().Color = Colors.hailColor
-		hail:GetData().isHail = true
-		hail:GetData().iceSize = mod.UConst.turdIcicleIceSize
-		hail:GetData().hailTrace = false
-		hail:GetData().hailSplash = false
-		
+	if mod.EntityInf[mod.Entity.IceTurd].VAR == entity.Variant then
+		sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
+		game:SpawnParticles (entity.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
+		for i=0, mod.UConst.nTurdIcicles do
+			local angle = i*360/mod.UConst.nTurdIcicles
+			--Ring projectiles:
+			local hail = mod:SpawnEntity(mod.Entity.Icicle, entity.Position, Vector(1,0):Rotated(angle)*mod.UConst.turdIcicleSpeed, entity):ToProjectile()
+			hail:GetSprite():Play("Idle")
+			hail:GetSprite().Rotation = angle
+			--hail:GetSprite().Color = Colors.hailColor
+			hail:GetData().iceSize = mod.UConst.turdIcicleIceSize
+			hail:GetData().hailTrace = false
+			hail:GetData().hailSplash = false
+			
+		end
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.IceTurdUpdate, EntityType.ICETURD)
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, EntityType.ICETURD)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.IceTurdUpdate, mod.EntityInf[mod.Entity.IceTurd].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, mod.EntityInf[mod.Entity.IceTurd].ID)
 
 
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
@@ -260,11 +280,8 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, EntityType.ICE
 
 --Red things updates----------------------------------------------------------------------------------------------------------------
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, redthing)
-	if redthing.Variant == EffectVariant.REDTRAPDOOR then
-		local sprite = redthing:GetSprite()
-		if sprite:IsFinished("Idle") then
-			redthing:Remove()
-		elseif sprite:IsEventTriggered("Sound") then
+	if redthing.Variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and redthing.SubType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB then
+		if redthing:GetSprite():IsEventTriggered("Sound") then
 			sfx:Play(Isaac.GetSoundIdByName("TrapdoorOC"),1)
 		end
 	end
@@ -272,22 +289,10 @@ end)
 
 --Thunder---------------------------------------------------------------------------------------------------------------------------
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, light)
-	if light:GetData().isThunder and light:GetSprite():IsEventTriggered("Hit") then
-		sfx:Play(Isaac.GetSoundIdByName("Thunder"),1)
-	end
-end)
-
---Aurora----------------------------------------------------------------------------------------------------------------------------
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, aurora)
-	if aurora.Variant == EffectVariant.AURORA and aurora:GetSprite():IsFinished("Idle") then
-		aurora:Remove()
-	end
-end)
-
---Timestuck--------------------------------------------------------------------------------------------------------------------------
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
-	if effect.Variant == EffectVariant.TIMESTUCK and effect:GetSprite():IsFinished("Idle") then
-		effect:Remove()
+	if light.Variant == mod.EntityInf[mod.Entity.Thunder].VAR and light.SubType == mod.EntityInf[mod.Entity.Thunder].SUB then
+		if light:GetSprite():IsEventTriggered("Hit") then
+			sfx:Play(Isaac.GetSoundIdByName("Thunder"),1)
+		end
 	end
 end)
 
@@ -299,7 +304,7 @@ function mod:SpawnSnowflake(entity, room, speed)
 			local position = room:GetRandomPosition(0)-Vector(room:GetCenterPos().X*3.1,0)
 			position = position + position*(1-2*rng:RandomFloat())/2 + (speed-1)*Vector(speed*160,speed*85)
 			local velocity = Vector(10*speed,rng:RandomFloat())
-			local snowflake = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SNOWFLAKE, 0, position, velocity, entity)
+			local snowflake = mod:SpawnEntity(mod.Entity.Snowflake, position, velocity, entity)
 
 			local sprite = snowflake:GetSprite()
 			local randomAnim = tostring(mod:RandomInt(1,4))
@@ -308,10 +313,12 @@ function mod:SpawnSnowflake(entity, room, speed)
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, snow)
-	local sprite = snow:GetSprite()
-	local finished = sprite:IsFinished("Drop01") or sprite:IsFinished("Drop02") or sprite:IsFinished("Drop03") or sprite:IsFinished("Drop04")
-	if snow.Variant == EffectVariant.SNOWFLAKE and finished then
-		snow:Remove()
+	if snow.Variant == mod.EntityInf[mod.Entity.Snowflake].VAR and snow.SubType == mod.EntityInf[mod.Entity.Snowflake].SUB then
+		local sprite = snow:GetSprite()
+		local finished = sprite:IsFinished("Drop01") or sprite:IsFinished("Drop02") or sprite:IsFinished("Drop03") or sprite:IsFinished("Drop04")
+		if finished then
+			snow:Remove()
+		end
 	end
 end)
 
@@ -338,65 +345,80 @@ end)
 
 --Tornado---------------------------------------------------------------------------------------------------------------------------
 function mod:TornadoUpdate(entity)
-	local data = entity:GetData()
-	local sprite = entity:GetSprite()
+	if entity.SubType == mod.EntityInf[mod.Entity.Tornado].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
 
-	if data.Lifespan == nil then data.Lifespan = 12 end
-	if data.Height == nil then data.Height = 6 end
-	if data.Scale == nil then data.Scale = 0.5 end
-	if data.Duped == nil then data.Duped = false end
-	if data.OriginalPos == nil then data.OriginalPos = entity.Position end
-	if data.Frame == nil then data.Frame = 0 end
-	if data.FlagForSpawn == nil then data.FlagForSpawn = false end
+		if data.Lifespan == nil then data.Lifespan = 12 end
+		if data.Height == nil then data.Height = 6 end
+		if data.Scale == nil then data.Scale = 0.5 end
+		if data.Duped == nil then data.Duped = false end
+		if data.OriginalPos == nil then data.OriginalPos = entity.Position end
+		if data.Frame == nil then data.Frame = 0 end
+		if data.FlagForSpawn == nil then data.FlagForSpawn = false end
 
-	if not data.Init then
-		data.Init = true
-		sprite.Scale = Vector(1,1)*data.Scale
+		if not data.Init then
+			data.Init = true
+			sprite.Scale = Vector(1,1)*data.Scale
 
-		if game:GetLevel():GetStage()==LevelStage.STAGE4_1 or game:GetLevel():GetStage()==LevelStage.STAGE4_2 then
-			
-			sprite:ReplaceSpritesheet (0, "gfx/effects/tornado_shiny.png")
-			sprite:LoadGraphics()
+			if game:GetLevel():GetStage()==LevelStage.STAGE4_1 or game:GetLevel():GetStage()==LevelStage.STAGE4_2 then
+				
+				sprite:ReplaceSpritesheet (0, "gfx/effects/tornado_shiny.png")
+				sprite:LoadGraphics()
+			end
 		end
-	end
 
-	if data.FlagForSpawn then
-		data.FlagForSpawn = false
-		if not data.Duped and data.Height > 0 then
-			data.Duped = true
-			local tornado = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TORNADO, 0, data.OriginalPos+Vector(0,-32*data.Scale), Vector.Zero, entity)
-			tornado:GetData().Lifespan = data.Lifespan
-			tornado:GetData().Height = data.Height - 1
-			tornado:GetData().Scale = data.Scale * 1.3
-			tornado.DepthOffset = entity.DepthOffset + 44
+		if data.FlagForSpawn then
+			data.FlagForSpawn = false
+			if not data.Duped and data.Height > 0 then
+				data.Duped = true
+				local tornado = mod:SpawnEntity(mod.Entity.Tornado, data.OriginalPos+Vector(0,-32*data.Scale), Vector.Zero, entity)
+				tornado:GetData().Lifespan = data.Lifespan
+				tornado:GetData().Height = data.Height - 1
+				tornado:GetData().Scale = data.Scale * 1.3
+				tornado.DepthOffset = entity.DepthOffset + 44
+			end
 		end
-	end
 
-	if sprite:IsFinished("Appear") then
-		sprite:Play("Idle",true)
-		data.FlagForSpawn = true
-	elseif sprite:IsEventTriggered("FastSpawn") and data.FastSpawn then
-		data.FlagForSpawn = true
-	elseif sprite:IsFinished("Idle") then
-		if data.Lifespan > 0 then
-			data.Lifespan = data.Lifespan - 1
+		if sprite:IsFinished("Appear") then
 			sprite:Play("Idle",true)
+			data.FlagForSpawn = true
+		elseif sprite:IsEventTriggered("FastSpawn") and data.FastSpawn then
+			data.FlagForSpawn = true
+		elseif sprite:IsFinished("Idle") then
+			if data.Lifespan > 0 then
+				data.Lifespan = data.Lifespan - 1
+				sprite:Play("Idle",true)
 
-		else
-			sprite:Play("Death",true)
+			else
+				sprite:Play("Death",true)
+			end
+		elseif sprite:IsFinished("Death") then
+			entity:Remove()
 		end
-	elseif sprite:IsFinished("Death") then
-		entity:Remove()
-	end
 
-	--Waving
-	local angle = data.Frame/(data.Scale)
-	entity.Position = data.OriginalPos + Vector(10*data.Scale,0)*math.sin(angle)
-	data.Frame = data.Frame + 1
+		--Waving
+		local angle = data.Frame/(data.Scale)
+		entity.Position = data.OriginalPos + Vector(10*data.Scale,0)*math.sin(angle)
+		data.Frame = data.Frame + 1
+	end
 end
 
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.TornadoUpdate, EffectVariant.TORNADO)
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.TornadoUpdate, mod.EntityInf[mod.Entity.Tornado].VAR)
 
+--Effects that dissapear after idle-------------------------------------------------------------------------------------------------
+
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
+	local valid = effect.Variant == mod.EntityInf[mod.Entity.Aurora].VAR and effect.SubType == mod.EntityInf[mod.Entity.Aurora].SUB or
+	effect.Variant == mod.EntityInf[mod.Entity.TimeFreezeSource].VAR and effect.SubType == mod.EntityInf[mod.Entity.TimeFreezeSource].SUB or
+	effect.Variant == mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR and effect.SubType == mod.EntityInf[mod.Entity.TimeFreezeObjective].SUB or
+	effect.Variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and effect.SubType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB
+	if valid then
+		if effect:GetSprite():IsFinished("Idle") then
+			effect:Remove()
+		end
+	end
+end)
 
 --PROJECTILES-----------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -418,16 +440,18 @@ function mod:KeyUpdate(key)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, key)
-	if key.Variant == ProjectileVariant.KEYKNIFE then
+	if key.Variant == mod.EntityInf[mod.Entity.KeyKnife].VAR or key.Variant == mod.EntityInf[mod.Entity.KeyKnifeRed].VAR then
 		mod:KeyUpdate(key)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, key, collider)
-	if collider.Type == EntityType.ENTITY_PLAYER and key.Variant == ProjectileVariant.KEYKNIFE then
-		if  key.SubType == 1 then
-			game:SpawnParticles (key.Position, EffectVariant.NAIL_PARTICLE, 3, 9)
-		else
-			game:SpawnParticles (key.Position, EffectVariant.TOOTH_PARTICLE, 3, 9)
+	if key.Variant == mod.EntityInf[mod.Entity.KeyKnife].VAR or key.Variant == mod.EntityInf[mod.Entity.KeyKnifeRed].VAR then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			if  key.SubType == mod.EntityInf[mod.Entity.KeyKnife].SUB then
+				game:SpawnParticles (key.Position, EffectVariant.NAIL_PARTICLE, 3, 9)
+			else
+				game:SpawnParticles (key.Position, EffectVariant.TOOTH_PARTICLE, 3, 9)
+			end
 		end
 	end
 end)
@@ -460,11 +484,10 @@ function mod:HailProjectile(tear,collided)
 			for i=0, mod.UConst.nShotIcicles do
 				local angle = i*360/mod.UConst.nShotIcicles
 				--Ring projectiles:
-				local hail = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.ICICLE, 0, tear.Position, Vector(1,0):Rotated(angle)*mod.UConst.shotIcicleSpeed, tear):ToProjectile()
+				local hail = mod:SpawnEntity(mod.Entity.Icicle, tear.Position, Vector(1,0):Rotated(angle)*mod.UConst.shotIcicleSpeed, tear):ToProjectile()
 				hail:GetSprite():Play("Idle")
 				hail:GetSprite().Rotation = angle
 				--hail:GetSprite().Color = mod.Colors.hailColor
-				hail:GetData().isHail = true
 				hail:GetData().iceSize = mod.UConst.shotIcicleIceSize
 				hail:GetData().hailTrace = false
 				hail:GetData().hailSplash = false
@@ -481,12 +504,18 @@ function mod:HailProjectile(tear,collided)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().isHail then
+	if tear.Variant == mod.EntityInf[mod.Entity.Hail].VAR and tear.SubType == mod.EntityInf[mod.Entity.Hail].SUB or
+	tear.Variant == mod.EntityInf[mod.Entity.Icicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.Icicle].SUB or
+	tear.Variant == mod.EntityInf[mod.Entity.BigIcicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.BigIcicle].SUB then
 		mod:HailProjectile(tear,false)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
-	if tear:GetData().isHail and collider.Type == EntityType.ENTITY_PLAYER then
-		mod:HailProjectile(tear,true)
+	if tear.Variant == mod.EntityInf[mod.Entity.Hail].VAR and tear.SubType == mod.EntityInf[mod.Entity.Hail].SUB or
+	tear.Variant == mod.EntityInf[mod.Entity.Icicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.Icicle].SUB or
+	tear.Variant == mod.EntityInf[mod.Entity.BigIcicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.BigIcicle].SUB then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:HailProjectile(tear,true)
+		end
 	end
 end)

@@ -103,4 +103,8 @@
 	<sound name="Pop">
 		<sample weight="1" path="pop.wav" />
 	</sound>
+	<sound name="SawHit">
+		<sample weight="1" path="saw_hit1.wav" />
+		<sample weight="1" path="saw_hit2.wav" />
+	</sound>
 </sounds>

@@ -85,44 +85,14 @@ mod.ModConfigs = {
 	roomSpawnChance = 20
 }
 
---ISAAC GET THINGS------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------
-mod.EntityVariant = {} --tHIS IS ABSOLUTELY NECESARY !!1!!111
-mod.EntitySubtype = {} --tHIS IS ABSOLUTELY NECESARY !!1!!111
-
-EntityType.ASTRALSTATUE = Isaac.GetEntityTypeByName("Astral Statue")
-
-EntityType.JUPITER = Isaac.GetEntityTypeByName("Jupiter")
-EffectVariant.THUNDER = Isaac.GetEntityVariantByName ("Thunder")
-EffectVariant.AURORA = Isaac.GetEntityVariantByName ("Aurora")
-
-EntityType.SATURN = Isaac.GetEntityTypeByName("Saturn")
-EntityType.IETDDATD = Isaac.GetEntityTypeByName("Invisible entity that does damage and then dies") --Dont mention :TakeDamage()
-mod.EntitySubtype.HYPERION = 1
-ProjectileVariant.KEYKNIFE = Isaac.GetEntityVariantByName ("Key Knife")
-EffectVariant.TIMESTUCK = Isaac.GetEntityVariantByName ("Timestuck Source")
-
-EntityType.URANUS = Isaac.GetEntityTypeByName("Uranus")
-EntityType.ICETURD = Isaac.GetEntityTypeByName("Ice Turd")
-ProjectileVariant.ICICLE = Isaac.GetEntityVariantByName ("Icicle")
-ProjectileVariant.HAIL = Isaac.GetEntityVariantByName ("Hail")
-EffectVariant.SNOWFLAKE = Isaac.GetEntityVariantByName ("Snowflake")
-
-EntityType.NEPTUNE = Isaac.GetEntityTypeByName("Neptune")
-mod.EntityVariant.FAKER = Isaac.GetEntityVariantByName("NeptuneFaker")
-EffectVariant.TORNADO = Isaac.GetEntityVariantByName ("Tornado")
-
-EffectVariant.REDTRAPDOOR = Isaac.GetEntityVariantByName ("Red Trapdoor")
+include("scripts.findentities")
 
 --Room and planet
 mod.RoomsPlanet = {
-	[8500] = EntityType.JUPITER,
-	[8501] = EntityType.SATURN,
-	[8502] = EntityType.URANUS,
-	[8503] = EntityType.NEPTUNE
+	[8500] = mod.Entity.Jupiter,
+	[8501] = mod.Entity.Saturn,
+	[8502] = mod.Entity.Uranus,
+	[8503] = mod.Entity.Neptune,
 }
 
 --SILLY FUCTIONS--------------------------------------------------------------------------------------------------------------------
@@ -204,19 +174,31 @@ function mod:NormalDeath(entity, notExplosion)
 
 	--Explosion
 	if not notExplosion then
-		game:GetRoom():MamaMegaExplosion(entity.Position)
-		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.8)
+		--game:GetRoom():MamaMegaExplosion(entity.Position)
+
+		--local gigaBomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_GIGA, 0, entity.Position, Vector.Zero, entity ):ToBomb()
+		--gigaBomb:SetExplosionCountdown(0)
+		--game: BombExplosionEffects  ( entity.Position, 100, 120, true, entity, TearFlags.TEAR_NORMAL, DamageFlag.DAMAGE_EXPLOSION, false )
+
+		--game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+
+		local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_BIG, 0, entity.Position, Vector.Zero, entity ):ToBomb()
+		bomb:SetExplosionCountdown(0)
+		bomb.ExplosionDamage = 150
+		bomb.RadiusMultiplier = 1.45
+		
+		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
 	end
 end
 --deding
 mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, function(_, entity)
-	if entity.Type == EntityType.JUPITER then
+	if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR then
 		mod:JupiterDying(entity)
-	elseif entity.Type == EntityType.SATURN then
+	elseif entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR then
 		mod:SaturnDying(entity)
-	elseif entity.Type == EntityType.URANUS then
+	elseif entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR then
 		mod:UranusDying(entity)
-	elseif entity.Type == EntityType.NEPTUNE then
+	elseif entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR then
 		mod:NeptuneDying(entity)
 	end
 end)
@@ -278,8 +260,8 @@ end
 --Save
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, function(_, shouldSave)
 	if shouldSave then
-		if mod.savedata.planetAlive and mod.savedata.planetType then
-			local planet = Isaac.FindByType(mod.savedata.planetType)
+		if mod.savedata.planetAlive and mod.savedata.planetNum then
+			local planet = mod:FindByTypeMod(mod.savedata.planetNum)
 			if planet~=nil and #planet>0 and planet[1]~=nil then
 				mod.savedata.planetHP = planet[1].HitPoints --There should not be more than 1 planet at the same time so... (we dont talk about meat cleaver)
 				--print(mod.savedata.planetHP)
@@ -292,11 +274,21 @@ end)
 
 --Equals two saves
 function mod:EqualSaves(save1, save2)
-	if save2.planetType ~= nil then save1.planetType = save2.planetType end
+	if save2.planetNum ~= nil then save1.planetNum = save2.planetNum end
 	if save2.planetAlive ~= nil then save1.planetAlive = save2.planetAlive end
 	if save2.planetKilled ~= nil then save1.planetKilled = save2.planetKilled end
 	if save2.planetHP ~= nil then save1.planetHP = save2.planetHP end
 	if save2.spawnchancemultiplier ~= nil then save1.spawnchancemultiplier = save2.spawnchancemultiplier end
+end
+
+--Spawn entity from mod
+function mod:SpawnEntity(entityNum, position, velocity, origin)
+	return Isaac.Spawn(mod.EntityInf[entityNum].ID, mod.EntityInf[entityNum].VAR, mod.EntityInf[entityNum].SUB, position, velocity, origin)
+end
+
+--Find mod entity
+function mod:FindByTypeMod(entityNum)
+	return Isaac.FindByType(mod.EntityInf[entityNum].ID, mod.EntityInf[entityNum].VAR, mod.EntityInf[entityNum].SUB)
 end
 
 --Spawn
@@ -307,9 +299,9 @@ function mod:AppearPlanet(entity)
 		sprite:Play("AppearSlow",true)
 	else
 		sprite:Play("Appear",true)
-		local trapdoor = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.REDTRAPDOOR, 0, entity.Position, Vector.Zero, entity)
+		local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position, Vector.Zero, entity)
 		if mod.ModFlags.glowingHourglass > 0 then
-			local timestuck = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TIMESTUCK, 1, entity.Position, Vector.Zero, entity)
+			local timestuck = mod:SpawnEntity(mod.Entity.TimeFreezeObjective, entity.Position, Vector.Zero, entity)
 			timestuck:GetSprite().Scale = Vector(1,1)*0.5
 			sfx:Play(Isaac.GetSoundIdByName("TimeResume"),2)
 		end
@@ -363,7 +355,7 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
 		mod.savedata.spawnchancemultiplier = 1
 		mod.savedata.planetAlive = false
 		mod.savedata.planetKilled = false
-		mod.savedata.planetType = 0
+		mod.savedata.planetNum = 0
 		mod.savedata.planetHP = 1
 
 		mod:EqualSaves(mod.savedataOld, mod.savedata)
@@ -460,8 +452,13 @@ end)
 
 --Update health of boss, may be delayed by one damage
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_,entity,_,_,_,_)
-	if entity.Type == EntityType.JUPITER or entity.Type == EntityType.SATURN or entity.Type == EntityType.URANUS or entity.Type == EntityType.NEPTUNE then
-		if mod.savedata.planetAlive and entity.Type==mod.savedata.planetType then
+	
+	if mod.savedata.planetAlive then
+		if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR
+		then
 			mod.savedata.planetHP = entity.HitPoints --There should not be more than 1 planet at the same time so... (we dont talk about meat cleaver)
 			--print(mod.savedata.planetHP)
 		end
@@ -563,7 +560,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 
 		--What planet should spawn
 		if mod.RoomsPlanet[roomdesc.Data.Variant] ~= nil then
-			mod.savedata.planetType = mod.RoomsPlanet[roomdesc.Data.Variant]
+			mod.savedata.planetNum = mod.RoomsPlanet[roomdesc.Data.Variant]
 		end
 
 
@@ -605,17 +602,17 @@ end)
 
 --Reset chances if glowing hourglass was used
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
-	if item == CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS and mod.savedata.planetType ~= EntityType.SATURN then
+	if item == CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS and mod.savedata.planetNum ~= mod.Entity.Saturn then
 		mod:EqualSaves(mod.savedata, mod.savedataOld)
 		--mod:SaveData(json.encode(mod.savedata))
-	elseif item == CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS and mod.savedata.planetType == EntityType.SATURN then
+	elseif item == CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS and mod.savedata.planetNum == mod.Entity.Saturn then
 		mod.ModFlags.glowingHourglass = 2--You are not going to scape
 	end
 end)
 --Trying to steal the item
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
 	if item == CollectibleType.COLLECTIBLE_MOVING_BOX or item == CollectibleType.COLLECTIBLE_VOID or item == CollectibleType.COLLECTIBLE_ABYSS then
-		local statues = Isaac.FindByType(EntityType.ASTRALSTATUE)
+		local statues = mod:FindByTypeMod(mod.Entity.Statue)
 		if #statues > 0 then
 			local statue = statues[1]
 			mod:StatueDie(statue)
@@ -625,7 +622,7 @@ mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
 end)
 mod:AddCallback(ModCallbacks.MC_USE_CARD, function(_,card)
 	if card == Card.RUNE_BLACK or card == Card.CARD_REVERSE_HERMIT then
-		local statues = Isaac.FindByType(EntityType.ASTRALSTATUE)
+		local statues = mod:FindByTypeMod(mod.Entity.Statue)
 		if #statues > 0 then
 			local statue = statues[1]
 			mod:StatueDie(statue)
@@ -636,7 +633,7 @@ end)
 --Uranus shitting
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
 	if item == CollectibleType.COLLECTIBLE_FLUSH then
-		for _, e in ipairs(Isaac.FindByType(EntityType.URANUS)) do
+		for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Uranus)) do
 			e:GetData().State = mod.UMSState.SPIN
 			e:GetData().StateFrame = 0
 			mod:UranusThank(e, e:GetData(), e:GetSprite())
@@ -662,14 +659,14 @@ end)
 function mod:CheckSpawnNewRoom()
 	if mod.savedata and mod.savedata.planetAlive and (not mod.savedata.planetKilled) then
 		mod:scheduleForUpdate(function()
-			mod:SpawnPlanet(mod.savedata.planetType)
+			mod:SpawnPlanet(mod.savedata.planetNum)
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
 end
 --SpawnPlanet if room changed or continued
-function mod:SpawnPlanet(entityType)
-	local validType = entityType == EntityType.JUPITER or entityType == EntityType.SATURN or entityType == EntityType.URANUS or entityType == EntityType.NEPTUNE
-	if validType and #(Isaac.FindByType(entityType))==0 then
+function mod:SpawnPlanet(entityNum)
+	local validType = entityNum==mod.Entity.Jupiter or entityNum==mod.Entity.Saturn or entityNum==mod.Entity.Uranus or entityNum==mod.Entity.Neptune
+	if validType and #(mod:FindByTypeMod(entityNum))==0 then
 		
 		local position = Isaac.GetRandomPosition(0)
 		for i=1, 50 do
@@ -677,7 +674,7 @@ function mod:SpawnPlanet(entityType)
 			position = Isaac.GetRandomPosition(0)
 		end
 
-		local planet = Isaac.Spawn(entityType, 0, 0, position, Vector.Zero, nil)
+		local planet = mod:SpawnEntity(entityNum, position, Vector.Zero, nil)
 		planet.HitPoints = mod.savedata.planetHP
 	end
 end
@@ -692,7 +689,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 		
 		mod:scheduleForUpdate(function()
 			if (not mod.savedata.planetAlive) and (not mod.savedata.planetKilled) then
-				local statue = Isaac.Spawn(EntityType.ASTRALSTATUE, 0, 0, game:GetRoom():GetCenterPos(0)+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
+				local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos(0)+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
 			end
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
@@ -740,9 +737,7 @@ end)
 function mod:PausePool()
 	mod.ModFlags.noPool = true
 	mod:scheduleForUpdate(function()
-		if (not mod.savedata.planetAlive) and (not mod.savedata.planetKilled) then
-			mod.ModFlags.noPool = false
-		end
+		mod.ModFlags.noPool = false
 	end, 2, ModCallbacks.MC_POST_UPDATE)
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_,entity)--Dont reroll TEden items into astral challenge items
@@ -786,18 +781,17 @@ if HPBars then
 		tooltip = "Styled to resemble the Planetarium but Darker"
 	}
 
-	HPBars.BossIgnoreList[tostring(EntityType.ASTRALSTATUE)..".0"] = {
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {
 		function(entity)
 			return true
 		end,
 	}
 
 	--Adding the bars
-	Jid = tostring(EntityType.JUPITER)..".0"
-	Sid = tostring(EntityType.SATURN)..".0"
-	Uid = tostring(EntityType.URANUS)..".0"
-	Nid = tostring(EntityType.NEPTUNE)..".0"
-
+	Jid = tostring(mod.EntityInf[mod.Entity.Jupiter].ID).."."..tostring(mod.EntityInf[mod.Entity.Jupiter].VAR)
+	Sid = tostring(mod.EntityInf[mod.Entity.Saturn].ID).."."..tostring(mod.EntityInf[mod.Entity.Saturn].VAR)
+	Uid = tostring(mod.EntityInf[mod.Entity.Uranus].ID).."."..tostring(mod.EntityInf[mod.Entity.Uranus].VAR)
+	Nid = tostring(mod.EntityInf[mod.Entity.Neptune].ID).."."..tostring(mod.EntityInf[mod.Entity.Neptune].VAR)
     HPBars.BossDefinitions[Jid] = {
         sprite = "gfx/bosses/icon_jupiter.png",
 		barStyle = "PlanetariumHC"

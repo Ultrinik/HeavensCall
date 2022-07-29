@@ -4,9 +4,8 @@
     <directory>heaven's call</directory>
     <id>2839972756</id>
     <description>
-	Be sure to leave your feedback about how tanky the bosses should be, It's still a hot topic of discussion!
-[h1] What is this mod [/h1]
-This mod add a new type of room called the [i] Astral Challenge Room [/i], it can spawn between Caves 1 and Depths 2 (and the equivalents alt floors), it can spawn in Womb if you have ‘Telescope Lens’, it spawns with a 20% chance, once per run (The chance drops to 0% when you [b] enter [/b] the room).
+	[h1] What is this mod [/h1]
+This mod add a new type of room called the [i] Astral Challenge Room [/i], it can spawn between Caves 1 and Depths 2 (and the equivalents alt floors), it can spawn in Womb if you have ‘Telescope Lens’, each floor it has a 20% chance of spawning, it spawns once per run (The chance drops to 0% when you [b] enter [/b] the room), if the room spawns, there will be wisp in the starting room (note: Curse of Darkness can generate wisp on any room).
 
 The room contains a random  [b] planetarium or zodiac [/b] collectible, you can pick it up or blow up the nothing suspicious glass statue in the room to transform it into some pickups.
 
@@ -58,15 +57,18 @@ Some music mods appear to make the boss music not play, however, you are not los
 
 The mod currently has no new items, and probably won’t have many, I’m not really interested in creating items, and also my creativity for them is zero.
 
-If the room doesn't spawn, even when the chance is set to 100%, try restarting your game.
+If the room doesn't spawn, even when the chance is set to 100% or the item pool from the room is broken (is giving you regular items) try restarting your game, I have no idea why this sometimes happens or why this is the solution...
+
+You want the option to deactivate boss tracking again? convince me.
 
 [h1] About me? [/h1]
 This is my first “decent” mod, I had done some other mods, basically all around 2017 (of which only two survive and were updated for being acceptable enough), so this is my first mod in 5~ years.
 
 Since I started playing this game around 2013 I always especially liked the little creepy-cute creatures of this game, and always wanted to do some myself. I might not be the most skilled spriter or coder, but I’m happy with how the four fellas ended up :D
 
+
 </description>
-    <version>1.2.3</version>
+    <version>1.2.7</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Rooms"/>
