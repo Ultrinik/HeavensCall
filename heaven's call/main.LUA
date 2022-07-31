@@ -24,30 +24,34 @@ include("scripts.roomsdata")
 
 --Colors
 mod.Colors = {
-	boomColor = Color(1,1,1,1),
-	boomColor2 = Color(1,1,1,1),
-	jupiterShotColor = Color(2,2,2,1),
-	jupiterLaser1Color = Color(0.5,0.5,0.5,1),
-	jupiterLaser2Color = Color(1,1,1,0.95),
-	hailColor = Color(1,1,1,0.9),
-	poopColor = Color(1,1,1,1),
-	peeColor = Color(1,1,1,1),
-	iceColor = Color(1,1,1,0.7),
-	frozenColor = Color(1,1,1,1),
-	timeChanged = Color(1,1,1,1)
+	boom = Color(1,1,1,1),
+	boom2 = Color(1,1,1,1),
+	jupiterShot = Color(2,2,2,1),
+	jupiterLaser1 = Color(0.5,0.5,0.5,1),
+	jupiterLaser2 = Color(1,1,1,0.95),
+	hail = Color(1,1,1,0.9),
+	poop = Color(1,1,1,1),
+	pee = Color(1,1,1,1),
+	ice = Color(1,1,1,0.7),
+	frozen = Color(1,1,1,1),
+	timeChanged = Color(1,1,1,1),
+	fire = Color(1,1,1,1),
+	superFire = Color(0.75,0.75,0.75,1)
 }
 function mod:ColorizeColors()
-	mod.Colors.boomColor:SetColorize(1.3,2,0.7,1)
-	mod.Colors.boomColor2:SetColorize(1.9,2.5,1.4,1)
-	mod.Colors.jupiterShotColor:SetColorize(1.9,2.5,1.4,1)
-	mod.Colors.jupiterLaser1Color:SetColorize(1.9,2.5,1.4,1)
-	mod.Colors.jupiterLaser2Color:SetColorize(3.75,3.75,6.5,1)
-	mod.Colors.hailColor:SetColorize(1,1.5,2.5,1)
-	mod.Colors.poopColor:SetColorize(1.2,0.7,0.6,1)
-	mod.Colors.peeColor:SetColorize(3,2.7,0.1,1)
-	mod.Colors.iceColor:SetColorize(5,7,10,1)
-	mod.Colors.frozenColor:SetColorize(1.5,2,3,1)
+	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
+	mod.Colors.boom2:SetColorize(1.9,2.5,1.4,1)
+	mod.Colors.jupiterShot:SetColorize(1.9,2.5,1.4,1)
+	mod.Colors.jupiterLaser1:SetColorize(1.9,2.5,1.4,1)
+	mod.Colors.jupiterLaser2:SetColorize(3.75,3.75,6.5,1)
+	mod.Colors.hail:SetColorize(1,1.5,2.5,1)
+	mod.Colors.poop:SetColorize(1.2,0.7,0.6,1)
+	mod.Colors.pee:SetColorize(3,2.7,0.1,1)
+	mod.Colors.ice:SetColorize(5,7,10,1)
+	mod.Colors.frozen:SetColorize(1.5,2,3,1)
 	mod.Colors.timeChanged:SetColorize(1,0.2,0.2,1)
+	mod.Colors.fire:SetColorize(5,2.5,0,1)
+	mod.Colors.superFire:SetColorize(20,7,0,1)
 end
 mod:ColorizeColors()
 
@@ -83,6 +87,9 @@ mod.ModConfigs = {
 	noRain = false,
 	noSnow = false,
 	roomSpawnChance = 20
+}
+mod.ModConstants = {
+	burningFrames = 275
 }
 
 include("scripts.findentities")

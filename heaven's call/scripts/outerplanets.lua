@@ -232,7 +232,7 @@ function mod:JupiterCharge2(entity, data, sprite, target,room)
 	elseif sprite:IsEventTriggered("ChargeLaser") then
 		local player_direction = data.TargetPosition_aim - (entity.Position-Vector(0,75))
 		local brimstone = EntityLaser.ShootAngle(12, entity.Position-Vector(0,75)+player_direction:Normalized()*45 , player_direction:GetAngleDegrees(), 5, Vector(5,5), entity)
-		brimstone:GetSprite().Color = mod.Colors.jupiterLaser1Color
+		brimstone:GetSprite().Color = mod.Colors.jupiterLaser1
 		if target.Position.Y >= entity.Position.Y then
 			--This is to make the brimstone render below of above Jupiter
 			brimstone.DepthOffset = 100
@@ -315,7 +315,7 @@ function mod:JupiterShot(entity, data, sprite, target,room)
 		for i = 1, 2 do
 			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position-Vector(0,35)+player_direction:Normalized()*45, player_direction:Rotated((-2*i+3)*23):Normalized()*mod.JConst.shotSpeed, entity)
 			tear:GetSprite().Scale = mod.JConst.shotTearScale * Vector(1,1)
-			tear:GetSprite().Color = mod.Colors.jupiterShotColor
+			tear:GetSprite().Color = mod.Colors.jupiterShot
 		end
 		
 	end
@@ -344,7 +344,8 @@ function mod:JupiterCloud(entity, data, sprite, target,room)
 		tear:GetSprite().Scale = mod.JConst.cloudTearScale * Vector(1,1)
 		tear:AddProjectileFlags(ProjectileFlags.WIGGLE)
 		tear:GetData().cloudJupiterProjectile = true --flag to check in projectile update function
-		tear:GetSprite().Color = mod.Colors.boomColor
+		tear:GetSprite().Color = mod.Colors.boom
+		tear.Parent = entity
 		
 		entity.Velocity = -(target.Position - entity.Position):Normalized() * mod.JConst.cloudKnockback
 		
@@ -383,7 +384,7 @@ function mod:JupiterLaser(entity, data, sprite, target,room)
 		--Brimstone:
 		local player_direction = data.TargetPosition_aim - (entity.Position + Vector(0,-75))
 		local superbrimstone = EntityLaser.ShootAngle(14, entity.Position + Vector(0,-75), player_direction:GetAngleDegrees(), 37, Vector.Zero, entity)
-		superbrimstone:GetSprite().Color = mod.Colors.jupiterLaser2Color
+		superbrimstone:GetSprite().Color = mod.Colors.jupiterLaser2
 		superbrimstone:GetData().JupiterLaser = true
 		data.LaserFlag=true
 		--Spin direction
@@ -409,7 +410,7 @@ function mod:JupiterLaser(entity, data, sprite, target,room)
 			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position-Vector(0,30), ((Vector(1,0)):Rotated(i*360/4+ extra)):Normalized()*7, entity):ToProjectile()
 			tear.FallingSpeed = 0
 			tear.FallingAccel = -0.1
-			tear:GetSprite().Color = mod.Colors.jupiterShotColor
+			tear:GetSprite().Color = mod.Colors.jupiterShot
 		end
 		
 		local angle = 360*rng:RandomFloat()
@@ -476,15 +477,17 @@ end
 
 --ded
 function mod:JupiterDeath(entity)
-	--Particles
-	game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13, mod.Colors.boomColor)
-	local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
-	bloody:GetSprite().Color = mod.Colors.boomColor
-	--Fart:
-	local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
-	fart:GetSprite().Scale = mod.JConst.deathFartScale*Vector(1,1)
-	sfx:Play(Isaac.GetSoundIdByName("SuperFart"), 3)
-	mod:NormalDeath(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR and entity.SubType == mod.EntityInf[mod.Entity.Jupiter].SUB then
+		--Particles
+		game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13, mod.Colors.boom)
+		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+		bloody:GetSprite().Color = mod.Colors.boom
+		--Fart:
+		local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
+		fart:GetSprite().Scale = mod.JConst.deathFartScale*Vector(1,1)
+		sfx:Play(Isaac.GetSoundIdByName("SuperFart"), 3)
+		mod:NormalDeath(entity)
+	end
 end
 --deding
 function mod:JupiterDying(entity)
@@ -529,7 +532,7 @@ function mod:CloudJupiterProjectile(tear,collided)
 		
 		--Explosion:
 		local explode = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, tear.Position, Vector.Zero, tear):ToEffect()
-		explode:GetSprite().Color = mod.Colors.boomColor
+		explode:GetSprite().Color = mod.Colors.boom
 		
 		--Explosion damage
 		for i, entity in ipairs(Isaac.FindInRadius(tear.Position, mod.JConst.cloudExplosionRadius)) do
@@ -547,15 +550,15 @@ function mod:CloudJupiterProjectile(tear,collided)
 		for i=0, mod.JConst.nCloudRingProjectiles do
 			--Ring projectiles:
 			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(10,0):Rotated(i*360/mod.JConst.nCloudRingProjectiles), tear):ToProjectile()
-			tear:GetSprite().Color = mod.Colors.boomColor
+			tear:GetSprite().Color = mod.Colors.boom
 			tear.FallingSpeed = -0.1
 			tear.FallingAccel = 0.3
 		end
 		for i=0, mod.JConst.nCloudRndProjectiles do
 			--Random projectiles:
 			local angle = mod:RandomInt(0, 360)
-			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(7,0):Rotated(angle), tear):ToProjectile()
-			tear:GetSprite().Color = mod.Colors.boomColor2
+			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(7,0):Rotated(angle), tear.Parent):ToProjectile()
+			tear:GetSprite().Color = mod.Colors.boom2
 			local randomFall = -1 * mod:RandomInt(1, 500) / 1000
 			tear.FallingSpeed = randomFall
 			tear.FallingAccel = 0.2
@@ -1409,37 +1412,38 @@ end
 
 --ded
 function mod:SaturnDeath(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR and entity.SubType == mod.EntityInf[mod.Entity.Saturn].SUB then
 
+		--Particles
+		game:SpawnParticles (entity.Position, EffectVariant.IMPACT, 20, 25, Color(3,0,0,1))
+		local ring = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SIREN_RING, 0, entity.Position, Vector.Zero, entity)
+		ring:GetSprite().Color = Color(0.5,0,0,1)
 
-	--Particles
-	game:SpawnParticles (entity.Position, EffectVariant.IMPACT, 20, 25, Color(3,0,0,1))
-	local ring = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SIREN_RING, 0, entity.Position, Vector.Zero, entity)
-	ring:GetSprite().Color = Color(0.5,0,0,1)
+		--remaining bombs
+		for _,b in ipairs(Isaac.FindByType(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL)) do
+			b = b:ToBomb()
+			b.ExplosionDamage = 0
+			b:SetExplosionCountdown(0)
+		end
 
-	--remaining bombs
-	for _,b in ipairs(Isaac.FindByType(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL)) do
-		b = b:ToBomb()
-		b.ExplosionDamage = 0
-		b:SetExplosionCountdown(0)
-	end
+		sfx:Play(Isaac.GetSoundIdByName("TouhouDeath"), 0.05)
+		mod:NormalDeath(entity)
 
-	sfx:Play(Isaac.GetSoundIdByName("TouhouDeath"), 0.05)
-	mod:NormalDeath(entity)
+		
+		for i=0, game:GetNumPlayers()-1 do
+			local player = Isaac.GetPlayer(i)
+			player.ControlsCooldown = 2
+		end
+		mod.ModFlags.globalTimestuck = false
 
-	
-	for i=0, game:GetNumPlayers()-1 do
-		local player = Isaac.GetPlayer(i)
-		player.ControlsCooldown = 2
-	end
-	mod.ModFlags.globalTimestuck = false
-
-	
-	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.KeyKnife)) do
-		i:Remove()
-	end
-	
-	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.KeyKnifeRed)) do
-		i:Remove()
+		
+		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.KeyKnife)) do
+			i:Remove()
+		end
+		
+		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.KeyKnifeRed)) do
+			i:Remove()
+		end
 	end
 end
 --deding
@@ -1677,15 +1681,16 @@ function mod:UranusShot(entity, data, sprite, target, room)
 	elseif sprite:IsEventTriggered("Shot") then
 		local player_direction = target.Position - entity.Position
 		local hail = mod:SpawnEntity(mod.Entity.BigIcicle, entity.Position, player_direction:Normalized()*mod.UConst.shotSpeed, entity):ToProjectile()
-		hail:GetSprite():Play("Idle")
 		hail:GetSprite().Rotation = player_direction:GetAngleDegrees()
 		hail.FallingAccel  = -0.1
 		hail.FallingSpeed = 0
 		hail:AddScale(mod.UConst.shotScale)
 		--hail:GetSprite().Color = mod.Colors.hailColor
+		hail:GetData().IsIcicle = true
 		hail:GetData().iceSize = mod.UConst.shotIceSize
 		hail:GetData().hailTrace = true
 		hail:GetData().hailSplash = true
+		hail.Parent = entity
 		
 		local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
 	end
@@ -1762,7 +1767,7 @@ function mod:UranusFarting(entity, data, sprite, target, room)
 		
 		local poopParams = ProjectileParams()
 		
-		poopParams.Color = mod.Colors.poopColor
+		poopParams.Color = mod.Colors.poop
 		
 		entity:FireBossProjectiles (mod.UConst.poopDensity, data.fartTarget, 8-data.fartCount, poopParams )
 		
@@ -1791,7 +1796,7 @@ function mod:UranusHail(entity, data, sprite, target, room)
 					p:AddEntityFlags(EntityFlag.FLAG_ICE_FROZEN)
 					p.CollisionDamage = 0
 					p:GetSprite():Stop()
-					p:GetSprite().Color = mod.Colors.frozenColor
+					p:GetSprite().Color = mod.Colors.frozen
 					p.HitPoints = 0
 				end
 			end
@@ -1825,13 +1830,14 @@ function mod:UranusHail(entity, data, sprite, target, room)
 			hail.Height = -mod:RandomInt(380,840)
 			hail.Scale = mod:RandomInt(16,20)/20
 			--hail.Color = mod.Colors.hailColor
-			
+
+			hail:GetData().IsIcicle = true
 			hail:GetData().iceSize = mod.UConst.hailIceSize
 			hail:GetData().hailTrace = false
 			hail:GetData().hailSplash = false
 			
 			local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.OCCULT_TARGET, 0, position, Vector.Zero, entity):ToEffect()
-			target.Color = mod.Colors.hailColor
+			target.Color = mod.Colors.hail
 			target.Timeout = 10
 		end
 	
@@ -1859,7 +1865,7 @@ function mod:UranusPee(entity, data, sprite, target, room)
 		
 		local peeParams = ProjectileParams()
 		
-		peeParams.Color = mod.Colors.peeColor
+		peeParams.Color = mod.Colors.pee
 		peeParams.Acceleration = 0.00001
 		
 		entity:FireBossProjectiles (mod.UConst.nPee, target.Position, -1, peeParams )
@@ -1927,55 +1933,58 @@ end
 
 --ded
 function mod:UranusDeath(entity)
-	--Relaxed
-	mod:scheduleForUpdate(function()
-		sfx:Play(Isaac.GetSoundIdByName("UranusRelax"), 0.6)
-	end, 25)
+	
+	if entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR and entity.SubType == mod.EntityInf[mod.Entity.Uranus].SUB then
+		--Relaxed
+		mod:scheduleForUpdate(function()
+			sfx:Play(Isaac.GetSoundIdByName("UranusRelax"), 0.6)
+		end, 25)
 
-	--Poops
-	for i=1,15 do
-		poop = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1), entity.Position + Vector(0.1,0):Rotated(rng:RandomFloat()*360), Vector((rng:RandomFloat() * 8) + 3.5,0):Rotated(rng:RandomFloat()*360), entity)
-	end
+		--Poops
+		for i=1,15 do
+			poop = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1), entity.Position + Vector(0.1,0):Rotated(rng:RandomFloat()*360), Vector((rng:RandomFloat() * 8) + 3.5,0):Rotated(rng:RandomFloat()*360), entity)
+		end
 
-	mod:NormalDeath(entity)
+		mod:NormalDeath(entity)
 
-	--Poop rain
-	for i=1, 350 do
+		--Poop rain
+		for i=1, 350 do
+			local angle = 360*rng:RandomFloat()
+			local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,(mod.NConst.rainDropRadius/2)^2)),0):Rotated(angle)
+			--Poop rain projectiles:
+			local poopParams = ProjectileParams()
+			poopParams.Scale = mod:RandomInt(1,100)/100
+			poopParams.FallingAccelModifier = 2
+			poopParams.ChangeTimeout = 3
+			poopParams.HeightModifier = -mod:RandomInt(150,6000)
+			poopParams.Color = mod.Colors.poop
+			
+			entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
+		end
 		local angle = 360*rng:RandomFloat()
 		local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,(mod.NConst.rainDropRadius/2)^2)),0):Rotated(angle)
 		--Poop rain projectiles:
 		local poopParams = ProjectileParams()
-		poopParams.Scale = mod:RandomInt(1,100)/100
+		poopParams.Scale = 2
 		poopParams.FallingAccelModifier = 2
 		poopParams.ChangeTimeout = 3
-		poopParams.HeightModifier = -mod:RandomInt(150,6000)
-		poopParams.Color = mod.Colors.poopColor
+		poopParams.HeightModifier = -7000
+		poopParams.Color = mod.Colors.poop
 		
 		entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
-	end
-	local angle = 360*rng:RandomFloat()
-	local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,(mod.NConst.rainDropRadius/2)^2)),0):Rotated(angle)
-	--Poop rain projectiles:
-	local poopParams = ProjectileParams()
-	poopParams.Scale = 2
-	poopParams.FallingAccelModifier = 2
-	poopParams.ChangeTimeout = 3
-	poopParams.HeightModifier = -7000
-	poopParams.Color = mod.Colors.poopColor
-	
-	entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
 
 
-	--Clean room
-	
-	for _, i in ipairs(Isaac.FindByType(EntityType.ENTITY_DIP)) do
-		i:Die()
-	end
-	
-	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.IceTurd)) do
-		i:Remove()
-		sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
-		game:SpawnParticles (i.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
+		--Clean room
+		
+		for _, i in ipairs(Isaac.FindByType(EntityType.ENTITY_DIP)) do
+			i:Die()
+		end
+		
+		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.IceTurd)) do
+			i:Remove()
+			sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
+			game:SpawnParticles (i.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
+		end
 	end
 end
 --deding
@@ -2526,16 +2535,19 @@ end
 
 --ded
 function mod:NeptuneDeath(entity)
+	
+	if entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR and entity.SubType == mod.EntityInf[mod.Entity.Neptune].SUB then
 
-	for _, i in ipairs(mod:FindByTypeMod(mod.Entity.NeptuneFaker)) do
-		i:Remove()
+		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.NeptuneFaker)) do
+			i:Remove()
+		end
+		
+		sfx:Play(Isaac.GetSoundIdByName("Pop"),100);
+
+		mod:NormalDeath(entity)
+		
+		mod:SpawnSplash(entity, 5, mod.NConst.upDownSpashFall*1.5)
 	end
-	
-	sfx:Play(Isaac.GetSoundIdByName("Pop"),100);
-
-	mod:NormalDeath(entity)
-	
-	mod:SpawnSplash(entity, 5, mod.NConst.upDownSpashFall*1.5)
 
 end
 --deding

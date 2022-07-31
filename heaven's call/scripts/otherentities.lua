@@ -256,8 +256,7 @@ function mod:IceTurdDeath(entity)
 			local angle = i*360/mod.UConst.nTurdIcicles
 			--Ring projectiles:
 			local hail = mod:SpawnEntity(mod.Entity.Icicle, entity.Position, Vector(1,0):Rotated(angle)*mod.UConst.turdIcicleSpeed, entity):ToProjectile()
-			hail:GetSprite():Play("Idle")
-			hail:GetSprite().Rotation = angle
+			hail:GetData().IsIcicle = true
 			--hail:GetSprite().Color = Colors.hailColor
 			hail:GetData().iceSize = mod.UConst.turdIcicleIceSize
 			hail:GetData().hailTrace = false
@@ -459,7 +458,18 @@ end)
 --Hail------------------------------------------------------------------------------------------------------------------------------
 function mod:HailProjectile(tear,collided)
 	local data = tear:GetData()
-	
+	local sprite = tear:GetSprite()
+	if data.Init == nil then
+		data.Init = true
+
+		--Sprite
+		if tear.Variant == mod.EntityInf[mod.Entity.Icicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.Icicle].SUB or
+		tear.Variant == mod.EntityInf[mod.Entity.BigIcicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.BigIcicle].SUB then
+			sprite:Play("Idle", true)
+			sprite.Rotation = tear.Velocity:GetAngleDegrees()
+		end
+	end
+
 	--This leaves a trace of slippery ice
 	if(data.hailTrace and math.floor(tear.Position.X+tear.Position.Y)%5==0) then
 		--Spawn ice creep
@@ -470,11 +480,6 @@ function mod:HailProjectile(tear,collided)
 	if tear:IsDead() or collided then
 		
 		game:SpawnParticles (tear.Position, EffectVariant.DIAMOND_PARTICLE, 3, 9)
-
-
-		if data.target then
-			data.target:Remove()
-		end
 		
 		--Spawn ice creep
 		mod:SpawnIceCreep(tear.Position, tear:GetData().iceSize, tear)
@@ -484,15 +489,15 @@ function mod:HailProjectile(tear,collided)
 			for i=0, mod.UConst.nShotIcicles do
 				local angle = i*360/mod.UConst.nShotIcicles
 				--Ring projectiles:
-				local hail = mod:SpawnEntity(mod.Entity.Icicle, tear.Position, Vector(1,0):Rotated(angle)*mod.UConst.shotIcicleSpeed, tear):ToProjectile()
-				hail:GetSprite():Play("Idle")
-				hail:GetSprite().Rotation = angle
+				local hail = mod:SpawnEntity(mod.Entity.Icicle, tear.Position, Vector(1,0):Rotated(angle)*mod.UConst.shotIcicleSpeed, tear.Parent):ToProjectile()
+				hail:GetData().IsIcicle = true
 				--hail:GetSprite().Color = mod.Colors.hailColor
 				hail:GetData().iceSize = mod.UConst.shotIcicleIceSize
 				hail:GetData().hailTrace = false
 				hail:GetData().hailSplash = false
 				
 			end
+			
 			sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1);
 		else
 			
@@ -504,18 +509,188 @@ function mod:HailProjectile(tear,collided)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear.Variant == mod.EntityInf[mod.Entity.Hail].VAR and tear.SubType == mod.EntityInf[mod.Entity.Hail].SUB or
-	tear.Variant == mod.EntityInf[mod.Entity.Icicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.Icicle].SUB or
-	tear.Variant == mod.EntityInf[mod.Entity.BigIcicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.BigIcicle].SUB then
+	if tear:GetData().IsIcicle then
 		mod:HailProjectile(tear,false)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
-	if tear.Variant == mod.EntityInf[mod.Entity.Hail].VAR and tear.SubType == mod.EntityInf[mod.Entity.Hail].SUB or
-	tear.Variant == mod.EntityInf[mod.Entity.Icicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.Icicle].SUB or
-	tear.Variant == mod.EntityInf[mod.Entity.BigIcicle].VAR and tear.SubType == mod.EntityInf[mod.Entity.BigIcicle].SUB then
+	if tear:GetData().IsIcicle then
 		if collider.Type == EntityType.ENTITY_PLAYER then
 			mod:HailProjectile(tear,true)
 		end
 	end
 end)
+
+
+--Flame-----------------------------------------------------------------------------------------------------------------------------
+function mod:FireUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		sprite:Play("Appear")
+		data.Init = true
+		if data.EmberPos == nil then data.EmberPos = -10 end
+	end
+
+	if sprite:IsFinished("Appear") then sprite:Play("Flickering",true) end
+
+	sprite.Rotation = tear.Velocity:GetAngleDegrees()
+	sprite.Scale = sprite.Scale + 0.018*Vector(1,1)
+	
+
+	if game:GetFrameCount()%5==0 then
+		--For tracing
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, tear.Position + Vector(0,data.EmberPos), Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Scale = 0.8*Vector(1,1)
+		cloud:GetSprite().Color = mod.Colors.superFire
+	end
+
+	--If tear collided then
+	if tear:IsDead() or collided then
+		
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, tear.Position, Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Scale = 1.6*Vector(1,1)
+		cloud:GetSprite().Color = mod.Colors.superFire
+
+		tear:Die()
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().IsFlamethrower then
+		mod:FireUpdate(tear,false)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsFlamethrower then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:FireUpdate(tear,true)
+		end
+	end
+end)
+
+--Fireball---------------------------------------------------------------------------------------------------------------------------
+function mod:FireballUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		sprite:Play("Idle")
+		sprite:SetFrame(mod:RandomInt(1,12))
+		sprite.PlaybackSpeed = 1.5
+		data.Init = true
+		data.Lifespan = mod:RandomInt(80,150)
+
+		if tear.Velocity.X < 0 then
+			sprite.FlipX = true
+		end
+		
+        tear:AddProjectileFlags(ProjectileFlags.BOUNCE)
+        tear:AddProjectileFlags (ProjectileFlags.BOUNCE_FLOOR)
+	end
+
+	data.Lifespan = data.Lifespan - 1
+	
+	if tear.Height >= 1 then
+		tear.FallingSpeed = -50;
+		tear.FallingAccel = 1.5;
+		tear.Height = -23
+        tear:AddProjectileFlags(ProjectileFlags.BOUNCE_FLOOR)
+	end
+
+	if game:GetFrameCount()%5==0 then
+		--For tracing
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, tear.Position, Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Scale = 0.4*Vector(1,1)
+		cloud:GetSprite().Color = mod.Colors.superFire
+		
+		game:SpawnParticles (tear.Position, EffectVariant.EMBER_PARTICLE, 3, 2)
+	end
+
+	--If tear collided then
+	if tear:IsDead() or collided or data.Lifespan <= 0 then
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, tear.Position, Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Scale = 0.8*Vector(1,1)
+		cloud:GetSprite().Color = mod.Colors.superFire
+
+		tear:Die()
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().IsFireball then
+		mod:FireballUpdate(tear,false)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsFireball then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:FireballUpdate(tear,true)
+		end
+	end
+end)
+
+
+--PLAYER----------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+
+--Burning effect
+function mod:PlayerBurning(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+	if data.BurnTime and data.BurnTime >= 0 and entity:GetPlayerType() ~= PlayerType.PLAYER_THEFORGOTTEN_B then
+
+		if data.BurnTime == mod.ModConstants.burningFrames then
+			data.PreBurnColor = sprite.Color
+		elseif data.BurnTime <= 0 then
+			sprite.Color = Color.Default
+			local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, entity)
+			cloud:GetSprite().Color = Color(0.03,0.03,0.03,1)
+		else
+			local color = Color(2*math.abs(math.sin(game:GetFrameCount()/1.5)),1.5*math.abs(math.sin(game:GetFrameCount()/1.5)),1*math.abs(math.sin(game:GetFrameCount()/1.5)),1)
+			--color:SetColorize(+0.75,0.25,0.25,1)
+			color:SetColorize(2*math.abs(math.sin(game:GetFrameCount()/1.5))+1,0.5,0,1)
+			sprite.Color = color
+		end
+		data.BurnTime = data.BurnTime - 1
+
+		if math.abs(entity:GetMovementInput().X) + math.abs(entity:GetMovementInput().Y) > 0 then 
+			data.direction = entity:GetMovementInput():Normalized()
+		elseif data.direction == nil then
+			data.direction = Vector(1,0)
+		end
+		entity.Velocity = data.direction*7
+		
+		--Its a me
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, entity.Position + Vector(0,-20), Vector.Zero, entity):ToEffect()
+		cloud:GetSprite().Scale = 0.8*Vector(1,1)
+		cloud:GetSprite().Color = Color(0,0,0,1)
+		if game:GetFrameCount()%15==0 then
+            sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS,0.5)
+		elseif game:GetFrameCount()%2==0 then
+			game:SpawnParticles (entity.Position, EffectVariant.EMBER_PARTICLE, 2, 2)
+		end
+
+	end
+end
+
+--Burn sfx and burning effect for venus
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, ref, _)
+    if entity.Type == EntityType.ENTITY_PLAYER then
+        if (ref.Entity:GetData().IsFlamethrower or  ref.Entity:GetData().IsFireball or ref.Entity.Type == mod.EntityInf[mod.Entity.Venus].ID ) then
+            sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS)
+        elseif  ref.Entity.Type == EntityType.ENTITY_PROJECTILE and ref.Entity.Variant == mod.EntityInf[mod.Entity.Kiss].VAR and ref.Entity.SubType == mod.EntityInf[mod.Entity.Kiss].SUB then
+			if not entity:ToPlayer():HasCollectible(CollectibleType.COLLECTIBLE_EVIL_CHARM) then
+            	entity:GetData().BurnTime = mod.ModConstants.burningFrames
+			end
+            sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS)
+			return false
+        end
+    end
+end)
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerBurning, 0)
+
