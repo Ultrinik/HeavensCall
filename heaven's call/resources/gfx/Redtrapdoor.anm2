@@ -1,8 +1,8 @@
 <AnimatedActor>
-	<Info CreatedBy="robot" CreatedOn="04-07-2022 1:25:49" Version="108" Fps="30"/>
+	<Info CreatedBy="robot" CreatedOn="31-07-2022 22:10:42" Version="109" Fps="30"/>
 	<Content>
 		<Spritesheets>
-			<Spritesheet Path="redtrapdoor.png" Id="0"/>
+			<Spritesheet Path="effects\redtrapdoor.png" Id="0"/>
 		</Spritesheets>
 		<Layers>
 			<Layer Name="layer0" Id="0" SpritesheetId="0"/>

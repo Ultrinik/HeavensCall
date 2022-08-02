@@ -256,7 +256,7 @@ function mod:IceTurdDeath(entity)
 			local angle = i*360/mod.UConst.nTurdIcicles
 			--Ring projectiles:
 			local hail = mod:SpawnEntity(mod.Entity.Icicle, entity.Position, Vector(1,0):Rotated(angle)*mod.UConst.turdIcicleSpeed, entity):ToProjectile()
-			hail:GetData().IsIcicle = true
+			hail:GetData().IsIcicle_HC = true
 			--hail:GetSprite().Color = Colors.hailColor
 			hail:GetData().iceSize = mod.UConst.turdIcicleIceSize
 			hail:GetData().hailTrace = false
@@ -269,6 +269,527 @@ end
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.IceTurdUpdate, mod.EntityInf[mod.Entity.IceTurd].ID)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, mod.EntityInf[mod.Entity.IceTurd].ID)
 
+--Dyspepsia---------------------------------------------------------------------------------------------------------------------------
+function mod:DyspepsiaUpdate(entity)
+	if mod.EntityInf[mod.Entity.Dyspepsia].VAR == entity.Variant then
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+
+		if sprite:IsPlaying("Attack") and sprite:GetFrame() == 1 and rng:RandomFloat() < 0.67 then
+			sprite:Play("Fly",true)
+		end
+
+		if sprite:IsEventTriggered("Fireball") then
+			local velocity = (target.Position - entity.Position):Normalized()*mod.VConst.blazeSpeedSlow*(0.3 + 0.6*rng:RandomFloat())
+			local fireball = mod:SpawnEntity(mod.Entity.Fireball, entity.Position, velocity, entity):ToProjectile()
+
+			fireball:GetData().IsFireball_HC = true
+			fireball:GetSprite().Scale = Vector(1,1)*0.75
+			
+			fireball.FallingSpeed = -10
+			fireball.FallingAccel = 1.5
+			
+			fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
+		end
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.DyspepsiaUpdate, mod.EntityInf[mod.Entity.Dyspepsia].ID)
+
+--Candles---------------------------------------------------------------------------------------------------------------------------
+mod.CandleGirs = {
+	[1] = mod.Entity.CandleSiren,
+	[2] = mod.Entity.CandleGurdy,
+	[3] = mod.Entity.CandleColostomia,
+	[4] = mod.Entity.CandleMist
+}
+
+
+--States and matrix
+mod.SirenMSTATE = {
+	APPEAR = 0,
+	SING = 1,
+	ANNOYED = 2,
+	AMBUSH = 3
+}
+mod.chainSiren = {          
+	[mod.SirenMSTATE.APPEAR] = 	{0,  1,  0,  0},
+	[mod.SirenMSTATE.SING] = 	{0,  1,  0,  0},
+	[mod.SirenMSTATE.ANNOYED] = {0,  0,  0,  1},--This last two does nothing, I know why they do nothing, I just dont care anymore
+	[mod.SirenMSTATE.AMBUSH] = 	{0,  1,  0,  0}
+}
+
+mod.GurdyMSTATE = {
+	APPEAR = 0,
+	TAUNT = 1,
+	SUMMON = 2
+}
+mod.chainGurdy = {          
+	[mod.GurdyMSTATE.APPEAR] = 	{0,  1,   0},
+	[mod.GurdyMSTATE.TAUNT] = 	{0,  0.35,0.65},
+	[mod.GurdyMSTATE.SUMMON] = 	{0,  1,   0}
+}
+
+mod.ColostomiaMSTATE = {
+	APPEAR = 0,
+	IDLE = 1,
+	JUMP = 2,
+	BOMB = 3
+}
+mod.chainColostomia = {          
+	[mod.ColostomiaMSTATE.APPEAR] = 	{0,  1,    0,    0},
+	[mod.ColostomiaMSTATE.IDLE] = 	{0,  0.7,  0.15, 0.15},
+	[mod.ColostomiaMSTATE.JUMP] = 	{0,  1,    0,    0},
+	[mod.ColostomiaMSTATE.BOMB] = 	{0,  1,    0,    0}
+}
+
+mod.MaidMSTATE = {
+	APPEAR = 0,
+	IDLE = 1,
+	ATTACK = 2
+}
+mod.chainMaid = {          
+	[mod.MaidMSTATE.APPEAR] = 	{0,  1,    0},
+	[mod.MaidMSTATE.IDLE] = 	{0,  0.65, 0.35},
+	[mod.MaidMSTATE.ATTACK] = 	{0,  1,    0}
+}
+
+function mod:CandleUpdate(entity)
+	if mod.EntityInf[mod.Entity.Candle].VAR == entity.Variant then
+		local sprite = entity:GetSprite()
+		local data = entity:GetData()
+        local target = entity:GetPlayerTarget()
+        local room = game:GetRoom()
+
+        if data.State == nil then data.State = 0 end
+        if data.StateFrame == nil then data.StateFrame = 0 end
+
+        --Frame
+        data.StateFrame = data.StateFrame + 1
+
+		if mod.EntityInf[mod.Entity.Candle].SUB == entity.SubType then
+
+			if data.Init == nil then
+				data.Init = true
+
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+				entity:AddEntityFlags(EntityFlag.FLAG_NO_STATUS_EFFECTS)
+				entity:AddEntityFlags(EntityFlag.FLAG_NO_KNOCKBACK)
+				entity:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK)
+				entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+			
+				if not mod:SomebodyHasItem(CollectibleType.COLLECTIBLE_MOMS_KNIFE) then
+					entity:AddEntityFlags(EntityFlag.FLAG_NO_TARGET)
+				end
+
+				sprite:Play("Appear", true) 
+			end
+
+			if sprite:IsFinished("Appear") then 
+				sprite:Play("Idle", true) 
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+			elseif sprite:IsFinished("IdleLit") then 
+				sprite:Play("Transform", true)
+			elseif sprite:IsFinished("Transform") then
+
+				
+				local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil):ToEffect()
+				sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+
+				local entity2Transform = mod.CandleGirs[mod:RandomInt(1,#mod.CandleGirs)]
+				--Dont spawn Siren if theres a Lilith
+				if mod:IsThereLilith() then
+					entity2Transform = mod.CandleGirs[mod:RandomInt(2,#mod.CandleGirs)]
+				else
+				
+				local candleGirl = mod:SpawnEntity(entity2Transform, entity.Position, Vector.Zero, entity.Parent)
+				candleGirl.Parent = entity.Parent
+
+				entity:Remove()
+			end
+			
+		elseif mod.EntityInf[mod.Entity.CandleSiren].SUB == entity.SubType then
+			if data.SirenResummonCount == nil then data.SirenResummonCount = 0 end
+
+			if data.State == mod.SirenMSTATE.APPEAR then
+				if data.StateFrame == 1 then
+					entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+					entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+					sprite:Play("Appear",true)
+				elseif sprite:IsFinished("Appear") then
+					data.State = mod:MarkovTransition(data.State, mod.chainSiren)
+					data.StateFrame = 0
+				end
+				
+			elseif data.State == mod.SirenMSTATE.SING then
+				if data.StateFrame == 1 then
+					sprite:Play("SingStart",true)
+					for i=1, mod.VConst.sirenSummons*3 do
+						local sirenRag = mod:SpawnEntity(mod.Entity.SirenRag, entity.Position, Vector.Zero, entity)
+						sirenRag.Parent = entity
+						local sprite = sirenRag:GetSprite()
+						sprite:ReplaceSpritesheet (0, "gfx/effects/empty.png")
+						sprite:ReplaceSpritesheet (1, "gfx/effects/empty.png")
+						sprite:ReplaceSpritesheet (2, "gfx/effects/empty.png")
+						sprite:ReplaceSpritesheet (3, "gfx/effects/empty.png")
+						sprite:ReplaceSpritesheet (4, "gfx/effects/empty.png")
+						sprite:LoadGraphics()
+					end
+
+				elseif sprite:IsFinished("SingStart") then
+					sprite:Play("SingLoop",true)
+
+				elseif sprite:IsFinished("SingLoop") then
+					local sirenRags = mod:FindByTypeMod(mod.Entity.SirenRag)
+					if #(sirenRags)>0 then
+						sprite:Play("SingLoop",true)
+						
+						if data.SirenResummonCount >= mod.VConst.sirenResummonRate then
+
+							if #sirenRags >= 50 then
+								for _, e in ipairs(sirenRags) do
+									e:Remove()
+								end
+							end
+
+							for i=1, mod.VConst.sirenSummons do
+								local sirenRag = mod:SpawnEntity(mod.Entity.SirenRag, entity.Position, Vector.Zero, entity)
+								sirenRag.Parent = entity
+								local sprite = sirenRag:GetSprite()
+								sprite:ReplaceSpritesheet (0, "gfx/effects/empty.png")
+								sprite:ReplaceSpritesheet (1, "gfx/effects/empty.png")
+								sprite:ReplaceSpritesheet (2, "gfx/effects/empty.png")
+								sprite:ReplaceSpritesheet (3, "gfx/effects/empty.png")
+								sprite:ReplaceSpritesheet (4, "gfx/effects/empty.png")
+								sprite:LoadGraphics()
+							end
+
+							data.SirenResummonCount = 0
+						end
+
+						data.SirenResummonCount = data.SirenResummonCount + 1
+					else
+						sprite:Play("SingEnd",true)
+					end
+
+				elseif sprite:IsFinished("SingEnd") then
+					data.State = mod:MarkovTransition(data.State, mod.chainSiren)
+					data.StateFrame = 0
+					
+				end
+
+				--Movement
+				if entity.Parent then
+					local parent = entity.Parent
+					--idleTime == frames moving in the same direction
+					if not data.idleTime then 
+						data.idleTime = mod:RandomInt(mod.VConst.idleTimeInterval.X, mod.VConst.idleTimeInterval.Y)
+
+						if parent.Position:Distance(entity.Position) < 100 then
+							data.targetvelocity = (-(parent.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-45, 45))
+						else
+							data.targetvelocity = ((parent.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+						end
+					end
+					
+					--If run out of idle time
+					if data.idleTime <= 0 and data.idleTime ~= nil then
+						data.idleTime = nil
+					else
+						data.idleTime = data.idleTime - 1
+					end
+					
+					--Do the actual movement
+					entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * 1.2
+					data.targetvelocity = data.targetvelocity * 0.99
+				end
+
+			elseif data.State == mod.SirenMSTATE.ANNOYED then
+				if data.StateFrame == 1 then
+					sprite:Play("Teleport",true)
+					entity.Velocity = Vector.Zero
+					entity.CollisionDamage = 0
+				elseif sprite:IsFinished("Teleport") then
+					data.State = mod:MarkovTransition(data.State, mod.chainSiren)
+					data.StateFrame = 0
+				end
+
+			elseif data.State == mod.SirenMSTATE.AMBUSH then
+				if data.StateFrame == 1 then
+					sprite:Play("Revive",true)
+					entity.Velocity = Vector.Zero
+					entity.Position = target.Position
+				elseif sprite:IsFinished("Revive") then
+					data.State = mod:MarkovTransition(data.State, mod.chainSiren)
+					data.StateFrame = 0
+				
+				elseif sprite:IsEventTriggered("Reappear") then
+					entity.CollisionDamage = 1
+
+				end
+
+			end
+
+		elseif mod.EntityInf[mod.Entity.CandleGurdy].SUB == entity.SubType then
+			entity.Velocity = Vector.Zero
+			if data.State == mod.GurdyMSTATE.APPEAR then
+				if data.StateFrame == 1 then
+					entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+					sprite:Play("Appear",true)
+					entity:AddEntityFlags(EntityFlag.FLAG_NO_KNOCKBACK)
+					entity:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK)
+				elseif sprite:IsFinished("Appear") then
+					data.State = mod:MarkovTransition(data.State, mod.chainGurdy)
+					data.StateFrame = 0
+				end
+				
+			elseif data.State == mod.GurdyMSTATE.TAUNT then
+				if data.StateFrame == 1 then
+					sprite:Play("Idle"..tostring(mod:RandomInt(1,3)),true)
+				elseif sprite:IsFinished("Idle1") or sprite:IsFinished("Idle2") or sprite:IsFinished("Idle3") then
+					data.State = mod:MarkovTransition(data.State, mod.chainGurdy)
+					data.StateFrame = 0
+					
+				end
+				
+			elseif data.State == mod.GurdyMSTATE.SUMMON then
+				if data.StateFrame == 1 then
+					sprite:Play("Attack"..tostring(mod:RandomInt(1,3)),true)
+				elseif sprite:IsFinished("Attack1") or sprite:IsFinished("Attack2") or sprite:IsFinished("Attack3") then
+					data.State = mod:MarkovTransition(data.State, mod.chainGurdy)
+					data.StateFrame = 0
+
+				elseif sprite:IsEventTriggered("Summon") then
+					if #mod:FindByTypeMod(mod.Entity.Dyspepsia) < 7 then
+						local butter = mod:SpawnEntity(mod.Entity.Dyspepsia, entity.Position, Vector.Zero, entity)
+						sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+					end
+					
+				end
+
+			end
+		elseif mod.EntityInf[mod.Entity.CandleColostomia].SUB == entity.SubType then
+			if data.State == mod.ColostomiaMSTATE.APPEAR then
+				if data.StateFrame == 1 then
+					entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+					sprite:Play("Appear",true)
+				elseif sprite:IsFinished("Appear") then
+					data.State = mod:MarkovTransition(data.State, mod.chainColostomia)
+					data.StateFrame = 0
+				end
+				
+			elseif data.State == mod.ColostomiaMSTATE.IDLE then
+				if data.StateFrame == 1 then
+					sprite:Play("Idle",true)
+				elseif sprite:IsFinished("Idle") then
+					data.State = mod:MarkovTransition(data.State, mod.chainColostomia)
+					data.StateFrame = 0
+					
+				end
+				
+			elseif data.State == mod.ColostomiaMSTATE.JUMP then
+				if data.StateFrame == 1 then
+					sprite:Play("Jump",true)
+				elseif sprite:IsFinished("Jump") then
+					data.State = mod:MarkovTransition(data.State, mod.chainColostomia)
+					data.StateFrame = 0
+
+				elseif sprite:IsEventTriggered("Land") then
+					game:ShakeScreen(10)
+					entity.Velocity = Vector.Zero
+
+				elseif sprite:IsEventTriggered("Jump") then
+					local direction = entity.Parent.Position - entity.Position
+					local velocity = direction:Normalized()*mod.VConst.coloJumpSpeed
+					entity.Velocity = velocity
+					
+				end
+				
+			elseif data.State == mod.ColostomiaMSTATE.BOMB then
+				if data.StateFrame == 1 then
+					
+					if target.Position.X - entity.Position.X > 0 then
+						sprite.FlipX = true
+					else
+						sprite.FlipX = false
+					end
+
+					sprite:Play("Attack",true)
+				elseif sprite:IsFinished("Attack") then
+					data.State = mod:MarkovTransition(data.State, mod.chainColostomia)
+					data.StateFrame = 0
+					
+				elseif sprite:IsEventTriggered("Bomb") then
+					
+					if target.Position.X - entity.Position.X > 0 then
+						sprite.FlipX = true
+					else
+						sprite.FlipX = false
+					end
+					
+					local target_pos = target.Position - entity.Position
+					local velocity = target_pos:Normalized()*15
+
+					local bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_BUTT, 0, entity.Position+velocity, velocity, entity):ToBomb()
+					bomb:GetSprite().Color = mod.Colors.buttFire
+					bomb:SetExplosionCountdown(120)
+					bomb:AddTearFlags(TearFlags.TEAR_BURN)
+				end
+
+			end
+		elseif mod.EntityInf[mod.Entity.CandleMist].SUB == entity.SubType then
+			if data.State == mod.MaidMSTATE.APPEAR then
+				if data.StateFrame == 1 then
+					entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+					sprite:Play("Appear",true)
+				elseif sprite:IsFinished("Appear") then
+					data.State = mod:MarkovTransition(data.State, mod.chainMaid)
+					data.StateFrame = 0
+				end
+				
+			elseif data.State == mod.MaidMSTATE.IDLE then
+				if data.StateFrame == 1 then
+					sprite:Play("Idle",true)
+				elseif sprite:IsFinished("Idle") then
+					data.State = mod:MarkovTransition(data.State, mod.chainMaid)
+					data.StateFrame = 0
+					
+				end
+
+				--Movement
+				if entity.Parent then
+					local parent = entity.Parent
+					--idleTime == frames moving in the same direction
+					if not data.idleTime then 
+						data.idleTime = mod:RandomInt(mod.VConst.idleTimeInterval.X, mod.VConst.idleTimeInterval.Y)
+
+						if parent.Position:Distance(entity.Position) < 75 then
+							data.targetvelocity = (-(parent.Position - entity.Position):Normalized()*3):Rotated(mod:RandomInt(-45, 45))
+						else
+							data.targetvelocity = ((parent.Position - entity.Position):Normalized()):Rotated(mod:RandomInt(-10, 10))
+						end
+					end
+					
+					--If run out of idle time
+					if data.idleTime <= 0 and data.idleTime ~= nil then
+						data.idleTime = nil
+					else
+						data.idleTime = data.idleTime - 1
+					end
+					
+					--Do the actual movement
+					entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * 1.2
+					data.targetvelocity = data.targetvelocity * 0.99
+				end
+				
+			elseif data.State == mod.MaidMSTATE.ATTACK then
+				if data.StateFrame == 1 then
+					data.TargetPos = target.Position
+					if data.TargetPos.X - entity.Position.X > 0 then
+						sprite:Play("AttackR",true)
+					else
+						sprite:Play("AttackL",true)
+					end
+				elseif sprite:IsFinished("AttackL") or sprite:IsFinished("AttackR") then
+					data.State = mod:MarkovTransition(data.State, mod.chainMaid)
+					data.StateFrame = 0
+
+				elseif sprite:IsEventTriggered("Attack") then
+					local direction = (data.TargetPos - entity.Position):Normalized()
+					local velocity = direction*mod.VConst.flameSpeed*1.5
+					local flame = mod:SpawnEntity(mod.Entity.Flame, entity.Position, velocity, entity):ToProjectile()
+					flame.FallingAccel  = -0.1
+					flame.FallingSpeed = 0
+					flame.Scale = 2
+			
+					flame:GetData().IsFlamethrower_HC = true
+					flame:GetData().NoGrow = true
+					flame:GetData().EmberPos = -20
+				end
+
+			end
+		end
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.CandleUpdate, mod.EntityInf[mod.Entity.Candle].ID)
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsKiss_HC then
+		if collider.Type == mod.EntityInf[mod.Entity.Candle].ID then
+			collider:GetSprite():Play("IdleLit",true)
+
+			local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, tear.Position, Vector.Zero, nil):ToEffect()
+			cloud:GetSprite().Color = mod.Colors.fire
+			tear:Remove()
+		end
+	end
+end)
+
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
+	if entity.Type == mod.EntityInf[mod.Entity.CandleSiren].ID and entity.Variant == mod.EntityInf[mod.Entity.CandleSiren].VAR and entity.SubType == mod.EntityInf[mod.Entity.CandleSiren].SUB then
+		for _, e in ipairs(mod:FindByTypeMod(mod.Entity.SirenRag)) do
+			e:Remove()
+		end
+	end
+end)
+
+--Siren rag doll (I just tought it was a good name)---------------------------------------------------------------------------------
+function mod:SirenRagUpdate(entity)
+	if mod.EntityInf[mod.Entity.SirenRag].VAR == entity.Variant and mod.EntityInf[mod.Entity.SirenRag].SUB == entity.SubType  then
+		local sprite = entity:GetSprite()
+		local data = entity:GetData()
+
+		--Init
+		if data.Skip == nil then 
+			data.Skip = true 
+
+			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+			--sprite:ReplaceSpritesheet (0, "gfx/effects/empty.png")
+			--sprite:ReplaceSpritesheet (1, "gfx/effects/empty.png")
+			--sprite:ReplaceSpritesheet (2, "gfx/effects/empty.png")
+			--sprite:ReplaceSpritesheet (3, "gfx/effects/empty.png")
+			--sprite:ReplaceSpritesheet (4, "gfx/effects/empty.png")
+			--sprite:LoadGraphics()
+
+			sprite:Play("Idle")
+		end
+
+
+		--Skip all animations until Siren decides to sing
+		local animName = sprite:GetAnimation()
+		if animName ~= "Attack2BStart" and animName ~= "Attack2BLoop" and animName ~= "Attack2BEnd" and data.Skip == true then
+			sprite:SetLastFrame ()
+			entity.Visible = false
+		end
+
+		--She singed and triggered the steal
+		if sprite:IsEventTriggered("SingFlag") then
+			data.Skip = false
+		end
+
+		--Loop that one animation
+		if data.Skip == false then
+			sprite:Play("Attack2BLoop",true)
+		end
+
+		--If Its going to attack stop her
+		if animName == "Attack1Start" or animName == "Teleport" then
+			entity:Remove()
+		end
+
+		if entity.Parent then
+			entity.Position = entity.Parent.Position
+			entity.Velocity = Vector.Zero
+		end
+
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SirenRagUpdate, EntityType.ENTITY_SIREN)
 
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -490,7 +1011,7 @@ function mod:HailProjectile(tear,collided)
 				local angle = i*360/mod.UConst.nShotIcicles
 				--Ring projectiles:
 				local hail = mod:SpawnEntity(mod.Entity.Icicle, tear.Position, Vector(1,0):Rotated(angle)*mod.UConst.shotIcicleSpeed, tear.Parent):ToProjectile()
-				hail:GetData().IsIcicle = true
+				hail:GetData().IsIcicle_HC = true
 				--hail:GetSprite().Color = mod.Colors.hailColor
 				hail:GetData().iceSize = mod.UConst.shotIcicleIceSize
 				hail:GetData().hailTrace = false
@@ -509,12 +1030,12 @@ function mod:HailProjectile(tear,collided)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsIcicle then
+	if tear:GetData().IsIcicle_HC then
 		mod:HailProjectile(tear,false)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
-	if tear:GetData().IsIcicle then
+	if tear:GetData().IsIcicle_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
 			mod:HailProjectile(tear,true)
 		end
@@ -536,7 +1057,8 @@ function mod:FireUpdate(tear, collided)
 	if sprite:IsFinished("Appear") then sprite:Play("Flickering",true) end
 
 	sprite.Rotation = tear.Velocity:GetAngleDegrees()
-	sprite.Scale = sprite.Scale + 0.018*Vector(1,1)
+
+	if not data.NoGrow then sprite.Scale = sprite.Scale + 0.018*Vector(1,1) end
 	
 
 	if game:GetFrameCount()%5==0 then
@@ -558,12 +1080,12 @@ function mod:FireUpdate(tear, collided)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsFlamethrower then
+	if tear:GetData().IsFlamethrower_HC then
 		mod:FireUpdate(tear,false)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
-	if tear:GetData().IsFlamethrower then
+	if tear:GetData().IsFlamethrower_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
 			mod:FireUpdate(tear,true)
 		end
@@ -580,7 +1102,7 @@ function mod:FireballUpdate(tear, collided)
 		sprite:SetFrame(mod:RandomInt(1,12))
 		sprite.PlaybackSpeed = 1.5
 		data.Init = true
-		data.Lifespan = mod:RandomInt(80,150)
+		data.Lifespan = mod:RandomInt(40,90)
 
 		if tear.Velocity.X < 0 then
 			sprite.FlipX = true
@@ -593,7 +1115,7 @@ function mod:FireballUpdate(tear, collided)
 	data.Lifespan = data.Lifespan - 1
 	
 	if tear.Height >= 1 then
-		tear.FallingSpeed = -50;
+		tear.FallingSpeed = -5;
 		tear.FallingAccel = 1.5;
 		tear.Height = -23
         tear:AddProjectileFlags(ProjectileFlags.BOUNCE_FLOOR)
@@ -619,18 +1141,63 @@ function mod:FireballUpdate(tear, collided)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsFireball then
+	if tear:GetData().IsFireball_HC then
 		mod:FireballUpdate(tear,false)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
-	if tear:GetData().IsFireball then
+	if tear:GetData().IsFireball_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
 			mod:FireballUpdate(tear,true)
 		end
 	end
 end)
 
+
+--Kiss---------------------------------------------------------------------------------------------------------------------------
+function mod:KissUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		sprite:Play("Idle")
+		data.Init = true
+	end
+
+	if sprite:IsFinished("Appear") then sprite:Play("Idle",true) end
+
+	sprite.Color = Color.Default
+
+	if game:GetFrameCount()%2==0 then
+		--For tracing
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, tear.Position + Vector(0,-15), Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Scale = 1.4*Vector(1,1)
+		cloud:GetSprite().Color = mod.Colors.superFire
+		
+		game:SpawnParticles (tear.Position, EffectVariant.EMBER_PARTICLE, 3, 2)
+	end
+
+	--If tear collided then
+	if tear:IsDead() or collided then
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, tear.Position, Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Color = mod.Colors.fire
+
+		tear:Die()
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().IsKiss_HC then
+		mod:KissUpdate(tear,false)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsKiss_HC then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:KissUpdate(tear,true)
+		end
+	end
+end)
 
 --PLAYER----------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -644,8 +1211,9 @@ function mod:PlayerBurning(entity)
 	local sprite = entity:GetSprite()
 	if data.BurnTime and data.BurnTime >= 0 and entity:GetPlayerType() ~= PlayerType.PLAYER_THEFORGOTTEN_B then
 
+		--Burning Color
 		if data.BurnTime == mod.ModConstants.burningFrames then
-			data.PreBurnColor = sprite.Color
+			--data.PreBurnColor = sprite.Color
 		elseif data.BurnTime <= 0 then
 			sprite.Color = Color.Default
 			local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, entity)
@@ -656,14 +1224,24 @@ function mod:PlayerBurning(entity)
 			color:SetColorize(2*math.abs(math.sin(game:GetFrameCount()/1.5))+1,0.5,0,1)
 			sprite.Color = color
 		end
+
+		--Timer
 		data.BurnTime = data.BurnTime - 1
 
+		--Movement
 		if math.abs(entity:GetMovementInput().X) + math.abs(entity:GetMovementInput().Y) > 0 then 
 			data.direction = entity:GetMovementInput():Normalized()
 		elseif data.direction == nil then
 			data.direction = Vector(1,0)
 		end
-		entity.Velocity = data.direction*7
+
+		--Bounce
+		if entity:CollidesWithGrid() then
+			data.direction = - data.direction
+		end
+
+		--Move
+		entity.Velocity = data.direction:Rotated(2*rng:RandomFloat()-1)*7
 		
 		--Its a me
 		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, entity.Position + Vector(0,-20), Vector.Zero, entity):ToEffect()
@@ -681,7 +1259,7 @@ end
 --Burn sfx and burning effect for venus
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, ref, _)
     if entity.Type == EntityType.ENTITY_PLAYER then
-        if (ref.Entity:GetData().IsFlamethrower or  ref.Entity:GetData().IsFireball or ref.Entity.Type == mod.EntityInf[mod.Entity.Venus].ID ) then
+        if (ref.Entity:GetData().IsFlamethrower_HC or  ref.Entity:GetData().IsFireball_HC or ref.Entity.Type == mod.EntityInf[mod.Entity.Venus].ID ) then
             sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS)
         elseif  ref.Entity.Type == EntityType.ENTITY_PROJECTILE and ref.Entity.Variant == mod.EntityInf[mod.Entity.Kiss].VAR and ref.Entity.SubType == mod.EntityInf[mod.Entity.Kiss].SUB then
 			if not entity:ToPlayer():HasCollectible(CollectibleType.COLLECTIBLE_EVIL_CHARM) then

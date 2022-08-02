@@ -52,7 +52,7 @@ mod.VMSState = {
 }
 mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
     [mod.VMSState.APPEAR] = 	{0,   0,    0,    1,    0,    0,    0,    0,    0,   0,   0},
-    [mod.VMSState.IDLE] = 	    {0,	  0.3,	0.05, 0.2,	0.04, 0.04,	0.08, 0.1,	0.04,0.05,0.1},
+    [mod.VMSState.IDLE] = 	    {0,	  0.605,0.01, 0.2,	0.005,0.01,	0.02, 0.04, 0.005,0.005,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    1,	0.08, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
@@ -68,6 +68,24 @@ mod.chainV = {--                 A    I     F     S     Ip    J     B     K     
     [mod.VMSState.LIT] =    	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0}
     
 }
+--[[mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
+    [mod.VMSState.APPEAR] = 	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
+    [mod.VMSState.IDLE] = 	    {0,   0.3,	0.15, 0,	0.14, 0,	0.18, 0.1,	0.08,0.05,0},
+    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    1,	0.08, 0.1,	0.04,0.05,0.1},
+    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
+    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
+    [mod.VMSState.FLAME] =  	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
+    [mod.VMSState.SUMMON] = 	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
+    [mod.VMSState.IPECAC] = 	{0,   0.8,  0,    0,    0,    0,    0.2,  0,    0,   0,   0},
+    [mod.VMSState.JUMPS] =  	{0,   0.6,  0,    0,    0.1,  0,    0.1,  0,    0,   0.2, 0},
+    [mod.VMSState.BLAZE] =  	{0,   0.75, 0,    0,    0,    0,    0,    0.25, 0,   0,   0},
+    [mod.VMSState.KISS] = 	    {0,   0.1,  0.45,  0,    0,    0,   0,    0,    0,   0.45,0},
+    --[mod.VMSState.KISS] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
+    [mod.VMSState.SWARM] =  	{0,   0.8,  0,    0,    0.15, 0,    0,    0,    0.05,0,   0},
+    [mod.VMSState.SLAM] =   	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
+    [mod.VMSState.LIT] =    	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0}
+    
+}--]]
 mod.VConst = {--Some constant variables of Venus
     idleTimeInterval = Vector(5,10),
     speed = 1.5,
@@ -85,8 +103,16 @@ mod.VConst = {--Some constant variables of Venus
 
     jumpSpeed = 15,
 
-    kissSpeed = 20,
-    kissHomming = 10,
+    kissSpeed = 25,
+    kissHomming = 0.7,
+
+    nSlamFireRing = 10,
+    nSlamSpinRing = 5,
+    nSlamFireball = 6,
+
+    sirenResummonRate = 7,
+    sirenSummons = 8,
+    coloJumpSpeed = 15,
 
 }
 
@@ -132,26 +158,26 @@ function mod:VenusUpdate(entity)
                 mod:VenusMove(entity, data, room, target)
             end
             
-        elseif data.State == mod.VMSState.FLAME then
-            mod:VenusFlamethrower(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.SUMMON then
-            mod:VenusSummon(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.IPECAC then
-            mod:VenusIpecac(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.JUMPS then
-            --mod:VenusJumps(entity, data, sprite, target,room) --Too many attacks, need to make space for the summons
-            data.State = mod:MarkovTransition(data.State, mod.chainV)
-            data.StateFrame = 0
-        elseif data.State == mod.VMSState.BLAZE then
-            mod:VenusBlaze(entity, data, sprite, target,room)
         elseif data.State == mod.VMSState.KISS then
             mod:VenusKiss(entity, data, sprite, target,room)
+        elseif data.State == mod.VMSState.FLAME then
+            mod:VenusFlamethrower(entity, data, sprite, target,room)
+        elseif data.State == mod.VMSState.IPECAC then
+            mod:VenusIpecac(entity, data, sprite, target,room)
+        elseif data.State == mod.VMSState.BLAZE then
+            mod:VenusBlaze(entity, data, sprite, target,room)
         elseif data.State == mod.VMSState.SWARM then
             mod:VenusSwarm(entity, data, sprite, target,room)
         elseif data.State == mod.VMSState.SLAM then
             mod:VenusSlam(entity, data, sprite, target,room)
         elseif data.State == mod.VMSState.LIT then
             mod:VenusLit(entity, data, sprite, target,room)
+        elseif data.State == mod.VMSState.JUMPS then
+            --mod:VenusJumps(entity, data, sprite, target,room) --Too many attacks, need to make space for the summons
+            data.State = mod:MarkovTransition(data.State, mod.chainV)
+            data.StateFrame = 0
+        elseif data.State == mod.VMSState.SUMMON then
+            mod:VenusSummon(entity, data, sprite, target,room)
         end
 
         
@@ -182,7 +208,7 @@ function mod:VenusFlamethrower(entity, data, sprite, target,room)
 		flame.FallingSpeed = 0
         flame.Scale = 2
 
-        flame:GetData().IsFlamethrower = true
+        flame:GetData().IsFlamethrower_HC = true
         flame:GetData().EmberPos = -20
     end
 
@@ -202,7 +228,7 @@ function mod:VenusFlamethrower(entity, data, sprite, target,room)
                 flame.FallingSpeed = 0
                 flame.Height = -5
 
-                flame:GetData().IsFlamethrower = true
+                flame:GetData().IsFlamethrower_HC = true
 
                 flame:AddProjectileFlags(ProjectileFlags.ACCELERATE)
                 flame:AddProjectileFlags(ProjectileFlags.MEGA_WIGGLE)
@@ -217,14 +243,21 @@ function mod:VenusFlamethrower(entity, data, sprite, target,room)
 end
 function mod:VenusSummon(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Summon",true)
+        if #mod:GetCandles() == 0 then
+            sprite:Play("Summon",true)
+        else
+            data.State = mod.VMSState.IDLE
+            data.State = mod:MarkovTransition(data.State, mod.chainV)
+            data.StateFrame = 0
+        end
     elseif sprite:IsFinished("Summon") then
         data.State = mod:MarkovTransition(data.State, mod.chainV)
         data.StateFrame = 0
-
-
-    end
     
+    elseif sprite:IsEventTriggered("Summon") and #mod:GetCandles() == 0 then
+        candle = mod:SpawnEntity(mod.Entity.Candle, game:GetRoom():GetRandomPosition(0), Vector.Zero, entity)
+        candle.Parent = entity
+    end
     mod:VenusMove(entity, data, room, target, 0.8)
 end
 function mod:VenusBlaze(entity, data, sprite, target,room)
@@ -240,9 +273,9 @@ function mod:VenusBlaze(entity, data, sprite, target,room)
             local velocity = (targetPos - entity.Position):Normalized()*mod.VConst.blazeSpeedSlow*(0.6 + 0.7*rng:RandomFloat())
             local fireball = mod:SpawnEntity(mod.Entity.Fireball, entity.Position, velocity, entity):ToProjectile()
 
-            fireball:GetData().IsFireball = true
+            fireball:GetData().IsFireball_HC = true
             
-            fireball.FallingSpeed = -10
+            fireball.FallingSpeed = -5
             fireball.FallingAccel = 1.5
             
             fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
@@ -253,9 +286,9 @@ function mod:VenusBlaze(entity, data, sprite, target,room)
             local velocity = (targetPos - entity.Position):Normalized()*mod.VConst.blazeSpeedFast*(0.5 + 0.7*rng:RandomFloat())
             local fireball = mod:SpawnEntity(mod.Entity.Fireball, entity.Position, velocity, entity):ToProjectile()
 
-            fireball:GetData().IsFireball = true
+            fireball:GetData().IsFireball_HC = true
 
-            fireball.FallingSpeed = -10
+            fireball.FallingSpeed = -5
             fireball.FallingAccel = 1.5
             
             fireball:AddProjectileFlags(ProjectileFlags.DECELERATE)
@@ -274,7 +307,7 @@ function mod:VenusIpecac(entity, data, sprite, target,room)
     elseif sprite:IsEventTriggered("Ipecac") then
         
         --Ipecac-like projectile technique from Alt Horsemen
-        local variance = (Vector(mod:RandomInt(-15, 15),mod:RandomInt(-15, 15))*0.1)
+        local variance = (Vector(mod:RandomInt(-15, 15),mod:RandomInt(-15, 15))*0.03)
         local vector = (target.Position-entity.Position)*0.028 + variance
         
         local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, vector, entity):ToProjectile();
@@ -312,6 +345,9 @@ function mod:VenusJumps(entity, data, sprite, target,room)
             data.FireWaveType = 1
         end
         flame:Die()
+        
+        game:ShakeScreen(20)
+
     elseif sprite:IsEventTriggered("Jump") then
 		local player_direction = target.Position - entity.Position
         local velocity = player_direction:Normalized()*mod.VConst.jumpSpeed
@@ -321,12 +357,20 @@ function mod:VenusJumps(entity, data, sprite, target,room)
 end
 function mod:VenusKiss(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Kiss",true)
+        if mod:GetUnburnedPlayer() ~= nil then
+            sprite:Play("Kiss",true)
+        else
+            data.State = mod:MarkovTransition(data.State, mod.chainV)
+            data.StateFrame = 0
+        end
     elseif sprite:IsFinished("Kiss") then
         data.State = mod:MarkovTransition(data.State, mod.chainV)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Kiss") then
+        local target = mod:GetUnburnedPlayer()
+        if target == nil then target = game:GetPlayer(0) end
+
 		local player_direction = target.Position - entity.Position
         local velocity = player_direction:Normalized()*mod.VConst.kissSpeed
         local kiss = mod:SpawnEntity(mod.Entity.Kiss, entity.Position, velocity, entity):ToProjectile()
@@ -334,19 +378,30 @@ function mod:VenusKiss(entity, data, sprite, target,room)
 		kiss.FallingSpeed = 0
         kiss.HomingStrength = mod.VConst.kissHomming
 
-        local sprite = kiss:GetSprite()
-        sprite:Play("Idle",true)
+        kiss:AddProjectileFlags(ProjectileFlags.SMART)
+        --kiss:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
+
+        kiss:GetData().IsKiss_HC = true
 
     end
 end
 function mod:VenusSwarm(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Swarm",true)
+        if #(mod:FindByTypeMod(mod.Entity.Dyspepsia)) >= 4 then
+            data.State = mod:MarkovTransition(data.State, mod.chainV)
+            data.StateFrame = 0
+        else
+            sprite:Play("Swarm",true)
+        end
     elseif sprite:IsFinished("Swarm") then
         data.State = mod:MarkovTransition(data.State, mod.chainV)
         data.StateFrame = 0
 
-
+    elseif sprite:IsEventTriggered("Summon") then
+        if #(mod:FindByTypeMod(mod.Entity.Dyspepsia))<4 then
+            local butter = mod:SpawnEntity(mod.Entity.Dyspepsia, entity.Position, Vector.Zero, entity)
+            sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+        end
     end
 end
 function mod:VenusSlam(entity, data, sprite, target,room)
@@ -356,17 +411,67 @@ function mod:VenusSlam(entity, data, sprite, target,room)
         data.State = mod:MarkovTransition(data.State, mod.chainV)
         data.StateFrame = 0
 
+    elseif sprite:IsEventTriggered("Slam") then
+        local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
+        flame:AddProjectileFlags(ProjectileFlags.FIRE_WAVE)
+        flame:Die()
+        
+        local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
+        flame:AddProjectileFlags(ProjectileFlags.FIRE_WAVE_X)
+        flame:Die()
+    elseif sprite:IsEventTriggered("Slam2") then
+        for i=1, mod.VConst.nSlamFireRing do
+            local angle = i*360/mod.VConst.nSlamFireRing
+            local velocity = Vector(1,0):Rotated(angle)*mod.VConst.flameSpeed*1.5
+            local flame = mod:SpawnEntity(mod.Entity.Flame, entity.Position, velocity, entity):ToProjectile()
+            flame.FallingAccel  = -0.1
+            flame.FallingSpeed = 0
+            flame.Scale = 2
+    
+            flame:GetData().IsFlamethrower_HC = true
+            flame:GetData().NoGrow = true
+            flame:GetData().EmberPos = -20
+        end
+    elseif sprite:IsEventTriggered("Slam3") then
+        for i=1, mod.VConst.nSlamFireball do
+            local angle = i*360/mod.VConst.nSlamFireball
+            local velocity = Vector(1,0):Rotated(angle)*mod.VConst.blazeSpeedSlow
+            local fireball = mod:SpawnEntity(mod.Entity.Fireball, entity.Position, velocity, entity):ToProjectile()
+
+            fireball:GetData().IsFireball_HC = true
+            
+            fireball.FallingSpeed = -10
+            fireball.FallingAccel = 1.5
+            
+            fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
+        end
 
     end
 end
 function mod:VenusLit(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Kiss",true)
+        local candleList = Isaac.FindByType(mod.EntityInf[mod.Entity.Candle].ID,mod.EntityInf[mod.Entity.Candle].VAR,mod.EntityInf[mod.Entity.Candle].SUB)
+        if #(candleList) > 0 and not candleList[1]:GetSprite():IsPlaying("IdleLit") then
+            sprite:Play("Kiss",true)
+        else
+            data.State = mod.VMSState.IDLE
+            data.State = mod:MarkovTransition(data.State, mod.chainV)
+            data.StateFrame = 0
+        end
     elseif sprite:IsFinished("Kiss") then
         data.State = mod:MarkovTransition(data.State, mod.chainV)
         data.StateFrame = 0
 
+    elseif sprite:IsEventTriggered("Kiss") and #mod:GetCandles() > 0 then
+		local candle_direction = mod:GetCandles()[1].Position - entity.Position
+        local velocity = candle_direction:Normalized()*mod.VConst.kissSpeed
+        local kiss = mod:SpawnEntity(mod.Entity.Kiss, entity.Position+velocity*2, velocity, entity):ToProjectile()
+		kiss.FallingAccel  = -0.1
+		kiss.FallingSpeed = 0
 
+        kiss:AddProjectileFlags(ProjectileFlags.HIT_ENEMIES)
+
+        kiss:GetData().IsKiss_HC = true
     end
 end
 
@@ -420,6 +525,39 @@ function mod:VenusDying(entity)
 
 end
 
+--Get random player thats not burning
+function mod:GetUnburnedPlayer()
+    local unburnedPlayers = {}
+	for i=0, game:GetNumPlayers ()-1 do
+		local player = game:GetPlayer(i)
+		if player:GetData().BurnTime and player:GetData().BurnTime <= 0 then 
+			unburnedPlayers[#unburnedPlayers+1]=player
+		end
+	end
+    if #unburnedPlayers > 0 then
+        local player =  unburnedPlayers[mod:RandomInt(1,#unburnedPlayers)]
+        return player
+    end
+    return nil
+end
+
+--Get candle summons
+function mod:GetCandles()
+    local candles = Isaac.FindByType(mod.EntityInf[mod.Entity.Candle].ID,mod.EntityInf[mod.Entity.Candle].VAR)
+    return candles
+end
+
+--Is there a Lilith?
+function mod:IsThereLilith()
+    for i=0, game:GetNumPlayers ()-1 do
+		local player = game:GetPlayer(i)
+		if player:GetPlayerType() == PlayerType.PLAYER_LILITH then 
+			return true
+		end
+	end
+    return false
+end
+
 --Callbacks
 --Venus updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.VenusUpdate, mod.EntityInf[mod.Entity.Venus].ID)
@@ -430,3 +568,36 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, flags, _
 	end
 end)
 
+
+--MARS---------------------------------------------------------------------------------------------------
+--[[
+@@&@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+&@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@&@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@&&&&&&&&&@@@/@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@&@@@@@@@@@@@@@@@@&&&&&&&&&&&&&&&&&@@*@@@@,@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@&@@&@@@@@@@@@@&&&&&&&&&&&&&&&&&&&&&&&@@%%@@&*@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@&&&&&&@@@&&&&&&&&&&&&&&&&&&@@@@%%@@@@@@@@@@@@@@@@@@@@%@@@%@
+@@@@@@@@@@@@&&@@@@@@@@@@@&&&@@&&&@&&&&&&&&&&&&&&&&@@&@@@@@@@@@@@@&&&&@@@@#@@#@##
+@@@@@@@@@@@&@@@@@@@@@@@@@&&&@&&&@@&&&@@@@@@@@@@&&&&&@@@@@@@@@@@@@@@&&&@@@@#@@@@#
+@@@@@@@@@@@@@@@@@@@@@@@@@&&@@&&&@&@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@&@@@@
+@@@@@@&@@@@@@@@@@@@@@@@@@&&@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@
+@@@@@@@@@@@&@@@@@@@@@@@@@@&%########%&@@@@@@@@@@@@@@@@@@@@@@@@@&&&&&&&@@@@@@@@@&
+@@@@@@@@@&&&&@@@@@@@@/%%(  (#############%#@@@@@@@@@@@@@@@@@&&&&&&&&&&&&@@@@@@@@
+@@@@@@@@&&&&&@@@&@@@@@#(###&@@#@@@########@@@@@@@& &@@@@@&&&&&&&&&&&&&&&&&@&@@@@
+@@@@@@@@&&&&&&&@@@@@@&  (#@@#&@@@@@@######&&@@@@@@@@@&&&&&&&&&&&&&&&&&&&&&&&&@@@
+@@@@@@@@@&&&&&&&&&&&&&###%@@#@&@@&&@######&@&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&@@@@@@
+@@@@@@@@@@&&&&&&&&&&@@&####@@@#@@@%#### ,%@&&&&&&&&&&&&&&&&&&&&&&&&&&&@@@@@@@@@@
+@@@@@@@@@@@@&&&&&@@#&&@@%###########,  #@@@@&#@@@@&&&&&&&&&&&&&&&&@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@&/&&&&&@@@@@@@@@@@@@@@&&&&@@%(#.&@@@@@@&&&&&&@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@*&&&@@&&&&&&&&&&&&&&&&&&&&&&&@@@//%*@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@&&&@@@@@@&&&&&&&&&&@@@@@@@@@&&@@&(%#@&*@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@&@@@(@*@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@(@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+]]--

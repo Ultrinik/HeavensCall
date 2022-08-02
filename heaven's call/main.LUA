@@ -36,7 +36,8 @@ mod.Colors = {
 	frozen = Color(1,1,1,1),
 	timeChanged = Color(1,1,1,1),
 	fire = Color(1,1,1,1),
-	superFire = Color(0.75,0.75,0.75,1)
+	superFire = Color(0.75,0.75,0.75,1),
+	buttFire = Color(1,1,1,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -52,6 +53,7 @@ function mod:ColorizeColors()
 	mod.Colors.timeChanged:SetColorize(1,0.2,0.2,1)
 	mod.Colors.fire:SetColorize(5,2.5,0,1)
 	mod.Colors.superFire:SetColorize(20,7,0,1)
+	mod.Colors.buttFire:SetColorize(2,1,0,1)
 end
 mod:ColorizeColors()
 
@@ -89,7 +91,7 @@ mod.ModConfigs = {
 	roomSpawnChance = 20
 }
 mod.ModConstants = {
-	burningFrames = 275
+	burningFrames = 350
 }
 
 include("scripts.findentities")
@@ -195,6 +197,7 @@ function mod:NormalDeath(entity, notExplosion)
 		bomb.RadiusMultiplier = 1.45
 		
 		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
+        game:ShakeScreen(60)
 	end
 end
 --deding

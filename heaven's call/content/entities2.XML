@@ -5,7 +5,7 @@
 	</entity>
 
 	<!-- Jupiter -->
-	<entity name="Jupiter" id="700" variant="370" subtype="0" anm2path="Jupiter.anm2"  baseHP="325" stageHP="80" shieldStrength="30" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="0">
+	<entity name="Jupiter" id="700" variant="370" subtype="0" anm2path="Jupiter.anm2"  baseHP="325" stageHP="80" shieldStrength="30" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="33" friction="0.9" numGridCollisionPoints="12" shadowSize="45" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="0">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -91,7 +91,7 @@
     </entity>
 
 	<!-- Venus -->
-	<entity name="Venus" id="705" variant="370" subtype="0" anm2path="Venus.anm2" baseHP="1800" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Venus" id="705" variant="370" subtype="0" anm2path="Venus.anm2" baseHP="1500" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -100,7 +100,7 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
-	<entity name="Wax Candle" id="722" variant="370" subtype="160" anm2path="WaxCandle.anm2" baseHP="400" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
+	<entity name="Candle" id="722" variant="370" subtype="160" anm2path="Candle.anm2" baseHP="400" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -112,8 +112,36 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
     </entity>
 	
+	<entity name="Dyspepsia" id="14" variant="370" subtype="160" anm2path="Dyspepsia.anm2" baseHP="15" boss="0" champion="0" collisionDamage="1" collisionMass="3" collisionRadius="13" friction="1" gridCollision="walls" hasFloorAlts="false"  numGridCollisionPoints="12" portrait="4" shadowSize="9" stageHP="0" >
+        <bestiary anim="Bestiary" transform="0,0,1"/>
+        <gibs amount="6" blood="1" bone="0" eye="1" gut="0" large="0" rock="0" dust="0"/>
+    </entity>
+
+	<entity anm2path="SirenRagdoll.anm2" baseHP="666" boss="0" bossID="79" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" id="904" name="Siren Rag" numGridCollisionPoints="12" portrait="105" shadowSize="0" stageHP="0" tags="nodelirium" variant="0" subtype="160" bestiary="false">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
+
+	<entity name="Candle Gurdy" id="722" variant="370" subtype="161" anm2path="CandleGurdy.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Candle Siren" id="722" variant="370" subtype="162" anm2path="CandleSiren.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Candle Colostomia" id="722" variant="370" subtype="163" anm2path="CandleColostomia.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Candle Maid in the Mist" id="722" variant="370" subtype="164" anm2path="CandleMaidInTheMist.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	
+	<!-- Mars -->
+	<entity name="Mars" id="707" variant="370" subtype="0" anm2path="Mars.anm2" baseHP="1500" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+		<bestiary transform="0,0,1" anim="Idle" />
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+
 	<!-- Luna -->
-	<entity name="Red Trapdoor" id="1000" variant="374" subtype="160" anm2path="grid/redtrapdoor.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+	<entity name="Red Trapdoor" id="1000" variant="374" subtype="160" anm2path="Redtrapdoor.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 

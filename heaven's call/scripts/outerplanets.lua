@@ -244,7 +244,7 @@ function mod:JupiterCharge2(entity, data, sprite, target,room)
 	
 	--Dont bounce on the walls you trash cow! (It makes the laser hard to predict)
 	if entity:CollidesWithGrid() then
-		entity.Velocity = Vector(0,0)
+		entity.Velocity = Vector.Zero
 		game:ShakeScreen(25);
 		sfx:Play(SoundEffect.SOUND_ROCK_CRUMBLE);
 	end
@@ -436,7 +436,7 @@ function mod:JupiterMove(entity, data, room, target)
 		local distance = room:GetCenterPos():Distance(entity.Position)
 		
 		--If its too far away, return to the center
-		if distance > 100 then
+		if distance > 80 then
 			data.targetvelocity = ((room:GetCenterPos() - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
 		--Else, get closer to the player
 		else
@@ -1686,7 +1686,7 @@ function mod:UranusShot(entity, data, sprite, target, room)
 		hail.FallingSpeed = 0
 		hail:AddScale(mod.UConst.shotScale)
 		--hail:GetSprite().Color = mod.Colors.hailColor
-		hail:GetData().IsIcicle = true
+		hail:GetData().IsIcicle_HC = true
 		hail:GetData().iceSize = mod.UConst.shotIceSize
 		hail:GetData().hailTrace = true
 		hail:GetData().hailSplash = true
@@ -1831,7 +1831,7 @@ function mod:UranusHail(entity, data, sprite, target, room)
 			hail.Scale = mod:RandomInt(16,20)/20
 			--hail.Color = mod.Colors.hailColor
 
-			hail:GetData().IsIcicle = true
+			hail:GetData().IsIcicle_HC = true
 			hail:GetData().iceSize = mod.UConst.hailIceSize
 			hail:GetData().hailTrace = false
 			hail:GetData().hailSplash = false
