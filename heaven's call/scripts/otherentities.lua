@@ -269,9 +269,9 @@ end
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.IceTurdUpdate, mod.EntityInf[mod.Entity.IceTurd].ID)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, mod.EntityInf[mod.Entity.IceTurd].ID)
 
---Dyspepsia---------------------------------------------------------------------------------------------------------------------------
-function mod:DyspepsiaUpdate(entity)
-	if mod.EntityInf[mod.Entity.Dyspepsia].VAR == entity.Variant then
+--Ulcers---------------------------------------------------------------------------------------------------------------------------
+function mod:UlcersUpdate(entity)
+	if mod.EntityInf[mod.Entity.Ulcers].VAR == entity.Variant then
 		local sprite = entity:GetSprite()
 		local target = entity:GetPlayerTarget()
 
@@ -294,7 +294,7 @@ function mod:DyspepsiaUpdate(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.DyspepsiaUpdate, mod.EntityInf[mod.Entity.Dyspepsia].ID)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.UlcersUpdate, mod.EntityInf[mod.Entity.Ulcers].ID)
 
 --Candles---------------------------------------------------------------------------------------------------------------------------
 mod.CandleGirs = {
@@ -401,7 +401,7 @@ function mod:CandleUpdate(entity)
 				--Dont spawn Siren if theres a Lilith
 				if mod:IsThereLilith() then
 					entity2Transform = mod.CandleGirs[mod:RandomInt(2,#mod.CandleGirs)]
-				else
+				end
 				
 				local candleGirl = mod:SpawnEntity(entity2Transform, entity.Position, Vector.Zero, entity.Parent)
 				candleGirl.Parent = entity.Parent
@@ -561,8 +561,8 @@ function mod:CandleUpdate(entity)
 					data.StateFrame = 0
 
 				elseif sprite:IsEventTriggered("Summon") then
-					if #mod:FindByTypeMod(mod.Entity.Dyspepsia) < 7 then
-						local butter = mod:SpawnEntity(mod.Entity.Dyspepsia, entity.Position, Vector.Zero, entity)
+					if #mod:FindByTypeMod(mod.Entity.Ulcers) < 7 then
+						local butter = mod:SpawnEntity(mod.Entity.Ulcers, entity.Position, Vector.Zero, entity)
 						sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
 					end
 					
@@ -791,6 +791,14 @@ end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SirenRagUpdate, EntityType.ENTITY_SIREN)
 
+--Deimos & Phobos-------------------------------------------------------------------------------------------------------------------
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
+	if entity:GetData().IsMartian and entity.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
+		mod:OrbitParent(entity)
+	end
+end)
+
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -925,6 +933,51 @@ function mod:TornadoUpdate(entity)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.TornadoUpdate, mod.EntityInf[mod.Entity.Tornado].VAR)
+
+--Airstrike---------------------------------------------------------------------------------------------------------------------------
+function mod:AirstrikeUpdate(entity)
+	if entity.SubType == mod.EntityInf[mod.Entity.MarsTarget].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+
+		if data.Init == nil then
+			data.Init = true
+			sprite:Play("Blink",true)
+			sprite:SetFrame(mod:RandomInt(1,90))
+		end
+
+		if sprite:IsFinished("Blink") then
+
+			local airstrike = mod:SpawnEntity(mod.Entity.MarsAirstrike, entity.Position, Vector.Zero, entity.Parent)
+
+			entity:Remove()
+		end
+
+	elseif entity.SubType == mod.EntityInf[mod.Entity.MarsAirstrike].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+
+		if sprite:IsFinished("Falling") then
+
+			--Explosion:
+			local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+			explosion:GetSprite().Scale = Vector.One*1.5
+			--Explosion damage
+			for i, entity_ in ipairs(Isaac.FindInRadius(entity.Position, mod.MConst.airstrikeExplosionRadius)) do
+				if entity_.Type ~= EntityType.ENTITY_PLAYER and not entity_:GetData().IsMartian then
+					entity_:TakeDamage(mod.MConst.explosionDamage/2, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity), 0)
+				elseif entity_.Type == EntityType.ENTITY_PLAYER then
+					entity_:TakeDamage(2, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity), 0)
+				end
+			end
+
+			entity:Remove()
+		end
+
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.AirstrikeUpdate, mod.EntityInf[mod.Entity.MarsTarget].VAR)
 
 --Effects that dissapear after idle-------------------------------------------------------------------------------------------------
 
@@ -1199,6 +1252,81 @@ mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, coll
 	end
 end)
 
+--Missile---------------------------------------------------------------------------------------------------------------------------
+function mod:MissileUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		data.Trigger = false
+
+		sprite:Play("Idle", true)
+		tear:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
+
+		tear.FallingSpeed = 0
+		tear.FallingAccel = -0.1
+
+		data.Init = true
+		data.Counter = 0
+		data.Flag = false
+	end
+
+	sprite.Rotation = tear.Velocity:GetAngleDegrees()
+	data.Counter = data.Counter + 1
+
+	if data.Counter >= mod.MConst.missileTime and not data.Flag then
+		data.Flag = true
+		tear:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
+	end
+
+	--To near!
+	if game:GetFrameCount()%4==0 and not data.Trigger then
+		for i=0, game:GetNumPlayers ()-1 do
+			local player = game:GetPlayer(i)
+			if tear.Position:Distance(player.Position) < 70 then
+				sprite.Rotation = 0
+				sprite:Play("Explosion", true)
+				data.Trigger = true
+				tear:ClearProjectileFlags (ProjectileFlags.SMART_PERFECT)
+				tear.Velocity = Vector.Zero
+				break
+			end
+		end
+	end
+
+
+	if sprite:IsFinished("Explosion") then
+		--Explosion:
+		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, tear.Position, Vector.Zero, tear.Parent):ToEffect()
+		--Explosion damage
+		for i, entity in ipairs(Isaac.FindInRadius(tear.Position, mod.MConst.missileExplosionRadius)) do
+			if entity.Type ~= EntityType.ENTITY_PLAYER and not entity:GetData().IsMartian then
+				entity:TakeDamage(mod.MConst.missileExplosionDamage, DamageFlag.DAMAGE_EXPLOSION, EntityRef(tear.Parent), 0)
+			elseif entity.Type == EntityType.ENTITY_PLAYER then
+				entity:TakeDamage(1, DamageFlag.DAMAGE_EXPLOSION, EntityRef(tear.Parent), 0)
+			end
+		end
+
+		--Projectile ring
+		for i=1, mod.MConst.nMissileTears do
+			local angle = i*360/mod.MConst.nMissileTears
+			local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(1,0):Rotated(angle)*mod.MConst.missileTearsSpeed, tear.Parent):ToProjectile()
+			shot.FallingSpeed = 0
+			shot.FallingAccel = -0.1
+		end
+
+		tear:Remove()
+	end
+
+
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().IsMissile_HC then
+		mod:MissileUpdate(tear,false)
+	end
+end)
+
 --PLAYER----------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1258,7 +1386,7 @@ end
 
 --Burn sfx and burning effect for venus
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, ref, _)
-    if entity.Type == EntityType.ENTITY_PLAYER then
+    if entity.Type == EntityType.ENTITY_PLAYER and ref.Entity then
         if (ref.Entity:GetData().IsFlamethrower_HC or  ref.Entity:GetData().IsFireball_HC or ref.Entity.Type == mod.EntityInf[mod.Entity.Venus].ID ) then
             sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS)
         elseif  ref.Entity.Type == EntityType.ENTITY_PROJECTILE and ref.Entity.Variant == mod.EntityInf[mod.Entity.Kiss].VAR and ref.Entity.SubType == mod.EntityInf[mod.Entity.Kiss].SUB then

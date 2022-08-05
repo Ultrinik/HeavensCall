@@ -167,6 +167,33 @@ function mod:MoveTowards(entity, data, objective, velocity)
 	end
 end
 
+function mod:IsOutsideRoom(point, room)
+	local marginX = 50
+	local marginY = 50
+
+	local varX = room:GetCenterPos(0).X - point.X
+	local varY = room:GetCenterPos(0).Y - point.Y
+	if varX > 0 then --p left
+		if varY > 0 then--p up
+			point = Vector(point.X - 1.65*marginX , point.Y - 1.65*marginY)
+		else--p down
+			point = Vector(point.X - 1.65*marginX , point.Y + marginY)
+		end
+	else --p right
+		if varY > 0 then--p up
+			point = Vector(point.X + 0.95*marginX , point.Y - 1.65*marginY)
+		else--p down
+			point = Vector(point.X + 0.95*marginX , point.Y + marginY)
+		end
+	end
+
+	if room:GetGridIndex(point) == -1 then 
+		return true 
+	else
+		return false
+	end
+end
+
 --ded
 function mod:NormalDeath(entity, notExplosion)
 	local data = entity:GetData()

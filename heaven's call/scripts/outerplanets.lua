@@ -231,7 +231,7 @@ function mod:JupiterCharge2(entity, data, sprite, target,room)
 	--Shot the laser
 	elseif sprite:IsEventTriggered("ChargeLaser") then
 		local player_direction = data.TargetPosition_aim - (entity.Position-Vector(0,75))
-		local brimstone = EntityLaser.ShootAngle(12, entity.Position-Vector(0,75)+player_direction:Normalized()*45 , player_direction:GetAngleDegrees(), 5, Vector(5,5), entity)
+		local brimstone = EntityLaser.ShootAngle(12, entity.Position-Vector(0,75)+player_direction:Normalized()*45 , player_direction:GetAngleDegrees(), 5, Vector.Zero, entity)
 		brimstone:GetSprite().Color = mod.Colors.jupiterLaser1
 		if target.Position.Y >= entity.Position.Y then
 			--This is to make the brimstone render below of above Jupiter
@@ -2020,10 +2020,12 @@ function mod:SpawnIceCreep(position, size, tear)
 	end
 end
 function mod:SpawnIceCreepSingular(position, tear)
-	local ice = mod:SpawnEntity(mod.Entity.IceCreep, position, Vector.Zero, tear):ToEffect()
-	ice:GetData().isIce = true
-	ice:GetData().iceCount = 2
-	ice.Timeout = 500
+	if not mod:IsOutsideRoom(position, game:GetRoom()) then
+		local ice = mod:SpawnEntity(mod.Entity.IceCreep, position, Vector.Zero, tear):ToEffect()
+		ice:GetData().isIce = true
+		ice:GetData().iceCount = 2
+		ice.Timeout = 500
+	end
 end
 
 --Pee
