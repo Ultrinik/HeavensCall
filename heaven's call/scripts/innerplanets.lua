@@ -235,6 +235,7 @@ function mod:VenusFlamethrower(entity, data, sprite, target,room)
         data.TargetPos = target.Position
     elseif sprite:IsEventTriggered("FlameStart") then
         data.Flamethrower = true
+        sfx:Play(Isaac.GetSoundIdByName("Flames"),1)
     elseif sprite:IsEventTriggered("Shot") then
 		local player_direction = target.Position - entity.Position
         local velocity = player_direction:Normalized()*mod.VConst.flameSpeed*1.5
@@ -715,7 +716,7 @@ mod.MConst = {
 
     nRowShots = 3,
     nShots = 3,
-    shotAngle = 20,
+    shotAngle = 35,
     shotSpeed = 6,
 
     missileExplosionDamage = 50,
@@ -726,14 +727,14 @@ mod.MConst = {
     missileTime = 20,
 
     nTargets = 6,
-    airstrikeExplosionRadius = 90,
+    airstrikeExplosionRadius = 70,
 }
 
 local PickedIndexes = {}
-
+local RandomDists = {}
 local airstrikesIndexes = { 
     32, 35, 39, 42,  
-    62, 65, 69, 72,  
+    --62, 65, 69, 72,  
     92, 95, 99, 102}
 
 function mod:MarsUpdate(entity)
@@ -749,6 +750,7 @@ function mod:MarsUpdate(entity)
         if data.StateFrame == nil then data.StateFrame = 0 end
         if data.TargetPos == nil then data.TargetPos = Vector.Zero end
         if data.ExtraLaserCount == nil then data.ExtraLaserCount = 0 end
+        if data.ExtraLaserWarningCount == nil then data.ExtraLaserWarningCount = 0 end
         if data.Laser == nil then data.Laser = false end
         if data.TargetDirection == nil then data.TargetDirection = Vector.Zero end
         if data.Move == nil then data.Move = false end
@@ -865,28 +867,60 @@ function mod:MarsLaser(entity, data, sprite, target,room)
     elseif sprite:IsFinished("Laser") then
         data.Laser = false
         data.ExtraLaserCount = 0
+        data.ExtraLaserWarningCount = 0
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("SetAim") then
+        sfx:Play(Isaac.GetSoundIdByName("LaserCharge"),5)
         data.TargetPos = target.Position
         entity.Velocity = Vector.Zero
     elseif sprite:IsEventTriggered("Laser") then
+        sfx:Play(Isaac.GetSoundIdByName("LaserShot"),7, 2, false, 1.3)
         data.Laser = true
         data.TargetDirection = (data.TargetPos - entity.Position):Normalized()
         local direction = data.TargetDirection
 		local laser = EntityLaser.ShootAngle(1, entity.Position + Vector(0,-40) + direction*45 , direction:GetAngleDegrees(), 85, Vector.Zero, entity)
-        --data.LaserEnd = laser.EndPoint()
-    elseif sprite:IsEventTriggered("ExtraLaser") then
-        data.ExtraLaserCount = data.ExtraLaserCount + 1
-        local distance = 140*data.ExtraLaserCount + mod:RandomInt(-40,40)
+
+        local sprite = laser:GetSprite()
+        sprite:ReplaceSpritesheet (0, "gfx/effects/energy_laser.png")
+		sprite:LoadGraphics()
+        sprite.Scale = Vector.One*2
+
+        RandomDists = {mod:RandomInt(-30,30), mod:RandomInt(-30,30), mod:RandomInt(-30,30), mod:RandomInt(-30,30)}
+
+
+    elseif sprite:IsEventTriggered("ExtraLaserWarning") then
+        data.ExtraLaserWarningCount = data.ExtraLaserWarningCount + 1
+        local distance = 140*data.ExtraLaserWarningCount + RandomDists[data.ExtraLaserWarningCount]
         local direction = data.TargetDirection
         local position = entity.Position + Vector(0,-40) + direction*distance
-        if not mod:IsOutsideRoom(position, room) then 
-            local laser1 = EntityLaser.ShootAngle(1,position , direction:GetAngleDegrees()+90, 25, Vector.Zero, entity)
-            local laser2 = EntityLaser.ShootAngle(1,position , direction:GetAngleDegrees()-90, 25, Vector.Zero, entity)
+        if not mod:IsOutsideRoom(position, room) then
+            for i = 0, 1 do
+                local laser = EntityLaser.ShootAngle(160,position , direction:GetAngleDegrees() + 90*(2*i-1), 15, Vector.Zero, entity)
+                laser.Parent = target
+                laser.DisableFollowParent = true
+            end
+    
+        end
+
+    elseif sprite:IsEventTriggered("ExtraLaser") then
+        data.ExtraLaserCount = data.ExtraLaserCount + 1
+        local distance = 140*data.ExtraLaserCount + RandomDists[data.ExtraLaserCount]
+        local direction = data.TargetDirection
+        local position = entity.Position + Vector(0,-40) + direction*distance
+        if not mod:IsOutsideRoom(position, room) then
+            for i = 0, 1 do
+                sfx:Play(Isaac.GetSoundIdByName("LaserShotMini"),7, 2, false, 0.75 + 0.35*rng:RandomFloat())
+                local laser = EntityLaser.ShootAngle(1,position , direction:GetAngleDegrees() + 90*(2*i-1), 10, Vector.Zero, entity)
+                local sprite = laser:GetSprite()
+                sprite:ReplaceSpritesheet (0, "gfx/effects/energy_laser.png")
+                sprite:LoadGraphics()
+            end
+    
         end
     end
+    sfx:Stop (SoundEffect.SOUND_BLOOD_LASER)
 
     if data.Laser then
         data.targetvelocity = -data.TargetDirection
@@ -936,7 +970,7 @@ function mod:MarsAirstrike(entity, data, sprite, target,room)
         --target.Parent = entity
     end
 
-    mod:MarsMove(entity, data, room, target, true)
+    --mod:MarsMove(entity, data, room, target, true)
 
 end
 function mod:MarsClock(entity, data, sprite, target,room)
@@ -953,11 +987,36 @@ function mod:MarsRocket(entity, data, sprite, target,room)
     elseif sprite:IsFinished("Rocket") then
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Missile") then
+        local direction = Vector(1,0)
+        local flag = false
+        if entity.Position.X > target.Position.X then
+            direction = Vector(-1,0)
+            flag = true
+        end
+
+        local rocketType = mod.Entity.MarsRocket
+        if rng:RandomFloat() < 0.1 then
+            rocketType = mod.Entity.MarsGigaRocket
+        end
+
+        local rocket = mod:SpawnEntity(rocketType, entity.Position + direction*50, direction, entity):ToBomb()
+        if flag then 
+            rocket:GetData().ToTheLeft = true 
+            rocket:GetSprite().FlipX = true
+        end
+        if rocketType == mod.Entity.MarsGigaRocket then
+            rocket.RadiusMultiplier = 1.5
+            rocket:GetData().IsMartian = true
+        end
     end
 end
 function mod:MarsDrones(entity, data, sprite, target,room)
-    if data.StateFrame == 1 then
-        sprite:Play("Idle",true)
+    if data.StateFrame == 1 then--Now the moons always attack
+        data.State = mod:MarkovTransition(data.State, mod.chainM)
+        data.StateFrame = 0
+        --sprite:Play("Idle",true)
     elseif sprite:IsFinished("Idle") then
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
@@ -972,6 +1031,8 @@ function mod:MarsShots(entity, data, sprite, target,room)
         
     elseif sprite:IsEventTriggered("Shot") then
         if (target.Position - entity.Position):Length() >= 200 then
+            sfx:Play(Isaac.GetSoundIdByName("EnergyShotTriple"),1)
+
             for j=1, mod.MConst.nRowShots do
                 local targetAim = target.Position - entity.Position
                 for i=0, mod.MConst.nShots-1 do
@@ -1159,7 +1220,26 @@ function mod:OrbitParent(entity)
 
 end
 
+function mod:Lerp(a,b,p)
+    return p*b + (1-p)*a
+end
+
+function mod:RocketLeft(bomb)
+    if bomb:GetData().ToTheLeft then--From Samael
+        local targetVel = 20*Vector(-1,0)
+        local startVel = targetVel*0.25
+        local framesUntilFullSpeed = 15
+        local counter = bomb.FrameCount
+        local percent = math.min(counter / framesUntilFullSpeed, 1)
+        bomb.Velocity = mod:Lerp(startVel,targetVel,percent)
+        bomb.SpriteRotation = targetVel:GetAngleDegrees()
+    end
+end
+
 --Callbacks
 --Mars updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.MarsUpdate, mod.EntityInf[mod.Entity.Mars].ID)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.MarsDeath, mod.EntityInf[mod.Entity.Mars].ID)
+
+--Rocket
+mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, mod.RocketLeft, BombVariant.BOMB_ROCKET)

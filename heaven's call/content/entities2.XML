@@ -91,7 +91,7 @@
     </entity>
 
 	<!-- Venus -->
-	<entity name="Venus" id="705" variant="370" subtype="0" anm2path="Venus.anm2" baseHP="1500" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Venus" id="705" variant="370" subtype="0" anm2path="Venus.anm2" baseHP="1200" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -135,15 +135,15 @@
 	</entity>
 	
 	<!-- Mars -->
-	<entity name="Mars" id="707" variant="370" subtype="0" anm2path="Mars.anm2" baseHP="1500" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Mars" id="707" variant="370" subtype="0" anm2path="Mars.anm2" baseHP="1000" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Deimos" id="707" variant="371" subtype="160" anm2path="Deimos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="none">
+	<entity name="Deimos" id="707" variant="371" subtype="160" anm2path="Deimos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="10" portrait="3" bestiary="false" gridCollision="none">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Phobos" id="707" variant="372" subtype="160" anm2path="Phobos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="none">
+	<entity name="Phobos" id="707" variant="372" subtype="160" anm2path="Phobos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="10" portrait="3" bestiary="true" gridCollision="none">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
@@ -160,6 +160,14 @@
     </entity>
     <entity name="Mars Airstrike" id="1000" variant="375" subtype="161" anm2path="MarsAirstrike.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="1" friction="1" numGridCollisionPoints="0" shadowSize="22" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
+
+	<!-- entity name="Energy Laser" id="7" variant="5" subtype="160" anm2path="EnergyLaser.anm2" baseHP="0" boss="0" champion="0" collisionDamage="22" collisionMass="8" collisionRadius="16" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" -->
+        <!--gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" /-->
+    <!--/entity -->
+	<entity anm2path="007.002_Thin Red Laser.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="8" collisionRadius="0" friction="1" id="7" name="Laser Warning" numGridCollisionPoints="0" shadowSize="0" stageHP="0" variant="160">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
 
 	<!-- Luna -->
 	<entity name="Red Trapdoor" id="1000" variant="374" subtype="160" anm2path="Redtrapdoor.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" />

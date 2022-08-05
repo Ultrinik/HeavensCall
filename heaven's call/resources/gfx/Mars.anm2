@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="Unknown" CreatedOn="05-08-2022 0:11:17" Version="170" Fps="30"/>
+	<Info CreatedBy="Unknown" CreatedOn="05-08-2022 17:22:18" Version="173" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="bosses\Mars.png" Id="0"/>
@@ -23,6 +23,7 @@
 			<Event Name="Missile" Id="6"/>
 			<Event Name="Shot" Id="7"/>
 			<Event Name="StartIdle" Id="8"/>
+			<Event Name="ExtraLaserWarning" Id="9"/>
 		</Events>
 	</Content>
 	<Animations DefaultAnimation="Appear">
@@ -239,9 +240,13 @@
 			<Triggers>
 				<Trigger EventId="2" AtFrame="12"/>
 				<Trigger EventId="3" AtFrame="29"/>
-				<Trigger EventId="4" AtFrame="60"/>
-				<Trigger EventId="4" AtFrame="70"/>
-				<Trigger EventId="4" AtFrame="80"/>
+				<Trigger EventId="9" AtFrame="60"/>
+				<Trigger EventId="9" AtFrame="62"/>
+				<Trigger EventId="9" AtFrame="64"/>
+				<Trigger EventId="9" AtFrame="66"/>
+				<Trigger EventId="4" AtFrame="78"/>
+				<Trigger EventId="4" AtFrame="82"/>
+				<Trigger EventId="4" AtFrame="86"/>
 				<Trigger EventId="4" AtFrame="90"/>
 			</Triggers>
 		</Animation>
@@ -391,12 +396,14 @@
 				<Trigger EventId="0" AtFrame="120"/>
 			</Triggers>
 		</Animation>
-		<Animation Name="Rocket" FrameNum="14" Loop="false">
+		<Animation Name="Rocket" FrameNum="28" Loop="false">
 			<RootAnimation>
 				<Frame XPosition="0" YPosition="0" XScale="100" YScale="100" Delay="1" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="false"/>
 			</RootAnimation>
 			<LayerAnimations>
 				<LayerAnimation LayerId="0" Visible="true">
+					<Frame XPosition="0" YPosition="-8" XPivot="50" YPivot="90" XCrop="0" YCrop="0" Width="100" Height="100" XScale="100" YScale="100" Delay="7" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
+					<Frame XPosition="0" YPosition="-7" XPivot="50" YPivot="90" XCrop="0" YCrop="0" Width="100" Height="100" XScale="100" YScale="90" Delay="7" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
 					<Frame XPosition="0" YPosition="-8" XPivot="50" YPivot="90" XCrop="0" YCrop="0" Width="100" Height="100" XScale="100" YScale="100" Delay="7" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
 					<Frame XPosition="0" YPosition="-7" XPivot="50" YPivot="90" XCrop="0" YCrop="0" Width="100" Height="100" XScale="100" YScale="90" Delay="7" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
 					<Frame XPosition="0" YPosition="-8" XPivot="50" YPivot="90" XCrop="0" YCrop="0" Width="100" Height="100" XScale="100" YScale="100" Delay="1" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
@@ -409,7 +416,9 @@
 					<Frame XPosition="0" YPosition="-95" XScale="100" YScale="100" Delay="1" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="false"/>
 				</NullAnimation>
 			</NullAnimations>
-			<Triggers/>
+			<Triggers>
+				<Trigger EventId="6" AtFrame="20"/>
+			</Triggers>
 		</Animation>
 	</Animations>
 </AnimatedActor>

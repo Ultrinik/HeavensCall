@@ -107,4 +107,22 @@
 		<sample weight="1" path="saw_hit1.wav" />
 		<sample weight="1" path="saw_hit2.wav" />
 	</sound>
+	<sound name="LaserShot">
+		<sample weight="1" path="laser_shot.wav" />
+	</sound>
+	<sound name="LaserShotMini">
+		<sample weight="1" path="laser_shot_mini.wav" />
+	</sound>
+	<sound name="LaserCharge">
+		<sample weight="1" path="laser_charge.wav" />
+	</sound>
+	<sound name="EnergyShot">
+		<sample weight="1" path="energy_shot.wav" />
+	</sound>
+	<sound name="EnergyShotTriple">
+		<sample weight="1" path="energy_shot_triple.wav" />
+	</sound>
+	<sound name="Flames">
+		<sample weight="1" path="flames.wav" />
+	</sound>
 </sounds>

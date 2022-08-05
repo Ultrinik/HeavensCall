@@ -69,6 +69,7 @@ mod.Entity ={
     MarsGigaBomb = 46,
     MarsRocket = 47,
     MarsGigaRocket = 48,
+    LaserWarning = 51,
 
 }
 mod.DefaultSub = 160
@@ -142,3 +143,4 @@ mod.EntityInf[mod.Entity.Missile] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Is
 mod.EntityInf[mod.Entity.MarsGigaBomb] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_NORMAL,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsGigaRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub+1}
+mod.EntityInf[mod.Entity.LaserWarning] = {ID = EntityType.ENTITY_LASER, VAR = 160,  SUB = 0}--This is useless, I cound use the regular tech laser

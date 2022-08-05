@@ -792,10 +792,39 @@ end
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SirenRagUpdate, EntityType.ENTITY_SIREN)
 
 --Deimos & Phobos-------------------------------------------------------------------------------------------------------------------
+function mod:MartiansUpdate(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+	local target = entity:GetPlayerTarget()
+
+    if entity.Variant == mod.EntityInf[mod.Entity.Deimos].VAR and entity.SubType == mod.EntityInf[mod.Entity.Deimos].SUB then
+		if sprite:IsEventTriggered("SetAim") and entity.Parent:GetData().State ~= mod.MMSState.AIRSTRIKE then
+			data.targetAim = target.Position
+			local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TARGET, 0, target.Position, Vector.Zero, entity):ToEffect()
+			target.Timeout = 38
+		elseif sprite:IsEventTriggered("Shot") and data.targetAim then
+			local direction = data.targetAim - entity.Position
+			local laser = EntityLaser.ShootAngle(2, entity.Position + Vector(0,-10), direction:GetAngleDegrees(), 1, Vector.Zero, entity)
+			data.targetAim = nil
+		end
+
+	elseif entity.Variant == mod.EntityInf[mod.Entity.Phobos].VAR and entity.SubType == mod.EntityInf[mod.Entity.Phobos].SUB then
+		if sprite:IsEventTriggered("Shot") then
+            sfx:Play(Isaac.GetSoundIdByName("EnergyShot"),1)
+
+			local targetAim = target.Position - entity.Position
+			local velocity = targetAim:Normalized()*mod.MConst.shotSpeed
+			local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+			shot.FallingSpeed = 0
+			shot.FallingAccel = -0.1
+		end
+	end
+end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
 	if entity:GetData().IsMartian and entity.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
 		mod:OrbitParent(entity)
+		mod:MartiansUpdate(entity)
 	end
 end)
 
@@ -1288,6 +1317,7 @@ function mod:MissileUpdate(tear, collided)
 				sprite:Play("Explosion", true)
 				data.Trigger = true
 				tear:ClearProjectileFlags (ProjectileFlags.SMART_PERFECT)
+				tear:AddProjectileFlags(ProjectileFlags.CANT_HIT_PLAYER)
 				tear.Velocity = Vector.Zero
 				break
 			end
