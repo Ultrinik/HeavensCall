@@ -91,6 +91,9 @@
 	<sound name="Inflation">
 		<sample weight="1" path="inflation.wav" />
 	</sound>
+	<sound name="Deinflation">
+		<sample weight="1" path="deinflation.wav" />
+	</sound>
 	<sound name="TrapdoorOC">
 		<sample weight="1" path="trapdoorOC.wav" />
 	</sound>
@@ -124,5 +127,25 @@
 	</sound>
 	<sound name="Flames">
 		<sample weight="1" path="flames.wav" />
+	</sound>
+	<sound name="FireballBit">
+		<sample weight="1" path="fireball_bit.wav" />
+	</sound>
+	<sound name="Fireball">
+		<sample weight="1" path="fireball.wav" />
+	</sound>
+	<sound name="Spindash">
+		<sample weight="1" path="spindash1.wav" />
+		<sample weight="1" path="spindash2.wav" />
+		<sample weight="1" path="spindash3.wav" />
+		<sample weight="1" path="spindash4.wav" />
+	</sound>
+	<sound name="SpindashRelease">
+		<sample weight="1" path="spindash_release.wav" />
+	</sound>
+	<sound name="Spring">
+		<sample weight="1" path="spring1.wav" />
+		<sample weight="1" path="spring2.wav" />
+		<sample weight="1" path="spring3.wav" />
 	</sound>
 </sounds>

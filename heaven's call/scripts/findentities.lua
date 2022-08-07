@@ -51,6 +51,8 @@ mod.Entity ={
     Aurora = 27,
     MarsTarget = 43,
     MarsAirstrike = 44,
+    TankEngine = 52,
+    Wagon = 53,
 
     ---------
     
@@ -83,6 +85,7 @@ mod.EntityInf[mod.Entity.Saturn] = {ID = Isaac.GetEntityTypeByName("Saturn"),  V
 mod.EntityInf[mod.Entity.Uranus] = {ID = Isaac.GetEntityTypeByName("Uranus"),  VAR = Isaac.GetEntityVariantByName("Uranus"),   SUB = 0}
 mod.EntityInf[mod.Entity.Neptune] = {ID = Isaac.GetEntityTypeByName("Neptune"), VAR = Isaac.GetEntityVariantByName("Neptune"),  SUB = 0}
 
+mod.EntityInf[mod.Entity.Mercury] =  {ID = Isaac.GetEntityTypeByName("Mercury"), VAR = Isaac.GetEntityVariantByName("Mercury"), SUB = 0}
 mod.EntityInf[mod.Entity.Venus] =  {ID = Isaac.GetEntityTypeByName("Venus"), VAR = Isaac.GetEntityVariantByName("Venus"), SUB = 0}
 mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars"), VAR = Isaac.GetEntityVariantByName("Mars"), SUB = 0}
 
@@ -119,6 +122,9 @@ mod.EntityInf[mod.Entity.IceCreep] = {ID = EntityType.ENTITY_EFFECT, VAR = Effec
 
 mod.EntityInf[mod.Entity.Tornado] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tornado"),  SUB = mod.DefaultSub}
 
+mod.EntityInf[mod.Entity.TankEngine] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tank Engine"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Wagon] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Wagon"),  SUB = mod.DefaultSub+1}
+
 mod.EntityInf[mod.Entity.MarsTarget] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Target"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsAirstrike] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Airstrike"),  SUB = mod.DefaultSub+1}
 
@@ -143,4 +149,4 @@ mod.EntityInf[mod.Entity.Missile] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Is
 mod.EntityInf[mod.Entity.MarsGigaBomb] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_NORMAL,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsGigaRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub+1}
-mod.EntityInf[mod.Entity.LaserWarning] = {ID = EntityType.ENTITY_LASER, VAR = 160,  SUB = 0}--This is useless, I cound use the regular tech laser
+mod.EntityInf[mod.Entity.LaserWarning] = {ID = EntityType.ENTITY_LASER, VAR = Isaac.GetEntityVariantByName("Laser Warning"),  SUB = 0}--This is useless, I could use the regular tech laser

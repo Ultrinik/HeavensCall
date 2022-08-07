@@ -107,11 +107,14 @@ function mod:JupiterUpdate(entity)
 		local room = game:GetRoom()
 		
 		--Custom data:
-		if data.State == nil then data.State = 0 end
-		if data.StateFrame == nil then data.StateFrame = 0 end
-		if data.MoveTowards == nil then data.MoveTowards = false end
-		if data.CurrentAngle == nil then data.CurrentAngle = -90 end
-		if data.LaserFlag == nil then data.LaserFlag = false end
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0 
+
+			data.MoveTowards = false 
+			data.CurrentAngle = -90 
+			data.LaserFlag = false 
+		end
 		
 		--Frame
 		data.StateFrame = data.StateFrame + 1
@@ -704,12 +707,15 @@ function mod:SaturnUpdate(entity)
 		local room = game:GetRoom()
 		
 		--Custom data:
-		if data.State == nil then data.State = 0 end
-		if data.StateFrame == nil then data.StateFrame = 0 end
-		if data.MoveTowards == nil then data.MoveTowards = false end
-		if data.TimeStoped == nil then data.TimeStoped = false end
-		if data.HealPerHyper == nil then data.HealPerHyper = mod.SConst.HealPerHyper end
-		if data.SawSkips == nil then data.SawSkips = 0 end
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+
+			data.MoveTowards = false 
+			data.TimeStoped = false 
+			data.HealPerHyper = mod.SConst.HealPerHyper 
+			data.SawSkips = 0 
+		end
 		
 		--Frame
 		data.StateFrame = data.StateFrame + 1
@@ -1615,11 +1621,14 @@ function mod:UranusUpdate(entity)
 		local room = game:GetRoom()
 		
 		--Custom data:
-		if data.State == nil then data.State = 0 end
-		if data.StateFrame == nil then data.StateFrame = 0 end
-		if data.HailCount == nil then data.HailCount = 0 end
-		if data.fartCount == nil then data.fartCount = 0 end
-		if data.SpinCount == nil then data.SpinCount = 0 end
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0 
+
+			data.HailCount = 0 
+			data.fartCount = 0
+			data.SpinCount = 0 
+		end
 		
 		--Frame
 		data.StateFrame = data.StateFrame + 1
@@ -2178,9 +2187,12 @@ function mod:NeptuneUpdate(entity)
 		local room = game:GetRoom()
 		
 		--Custom data:
-		if data.State == nil then data.State = 0 end
-		if data.StateFrame == nil then data.StateFrame = 0 end
-		if data.AbsorbCount == nil then data.AbsorbCount = 0 end
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+
+			data.AbsorbCount = 0 
+		end
 		
 		
 		--Frame
@@ -2418,7 +2430,7 @@ function mod:NeptuneRain(entity, data, sprite, target, room)
 		data.StateFrame = 0
 	
 	elseif sprite:IsEventTriggered("Rain") then
-		game:ShakeScreen(15);
+		game:ShakeScreen(15)
 		local splash = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BIG_SPLASH, 0, entity.Position+Vector(0,1), Vector.Zero, entity)
 
 		for i=0, mod.NConst.nRainDrop do

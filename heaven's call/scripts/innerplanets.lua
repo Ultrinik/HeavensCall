@@ -38,7 +38,321 @@ local json = require("json")
 @@@@@@@@@@@@@@@@%((//@@@@@@@@&@@@@//@@@@@@@/////@@@@/%@@@@@/(@@@@@@@@@
 @@@@@@@@@@@@@@@@@/***@@@@@@@%//(@(/(/@@@@#/#(//(%@@@&/&@@@@@//#(/#@@@@
 ]]--
+  
+mod.MRMSState = {
+    APPEAR = 0,
+    IDLE = 1,
+    CIRCLE = 2,
+    LINES = 3,
+    SPINDASH = 4,
+    DOUBLESPINDASH = 5,
+    HORN = 6,
+    SIDEJUMPS = 7,
+    DRILL = 8,
+    BIRDS = 9
+}
+mod.chainMR = {--                        A     I      Circ   Line   Spin   DSpin   Horn   Side   Drill  Brid
+    [mod.MRMSState.APPEAR] = 	        {0,     1,     0,     0,     0,     0,      0,     0,     0,     0},
+    [mod.MRMSState.IDLE] = 	            {0, 	0.709, 0.015, 0.03,	 0.058,	0.058,	0.04,  0.035, 0.04,	 0.015},
+    [mod.MRMSState.CIRCLE] = 	        {0,	    0.7,   0,	  0,	 0.15,	0.15,	0,	   0,	  0,	 0},
+    [mod.MRMSState.LINES] = 	        {0,	    0.6,   0,	  0.04,	 0.12,	0.12,	0.12,  0,	  0,	 0},
+    [mod.MRMSState.SPINDASH] = 	        {0,	    0.4,   0,	  0,	 0.3,	0.3,    0,	   0,	  0,	 0},
+    [mod.MRMSState.DOUBLESPINDASH] = 	{0,	    0.4,   0,	  0,	 0.3,	0.3,    0,	   0,	  0,	 0},
+    [mod.MRMSState.HORN] = 	            {0,	    0.7,   0,	  0,	 0.15,	0.15,	0,	   0,	  0,	 0},
+    [mod.MRMSState.SIDEJUMPS] = 	    {0,	    0.7,   0,	  0,	 0,	    0,	    0,	   0,	  0.2,	 0.1},
+    [mod.MRMSState.DRILL] = 	        {0,	    0.5,   0,	  0,	 0,	    0,	    0.4,   0,	  0,	 0.1},
+    [mod.MRMSState.BIRDS] = 	        {0,	    1,	   0,	  0,	 0,	    0,	    0,	   0,	  0,	 0}
+    
+}
+mod.MRConst = {--Some constant variables of Mercury
+    idleTimeInterval = Vector(5,10),
+    speed = 1.7,
 
+    nJumps = 3,
+    jumpSpeed = 35,
+
+    nDrills = 7,
+
+    spindashSpeed = 60,
+    maxBounces = 3,
+}
+
+function mod:MercuryUpdate(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Mercury].VAR and entity.SubType == mod.EntityInf[mod.Entity.Mercury].SUB then
+        local data = entity:GetData()
+        local sprite = entity:GetSprite()
+        local target = entity:GetPlayerTarget()
+        local room = game:GetRoom()
+        
+        --Custom data:
+        if data.State == nil then 
+            data.State = 0 
+            data.StateFrame = 0
+
+            data.JumpCount = 0
+            data.DrillCount = 0
+            data.TargetPos = target.Position
+            data.TargetVel = target.Velocity
+            data.IsSpindashing = false
+            data.BounceCount = 0
+        end
+        
+        --Frame
+        data.StateFrame = data.StateFrame + 1
+
+        if data.State == mod.MRMSState.APPEAR then
+            if data.StateFrame == 1 then
+                mod:AppearPlanet(entity)
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+            elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+                data.State = mod:MarkovTransition(data.State, mod.chainMR)
+                data.StateFrame = 0
+            elseif sprite:IsEventTriggered("EndAppear") then
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+            end
+            
+        elseif data.State == mod.MRMSState.IDLE then
+            if data.StateFrame == 1 then
+                sprite:Play("Idle",true)
+            elseif sprite:IsFinished("Idle") then
+                data.State = mod:MarkovTransition(data.State, mod.chainMR)
+                data.StateFrame = 0
+                
+            else
+                mod:MercuryMove(entity, data, room, target)
+            end
+            
+        elseif data.State == mod.MRMSState.CIRCLE then
+            mod:MercuryCircle(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.LINES then
+            mod:MercuryLines(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.SPINDASH then
+            mod:MercurySpindash(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.DOUBLESPINDASH then
+            mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.HORN then
+            mod:MercuryHorn(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.SIDEJUMPS then
+            mod:MercurySideJumps(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.DRILL then
+            mod:MercuryDrill(entity, data, sprite, target,room)
+        elseif data.State == mod.MRMSState.BIRDS then
+            mod:MercuryBirds(entity, data, sprite, target,room)
+        end
+
+    end
+end
+function mod:MercuryCircle(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Circle",true)
+    elseif sprite:IsFinished("Circle") then
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+
+    end
+
+end
+function mod:MercuryLines(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Lines",true)
+    elseif sprite:IsFinished("Lines") then
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+
+    end
+
+end
+function mod:MercurySpindash(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Spindash",true)
+    elseif sprite:IsFinished("Spindash") or data.BounceCount >= mod.MRConst.maxBounces then
+        data.IsSpindashing = false
+        data.BounceCount = 0
+        entity.CollisionDamage = 0
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("StartSpin") then
+        entity.Velocity = Vector.Zero
+        sfx:Play(Isaac.GetSoundIdByName("Spindash"),1)
+        data.TargetPos = target.Position
+
+    elseif sprite:IsEventTriggered("ReleaseSpin") then
+        sfx:Play(Isaac.GetSoundIdByName("SpindashRelease"),1)
+        data.IsSpindashing = true
+        entity.CollisionDamage = 1
+
+        local direction = (data.TargetPos - entity.Position):Normalized()
+        entity.Velocity = direction * mod.MRConst.spindashSpeed
+
+    end
+
+    if data.IsSpindashing and entity:CollidesWithGrid() then
+        data.BounceCount = data.BounceCount + 1
+        entity.Velocity = entity.Velocity:Normalized() * (mod.MRConst.spindashSpeed) * (mod.MRConst.maxBounces - data.BounceCount) / mod.MRConst.maxBounces
+    end
+
+end
+function mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Spindash",true)
+    elseif sprite:IsFinished("Spindash2") then
+        data.IsSpindashing = false
+        entity.CollisionDamage = 0
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("StartSpin") then
+        entity.Velocity = Vector.Zero
+        sfx:Play(Isaac.GetSoundIdByName("Spindash"),1)
+        data.TargetPos = target.Position
+
+        
+        --local laser = EntityLaser.ShootAngle(2,entity.Position , (target.Position - entity.Position):GetAngleDegrees(), 120, Vector.Zero, entity)
+
+    elseif sprite:IsEventTriggered("ReleaseSpin") and sprite:GetAnimation() == "Spindash" then
+        sprite:Play("Spindash2",true)
+        entity.Velocity = Vector.Zero
+        sfx:Play(Isaac.GetSoundIdByName("Spindash"),1)
+        data.TargetPos2 = target.Position
+        
+        --local laser = EntityLaser.ShootAngle(2,entity.Position , (target.Position - entity.Position):GetAngleDegrees(), 120, Vector.Zero, entity)
+
+    elseif sprite:IsEventTriggered("ReleaseSpin") and sprite:GetAnimation() == "Spindash2" then
+        data.IsSpindashing = true
+        sfx:Play(Isaac.GetSoundIdByName("SpindashRelease"),1)
+        entity.CollisionDamage = 1
+
+        local a = data.TargetPos - entity.Position
+        local b = data.TargetPos2 - entity.Position
+
+        local cross = a:Cross(b)
+        local extraAngle = math.asin( math.abs(cross) / (a:Length() * b:Length()) )
+        extraAngle = extraAngle * 180 / math.pi
+        if cross < 0 then extraAngle = - extraAngle end
+
+        local direction = b:Normalized():Rotated(extraAngle)
+
+        --local laser = EntityLaser.ShootAngle(2,entity.Position , direction:GetAngleDegrees(), 120, Vector.Zero, entity)
+
+        entity.Velocity = direction * mod.MRConst.spindashSpeed
+
+    end
+
+    if data.IsSpindashing and entity:CollidesWithGrid() then
+        entity.Velocity = Vector.Zero
+        game:ShakeScreen(20)
+    end
+
+end
+function mod:MercuryHorn(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Horn",true)
+    elseif sprite:IsFinished("Horn") then
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+
+    end
+
+end
+function mod:MercurySideJumps(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        data.JumpCount = data.JumpCount + 1
+        sprite:Play("Jumps",true)
+    elseif sprite:IsFinished("Jumps") then
+        data.StateFrame = 0
+        if data.JumpCount > mod.MRConst.nJumps then
+            data.JumpCount = 0
+            data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        end
+    
+    elseif sprite:IsEventTriggered("StartInvulnerable") then
+        local direction = (target.Position - entity.Position):Normalized()
+        entity.Velocity = direction * mod.MRConst.jumpSpeed
+        sfx:Play(Isaac.GetSoundIdByName("Spring"),1)
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        
+    elseif sprite:IsEventTriggered("EndInvulnerable") then
+        entity.Velocity = Vector.Zero
+        game:ShakeScreen(10)
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+
+    end
+
+end
+function mod:MercuryDrill(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("DrillStart",true)
+    elseif sprite:IsFinished("DrillStart") then
+        sprite:Play("Drill",true)
+    elseif sprite:IsFinished("Drill") then
+        if data.DrillCount < mod.MRConst.nDrills then
+            sprite:Play("Drill",true)
+            data.DrillCount = data.DrillCount + 1
+        else
+            sprite:Play("DrillEnd",true)
+        end
+    elseif sprite:IsFinished("DrillEnd") then
+        data.DrillCount = 0
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+
+    end
+
+end
+function mod:MercuryBirds(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Bird",true)
+    elseif sprite:IsFinished("Bird") then
+        data.State = mod:MarkovTransition(data.State, mod.chainMR)
+        data.StateFrame = 0
+
+
+    end
+
+end
+
+--Move
+function mod:MercuryMove(entity, data, room, target)   
+    if speed == nil then speed = 1 end
+    --idle move taken from 'Alt Death' by hippocrunchy
+    
+	--idleTime == frames moving in the same direction
+	if not data.idleTime then 
+		data.idleTime = mod:RandomInt(mod.MRConst.idleTimeInterval.X, mod.MRConst.idleTimeInterval.Y)
+		--V distance of Jupiter from the center of the room
+		local distance = room:GetCenterPos():Distance(entity.Position)
+		
+		--If its too far away, return to the center
+		if distance > 40 then
+			data.targetvelocity = ((room:GetCenterPos() - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+		--Else, get closer to the player
+		else
+			data.targetvelocity = ((target.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-50, 50))
+		end
+	end
+    
+    --If run out of idle time
+    if data.idleTime <= 0 and data.idleTime ~= nil then
+        data.idleTime = nil
+    else
+        data.idleTime = data.idleTime - 1
+    end
+    
+    --Do the actual movement
+    entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.MRConst.speed
+    data.targetvelocity = data.targetvelocity * 0.99
+end
+
+--Callbacks
+--Mercury updates
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.MercuryUpdate, mod.EntityInf[mod.Entity.Mercury].ID)
 
 --VENUS---------------------------------------------------------------------------------------------------
 --[[
@@ -87,14 +401,14 @@ mod.VMSState = {
 }
 mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
     [mod.VMSState.APPEAR] = 	{0,   0,    0,    1,    0,    0,    0,    0,    0,   0,   0},
-    [mod.VMSState.IDLE] = 	    {0,	  0.605,0.01, 0.2,	0.005,0.01,	0.02, 0.04, 0.005,0.005,0.1},
+    [mod.VMSState.IDLE] = 	    {0,	  0.60, 0.01, 0.2,	0.005,0.01,	0.02, 0.045,0.005,0.005,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    1,	0.08, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
     [mod.VMSState.FLAME] =  	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
     [mod.VMSState.SUMMON] = 	{0,   0.1,  0,    0,    0,    0,    0,    0,    0,   0,   0.9},
     [mod.VMSState.IPECAC] = 	{0,   0.8,  0,    0,    0,    0,    0.2,  0,    0,   0,   0},
-    [mod.VMSState.JUMPS] =  	{0,   0.6,  0,    0,    0.1,  0,    0.1,  0,    0,   0.2, 0},
+    [mod.VMSState.JUMPS] =  	{0,   0.4,  0,    0,    0.1,  0,    0.1,  0.2,  0,   0.2, 0},
     [mod.VMSState.BLAZE] =  	{0,   0.75, 0,    0,    0,    0,    0,    0.25, 0,   0,   0},
     [mod.VMSState.KISS] = 	    {0,   0.1,  0.3,  0,    0,    0.3,  0,    0,    0,   0.3,0},
     --[mod.VMSState.KISS] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
@@ -159,13 +473,16 @@ function mod:VenusUpdate(entity)
         local room = game:GetRoom()
         
         --Custom data:
-        if data.State == nil then data.State = 0 end
-        if data.StateFrame == nil then data.StateFrame = 0 end
-        if data.Flamethrower == nil then data.Flamethrower = false end
-        if data.FlameSlide == nil then data.FlameSlide = false end
-        if data.TargetPos == nil then data.TargetPos = target.Position end
-        if data.FireWaveType == nil then data.FireWaveType = 0 end
-        if data.FlameAngle == nil then data.FlameAngle = mod.VConst.flameAngleStart end
+        if data.State == nil then 
+            data.State = 0 
+            data.StateFrame = 0
+
+            data.Flamethrower = false
+            data.FlameSlide = false
+            data.TargetPos = target.Position
+            data.FireWaveType = 0
+            data.FlameAngle = mod.VConst.flameAngleStart
+        end
         
         --Frame
         data.StateFrame = data.StateFrame + 1
@@ -235,7 +552,7 @@ function mod:VenusFlamethrower(entity, data, sprite, target,room)
         data.TargetPos = target.Position
     elseif sprite:IsEventTriggered("FlameStart") then
         data.Flamethrower = true
-        sfx:Play(Isaac.GetSoundIdByName("Flames"),1)
+        sfx:Play(Isaac.GetSoundIdByName("Flames"),4)
     elseif sprite:IsEventTriggered("Shot") then
 		local player_direction = target.Position - entity.Position
         local velocity = player_direction:Normalized()*mod.VConst.flameSpeed*1.5
@@ -330,6 +647,8 @@ function mod:VenusBlaze(entity, data, sprite, target,room)
             fireball:AddProjectileFlags(ProjectileFlags.DECELERATE)
             fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
         end
+        
+        sfx:Play(Isaac.GetSoundIdByName("Fireball"),1)
     end
 end
 function mod:VenusIpecac(entity, data, sprite, target,room)
@@ -566,12 +885,12 @@ function mod:GetUnburnedPlayer()
     local unburnedPlayers = {}
 	for i=0, game:GetNumPlayers ()-1 do
 		local player = game:GetPlayer(i)
-		if player:GetData().BurnTime and player:GetData().BurnTime <= 0 then 
+		if player:GetData().BurnTime and player:GetData().BurnTime <= 1 then 
 			unburnedPlayers[#unburnedPlayers+1]=player
 		end
 	end
     if #unburnedPlayers > 0 then
-        local player =  unburnedPlayers[mod:RandomInt(1,#unburnedPlayers)]
+        local player = unburnedPlayers[mod:RandomInt(1,#unburnedPlayers)]
         return player
     end
     return nil
@@ -745,16 +1064,19 @@ function mod:MarsUpdate(entity)
         local room = game:GetRoom()
         
         --Custom data:
-        if data.State == nil then data.State = 0 end
-        if data.SecondState == nil then data.SecondState = 0 end
-        if data.StateFrame == nil then data.StateFrame = 0 end
-        if data.TargetPos == nil then data.TargetPos = Vector.Zero end
-        if data.ExtraLaserCount == nil then data.ExtraLaserCount = 0 end
-        if data.ExtraLaserWarningCount == nil then data.ExtraLaserWarningCount = 0 end
-        if data.Laser == nil then data.Laser = false end
-        if data.TargetDirection == nil then data.TargetDirection = Vector.Zero end
-        if data.Move == nil then data.Move = false end
-        if data.IsMartian == nil then data.IsMartian = true end
+        if data.State == nil then 
+            data.State = 0
+            data.SecondState = 0 
+            data.StateFrame = 0 
+
+            data.TargetPos = Vector.Zero 
+            data.ExtraLaserCount = 0 
+            data.ExtraLaserWarningCount = 0 
+            data.Laser = false
+            data.TargetDirection = Vector.Zero 
+            data.Move = false 
+            data.IsMartian = true 
+        end
         
         --Frame
         data.StateFrame = data.StateFrame + 1

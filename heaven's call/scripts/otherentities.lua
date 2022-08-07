@@ -290,6 +290,8 @@ function mod:UlcersUpdate(entity)
 			fireball.FallingAccel = 1.5
 			
 			fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
+			
+        	sfx:Play(Isaac.GetSoundIdByName("FireballBit"),1)
 		end
 	end
 end
