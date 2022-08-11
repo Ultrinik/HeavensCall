@@ -144,8 +144,6 @@
 		<sample weight="1" path="spindash_release.wav" />
 	</sound>
 	<sound name="Spring">
-		<sample weight="1" path="spring1.wav" />
-		<sample weight="1" path="spring2.wav" />
-		<sample weight="1" path="spring3.wav" />
+		<sample weight="1" path="spring.wav" />
 	</sound>
 </sounds>

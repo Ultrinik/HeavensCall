@@ -97,7 +97,7 @@
 	</entity>
 
 	<entity name="Mercury Bird" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="100" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
-		<bestiary transform="0,0,1" anim="Idle" />
+		<bestiary transform="0,0,-5" anim="Flying" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
@@ -110,6 +110,10 @@
 	<!-- entity name="Airplane" id="1000" variant="376" subtype="162" anm2path="effect_Airplane.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity -->
+	
+	<entity name="Horn" id="9" variant="377" subtype="160" anm2path="projectile_Horn.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="15" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
 
 
 	<!-- Venus -->
@@ -122,8 +126,8 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
-	<entity name="Candle" id="722" variant="370" subtype="160" anm2path="entity_Candle.anm2" baseHP="400" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
-		<bestiary transform="0,0,1" anim="Idle" />
+	<entity name="Candle" id="722" variant="370" subtype="0" anm2path="entity_Candle.anm2" baseHP="400" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
+		<bestiary transform="0,0,1" anim="IdleLit" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -136,7 +140,7 @@
     </entity>
 	
 	<entity name="Ulcers" id="14" variant="370" subtype="160" anm2path="entity_Ulcers.anm2" baseHP="15" boss="0" champion="0" collisionDamage="1" collisionMass="3" collisionRadius="13" friction="1" gridCollision="walls" hasFloorAlts="false"  numGridCollisionPoints="12" portrait="4" shadowSize="9" stageHP="0" bestiary="true">
-        <bestiary anim="Bestiary" transform="0,0,1"/>
+        <bestiary anim="Fly" transform="0,0,1"/>
         <gibs amount="6" blood="1" bone="0" eye="1" gut="0" large="0" rock="0" dust="0"/>
     </entity>
 
@@ -144,19 +148,19 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
     </entity>
 
-	<entity name="Candle Gurdy" id="722" variant="370" subtype="161" anm2path="entity_CandleGurdy.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
+	<entity name="Candle Gurdy" id="722" variant="371" subtype="0" anm2path="entity_CandleGurdy.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
+		<bestiary transform="0,0,1" anim="Idle1" />
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Candle Siren" id="722" variant="372" subtype="0" anm2path="entity_CandleSiren.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Candle Siren" id="722" variant="370" subtype="162" anm2path="entity_CandleSiren.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
+	<entity name="Candle Colostomia" id="722" variant="373" subtype="0" anm2path="entity_CandleColostomia.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Candle Colostomia" id="722" variant="370" subtype="163" anm2path="entity_CandleColostomia.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
-		<bestiary transform="0,0,1" anim="Idle" />
-		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
-	</entity>
-	<entity name="Candle Maid in the Mist" id="722" variant="370" subtype="164" anm2path="entity_CandleMaidInTheMist.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
+	<entity name="Candle Maid in the Mist" id="722" variant="374" subtype="0" anm2path="entity_CandleMaidInTheMist.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -167,11 +171,11 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Deimos" id="707" variant="371" subtype="160" anm2path="entity_Deimos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="10" portrait="3" bestiary="true" gridCollision="none">
+	<entity name="Deimos" id="707" variant="371" subtype="0" anm2path="entity_Deimos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="10" portrait="3" bestiary="true" gridCollision="none">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Phobos" id="707" variant="372" subtype="160" anm2path="entity_Phobos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="10" portrait="3" bestiary="true" gridCollision="none">
+	<entity name="Phobos" id="707" variant="372" subtype="0" anm2path="entity_Phobos.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="10" portrait="3" bestiary="true" gridCollision="none">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>

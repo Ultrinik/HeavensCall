@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="Unknown" CreatedOn="01-08-2022 3:24:37" Version="12" Fps="30"/>
+	<Info CreatedBy="Unknown" CreatedOn="07-08-2022 23:23:24" Version="14" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="monsters\candle_siren.png" Id="0"/>
@@ -21,6 +21,7 @@
 			<Event Name="Sound" Id="0"/>
 			<Event Name="Shoot" Id="1"/>
 			<Event Name="Reappear" Id="2"/>
+			<Event Name="Sing" Id="3"/>
 		</Events>
 	</Content>
 	<Animations DefaultAnimation="Idle">
@@ -182,6 +183,7 @@
 			</NullAnimations>
 			<Triggers>
 				<Trigger EventId="0" AtFrame="6"/>
+				<Trigger EventId="3" AtFrame="20"/>
 				<Trigger EventId="1" AtFrame="31"/>
 			</Triggers>
 		</Animation>

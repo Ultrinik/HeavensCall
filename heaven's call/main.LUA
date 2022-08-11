@@ -38,6 +38,7 @@ mod.Colors = {
 	fire = Color(1,1,1,1),
 	superFire = Color(0.75,0.75,0.75,1),
 	buttFire = Color(1,1,1,1),
+	mercury = Color(0.3,0.3,0.3,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -54,6 +55,7 @@ function mod:ColorizeColors()
 	mod.Colors.fire:SetColorize(5,2.5,0,1)
 	mod.Colors.superFire:SetColorize(20,7,0,1)
 	mod.Colors.buttFire:SetColorize(2,1,0,1)
+	mod.Colors.mercury:SetColorize(7,5,7,1)
 end
 mod:ColorizeColors()
 
@@ -122,8 +124,8 @@ end
 
 --Return the nearest integer from n in a list
 function mod:Takeclosest(list, n)
-    difference = math.abs(list[1]-n)
-	current = list[1]
+    local difference = math.abs(list[1]-n)
+	local current = list[1]
 	for i=2, #list do
 		if (math.abs(list[i]-n) < difference) then
 			difference = math.abs(list[i]-n)
@@ -562,7 +564,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 
 		--Now the actual background and walls
 		--SPACEEE
-		local wallspos = room:GetCenterPos(0)-Vector(0,1)*room:GetCenterPos(0).Y/2
+		local wallspos = room:GetCenterPos()-Vector(0,1)*room:GetCenterPos().Y/2
 		local effect = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0, wallspos, Vector.Zero, nil) --Some inert thing thats in the floor
 		local sprite = effect:GetSprite()
 		sprite.Color = Color(1,1,1,1)
@@ -705,10 +707,10 @@ function mod:SpawnPlanet(entityNum)
 	local validType = entityNum==mod.Entity.Jupiter or entityNum==mod.Entity.Saturn or entityNum==mod.Entity.Uranus or entityNum==mod.Entity.Neptune
 	if validType and #(mod:FindByTypeMod(entityNum))==0 then
 		
-		local position = Isaac.GetRandomPosition(0)
+		local position = Isaac.GetRandomPosition()
 		for i=1, 50 do
 			if position:Distance(Isaac.GetPlayer(0).Position) > 200 then break end
-			position = Isaac.GetRandomPosition(0)
+			position = Isaac.GetRandomPosition()
 		end
 
 		local planet = mod:SpawnEntity(entityNum, position, Vector.Zero, nil)
@@ -726,7 +728,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 		
 		mod:scheduleForUpdate(function()
 			if (not mod.savedata.planetAlive) and (not mod.savedata.planetKilled) then
-				local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos(0)+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
+				local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos()+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
 			end
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
@@ -819,6 +821,11 @@ if HPBars then
 	}
 
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {
+		function(entity)
+			return true
+		end,
+	}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {
 		function(entity)
 			return true
 		end,

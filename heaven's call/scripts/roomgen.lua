@@ -110,7 +110,7 @@ function mod:InitializeRoomData()
 	
 	if hascurseofmaze then
 		mod:scheduleForUpdate(function()
-			level:AddCurse(LevelCurse.CURSE_OF_MAZE)
+			level:AddCurse(LevelCurse.CURSE_OF_MAZE, false)
 			mod.applyingcurseofmaze = false
 		end, 0, ModCallbacks.MC_POST_UPDATE)
 	end

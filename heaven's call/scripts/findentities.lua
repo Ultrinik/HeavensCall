@@ -38,6 +38,7 @@ mod.Entity ={
     CandleMist = 42,
     Deimos = 49,
     Phobos = 50,
+    MercuryBird = 54,
 
     ---------
 
@@ -65,6 +66,7 @@ mod.Entity ={
     Fireball = 34,
     Kiss = 35,
     Missile = 45,
+    Horn = 55,
     
     ---------
 
@@ -75,19 +77,20 @@ mod.Entity ={
 
 }
 mod.DefaultSub = 160
+mod.DefaultEntitySub = 0
 
 --BOSSES-----------------------------------------------------------------------------------------------
 
 mod.EntityInf[mod.Entity.Statue] = {ID = Isaac.GetEntityTypeByName("Astral Statue"), VAR = Isaac.GetEntityVariantByName("Astral Statue"), SUB = mod.DefaultSub}
 
-mod.EntityInf[mod.Entity.Jupiter] = {ID = Isaac.GetEntityTypeByName("Jupiter"), VAR = Isaac.GetEntityVariantByName("Jupiter"),  SUB = 0}
-mod.EntityInf[mod.Entity.Saturn] = {ID = Isaac.GetEntityTypeByName("Saturn"),  VAR = Isaac.GetEntityVariantByName("Saturn"),   SUB = 0}
-mod.EntityInf[mod.Entity.Uranus] = {ID = Isaac.GetEntityTypeByName("Uranus"),  VAR = Isaac.GetEntityVariantByName("Uranus"),   SUB = 0}
-mod.EntityInf[mod.Entity.Neptune] = {ID = Isaac.GetEntityTypeByName("Neptune"), VAR = Isaac.GetEntityVariantByName("Neptune"),  SUB = 0}
+mod.EntityInf[mod.Entity.Jupiter] = {ID = Isaac.GetEntityTypeByName("Jupiter"), VAR = Isaac.GetEntityVariantByName("Jupiter"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Saturn] = {ID = Isaac.GetEntityTypeByName("Saturn"),  VAR = Isaac.GetEntityVariantByName("Saturn"),   SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Uranus] = {ID = Isaac.GetEntityTypeByName("Uranus"),  VAR = Isaac.GetEntityVariantByName("Uranus"),   SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Neptune] = {ID = Isaac.GetEntityTypeByName("Neptune"), VAR = Isaac.GetEntityVariantByName("Neptune"),  SUB = mod.DefaultEntitySub}
 
-mod.EntityInf[mod.Entity.Mercury] =  {ID = Isaac.GetEntityTypeByName("Mercury"), VAR = Isaac.GetEntityVariantByName("Mercury"), SUB = 0}
-mod.EntityInf[mod.Entity.Venus] =  {ID = Isaac.GetEntityTypeByName("Venus"), VAR = Isaac.GetEntityVariantByName("Venus"), SUB = 0}
-mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars"), VAR = Isaac.GetEntityVariantByName("Mars"), SUB = 0}
+mod.EntityInf[mod.Entity.Mercury] =  {ID = Isaac.GetEntityTypeByName("Mercury"), VAR = Isaac.GetEntityVariantByName("Mercury"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Venus] =  {ID = Isaac.GetEntityTypeByName("Venus"), VAR = Isaac.GetEntityVariantByName("Venus"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars"), VAR = Isaac.GetEntityVariantByName("Mars"), SUB = mod.DefaultEntitySub}
 
 --ENEMIES-----------------------------------------------------------------------------------------------
 
@@ -98,16 +101,18 @@ mod.EntityInf[mod.Entity.IceTurd] = {ID = Isaac.GetEntityTypeByName("Ice Turd"),
 
 mod.EntityInf[mod.Entity.NeptuneFaker] = {ID = Isaac.GetEntityTypeByName("NeptuneFaker"), VAR = Isaac.GetEntityVariantByName("NeptuneFaker"),  SUB = mod.DefaultSub}
 
-mod.EntityInf[mod.Entity.Ulcers] = {ID = Isaac.GetEntityTypeByName("Ulcers"), VAR = Isaac.GetEntityVariantByName("Ulcers"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.Candle] = {ID = Isaac.GetEntityTypeByName("Candle"), VAR = Isaac.GetEntityVariantByName("Candle"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.CandleGurdy] = {ID = Isaac.GetEntityTypeByName("Candle Gurdy"), VAR = Isaac.GetEntityVariantByName("Candle Gurdy"),  SUB = mod.DefaultSub+1}
-mod.EntityInf[mod.Entity.CandleSiren] = {ID = Isaac.GetEntityTypeByName("Candle Siren"), VAR = Isaac.GetEntityVariantByName("Candle Siren"),  SUB = mod.DefaultSub+2}
-mod.EntityInf[mod.Entity.SirenRag] = {ID = Isaac.GetEntityTypeByName("Siren Rag"), VAR = Isaac.GetEntityVariantByName("Siren Rag"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.CandleColostomia] = {ID = Isaac.GetEntityTypeByName("Candle Colostomia"), VAR = Isaac.GetEntityVariantByName("Candle Colostomia"),  SUB = mod.DefaultSub+3}
-mod.EntityInf[mod.Entity.CandleMist] = {ID = Isaac.GetEntityTypeByName("Candle Maid in the Mist"), VAR = Isaac.GetEntityVariantByName("Candle Maid in the Mist"),  SUB = mod.DefaultSub+4}
+mod.EntityInf[mod.Entity.MercuryBird] = {ID = Isaac.GetEntityTypeByName("Mercury Bird"), VAR = Isaac.GetEntityVariantByName("Mercury Bird"),  SUB = mod.DefaultSub}
 
-mod.EntityInf[mod.Entity.Deimos] = {ID = Isaac.GetEntityTypeByName("Deimos"), VAR = Isaac.GetEntityVariantByName("Deimos"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.Phobos] = {ID = Isaac.GetEntityTypeByName("Phobos"), VAR = Isaac.GetEntityVariantByName("Phobos"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Ulcers] = {ID = Isaac.GetEntityTypeByName("Ulcers"), VAR = Isaac.GetEntityVariantByName("Ulcers"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Candle] = {ID = Isaac.GetEntityTypeByName("Candle"), VAR = Isaac.GetEntityVariantByName("Candle"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.CandleGurdy] = {ID = Isaac.GetEntityTypeByName("Candle Gurdy"), VAR = Isaac.GetEntityVariantByName("Candle Gurdy"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.CandleSiren] = {ID = Isaac.GetEntityTypeByName("Candle Siren"), VAR = Isaac.GetEntityVariantByName("Candle Siren"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.SirenRag] = {ID = Isaac.GetEntityTypeByName("Siren Rag"), VAR = Isaac.GetEntityVariantByName("Siren Rag"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.CandleColostomia] = {ID = Isaac.GetEntityTypeByName("Candle Colostomia"), VAR = Isaac.GetEntityVariantByName("Candle Colostomia"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.CandleMist] = {ID = Isaac.GetEntityTypeByName("Candle Maid in the Mist"), VAR = Isaac.GetEntityVariantByName("Candle Maid in the Mist"),  SUB = mod.DefaultEntitySub}
+
+mod.EntityInf[mod.Entity.Deimos] = {ID = Isaac.GetEntityTypeByName("Deimos"), VAR = Isaac.GetEntityVariantByName("Deimos"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Phobos] = {ID = Isaac.GetEntityTypeByName("Phobos"), VAR = Isaac.GetEntityVariantByName("Phobos"),  SUB = mod.DefaultEntitySub}
 
 --EFFECTS-----------------------------------------------------------------------------------------------
 
@@ -139,6 +144,8 @@ mod.EntityInf[mod.Entity.Icicle] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isa
 mod.EntityInf[mod.Entity.BigIcicle] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Big Icicle"),  SUB = mod.DefaultSub+1}
 mod.EntityInf[mod.Entity.Hail] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Hail"),  SUB = mod.DefaultSub}
 
+mod.EntityInf[mod.Entity.Horn] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Horn"),  SUB = mod.DefaultSub}
+
 mod.EntityInf[mod.Entity.Flame] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Flame"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Fireball] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Fireball"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Kiss] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Kiss"),  SUB = mod.DefaultSub}
@@ -146,6 +153,7 @@ mod.EntityInf[mod.Entity.Kiss] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac
 mod.EntityInf[mod.Entity.Missile] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Missile"),  SUB = mod.DefaultSub}
 
 --OTHERS-------------------------------------------------------------------------------------------------
+
 mod.EntityInf[mod.Entity.MarsGigaBomb] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_NORMAL,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsGigaRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub+1}

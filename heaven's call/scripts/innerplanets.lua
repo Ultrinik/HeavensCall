@@ -2,6 +2,7 @@ local mod = HeavensCall
 local game = Game()
 local rng = RNG()
 local sfx = SFXManager()
+local music = MusicManager()
 local json = require("json")
 
 
@@ -53,9 +54,11 @@ mod.MRMSState = {
 }
 mod.chainMR = {--                        A     I      Circ   Line   Spin   DSpin   Horn   Side   Drill  Brid
     [mod.MRMSState.APPEAR] = 	        {0,     1,     0,     0,     0,     0,      0,     0,     0,     0},
-    [mod.MRMSState.IDLE] = 	            {0, 	0.709, 0.015, 0.03,	 0.058,	0.058,	0.04,  0.035, 0.04,	 0.015},
+    [mod.MRMSState.IDLE] = 	            {0, 	0.709, 0.025, 0.02,	 0.058,	0.058,	0.04,  0.035, 0.04,	 0.015},
+    --[mod.MRMSState.IDLE] = 	            {0,     0,     0,     0,     0,     0,      0,     0,     0,     1},
+    --[mod.MRMSState.IDLE] = 	            {0,     0,     0,     0,     0,     0,      0,     0,     1,     0},
     [mod.MRMSState.CIRCLE] = 	        {0,	    0.7,   0,	  0,	 0.15,	0.15,	0,	   0,	  0,	 0},
-    [mod.MRMSState.LINES] = 	        {0,	    0.6,   0,	  0.04,	 0.12,	0.12,	0.12,  0,	  0,	 0},
+    [mod.MRMSState.LINES] = 	        {0,	    0.6,   0.03,  0.01,	 0.12,	0.12,	0.12,  0,	  0,	 0},
     [mod.MRMSState.SPINDASH] = 	        {0,	    0.4,   0,	  0,	 0.3,	0.3,    0,	   0,	  0,	 0},
     [mod.MRMSState.DOUBLESPINDASH] = 	{0,	    0.4,   0,	  0,	 0.3,	0.3,    0,	   0,	  0,	 0},
     [mod.MRMSState.HORN] = 	            {0,	    0.7,   0,	  0,	 0.15,	0.15,	0,	   0,	  0,	 0},
@@ -69,12 +72,35 @@ mod.MRConst = {--Some constant variables of Mercury
     speed = 1.7,
 
     nJumps = 3,
-    jumpSpeed = 35,
+    jumpSpeed = 45,
+    nJumpProj = 8,
 
-    nDrills = 7,
+    nDrills = 14,
+    nDrillProjectiles = 10,
+    drillRockSpeed = 12,
+    drillShotSpeed = 10,
 
-    spindashSpeed = 60,
+    spindashSpeed = 75,
     maxBounces = 3,
+
+    nBirds = 12,
+    idleBirdTimeInterval = Vector(10,20),
+    birdShotSpeed = 10,
+    birdSpeed = 1.45,
+
+    nLines = 4,
+    lineSpeed = 70,
+    nLineShots = 4,
+    lineShotSpeed = 15,
+
+    nCircles = 35,
+    circleSpeed = 100,
+    circlingDistance = 575,
+    angleSpeed = 20,
+    circleShotSpeed = 8,
+
+    hornSpeed = 18,
+    nHornDivisions = 12,
 }
 
 function mod:MercuryUpdate(entity)
@@ -95,6 +121,11 @@ function mod:MercuryUpdate(entity)
             data.TargetVel = target.Velocity
             data.IsSpindashing = false
             data.BounceCount = 0
+            data.IsLining = false
+            data.LineCount = 0
+            data.IsCircling = false
+            data.CircleCount = 0
+            data.IsExploded = false
         end
         
         --Frame
@@ -145,23 +176,99 @@ function mod:MercuryUpdate(entity)
 end
 function mod:MercuryCircle(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
+        sprite:Play("Rainbow",true)
+    elseif sprite:IsFinished("Rainbow") then
+        entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NONE
+        data.IsCircling = true
+        music:PitchSlide(3.5)
         sprite:Play("Circle",true)
     elseif sprite:IsFinished("Circle") then
-        data.State = mod:MarkovTransition(data.State, mod.chainMR)
-        data.StateFrame = 0
+        if data.CircleCount >= mod.MRConst.nCircles then
+            entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
+            data.IsCircling = false
+            data.MercuryTargetVector = nil
+            data.CircleCount = 0
+            music:ResetPitch()
 
+            data.State = mod:MarkovTransition(data.State, mod.chainMR)
+            data.StateFrame = 0
+        else
+            data.CircleCount = data.CircleCount + 1
+            sprite:Play("Circle",true)
+
+
+            local direction = (target.Position - entity.Position):Normalized()
+
+            local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction*mod.MRConst.circleShotSpeed, entity):ToProjectile()
+            tear:GetSprite().Color = mod.Colors.mercury
+            tear.Height = -30
+        end
+
+    end
+
+    local player = Isaac.GetPlayer(0)
+    if data.IsCircling then
+        if data.MercuryTargetVector == nil then
+            data.MercuryTargetVector = (entity.Position - player.Position):Normalized() * mod.MRConst.circlingDistance
+            data.MercuryTargetAngle = 0
+        end
+        
+        data.MercuryTarget = player.Position + data.MercuryTargetVector:Rotated(data.MercuryTargetAngle)
+        data.MercuryTargetAngle = (data.MercuryTargetAngle + mod.MRConst.angleSpeed)%360
+
+
+        data.targetvelocity = ((data.MercuryTarget - entity.Position):Normalized()):Rotated(mod:RandomInt(-10, 10))
+
+		--Do the actual movement
+		entity.Velocity = data.targetvelocity * mod.MRConst.circleSpeed
 
     end
 
 end
 function mod:MercuryLines(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
+        sprite:Play("Rainbow",true)
+    elseif sprite:IsFinished("Rainbow") then
+        entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS_X
+        data.IsLining = true
+        music:PitchSlide(3.5)
         sprite:Play("Lines",true)
     elseif sprite:IsFinished("Lines") then
-        data.State = mod:MarkovTransition(data.State, mod.chainMR)
-        data.StateFrame = 0
+        if data.LineCount >= mod.MRConst.nLines then
+            entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
+            data.IsLining = false
+            data.LineCount = 0
+            music:ResetPitch()
+
+            data.State = mod:MarkovTransition(data.State, mod.chainMR)
+            data.StateFrame = 0
+        else
+            data.LineCount = data.LineCount + 1
+            sprite:Play("Lines",true)
 
 
+            for i=0, mod.MRConst.nLineShots-1 do
+                mod:scheduleForUpdate(function()
+                    local direction = (target.Position - entity.Position):Normalized()
+                    local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction*mod.MRConst.lineShotSpeed, entity):ToProjectile()
+                    tear:GetSprite().Color = mod.Colors.mercury
+                end,i*5)
+            end
+        end
+
+    end
+
+    if data.IsLining then
+        local room = game:GetRoom()
+        entity.Velocity = Vector(0, -mod.MRConst.lineSpeed)
+
+        if entity.Position.Y < room:GetCenterPos().Y and mod:IsOutsideRoom(entity.Position + Vector(0,100), room) then
+            if room:GetRoomShape() >= RoomShape.ROOMSHAPE_2x2 or room:GetRoomShape() == RoomShape.ROOMSHAPE_1x2 or room:GetRoomShape() == RoomShape.ROOMSHAPE_IIV then
+                entity.Position = Vector(entity.Position.X, 696+ 300)
+            else
+                entity.Position = Vector(entity.Position.X, 417 + 300)
+            end
+        end
     end
 
 end
@@ -188,9 +295,12 @@ function mod:MercurySpindash(entity, data, sprite, target,room)
         local direction = (data.TargetPos - entity.Position):Normalized()
         entity.Velocity = direction * mod.MRConst.spindashSpeed
 
+    elseif sprite:IsEventTriggered("Spin") then
+        mod:MercurySplash(entity, 2, 2, (-data.TargetPos + entity.Position):GetAngleDegrees())
     end
 
     if data.IsSpindashing and entity:CollidesWithGrid() then
+        entity.CollisionDamage = 0
         data.BounceCount = data.BounceCount + 1
         entity.Velocity = entity.Velocity:Normalized() * (mod.MRConst.spindashSpeed) * (mod.MRConst.maxBounces - data.BounceCount) / mod.MRConst.maxBounces
     end
@@ -218,13 +328,6 @@ function mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
         entity.Velocity = Vector.Zero
         sfx:Play(Isaac.GetSoundIdByName("Spindash"),1)
         data.TargetPos2 = target.Position
-        
-        --local laser = EntityLaser.ShootAngle(2,entity.Position , (target.Position - entity.Position):GetAngleDegrees(), 120, Vector.Zero, entity)
-
-    elseif sprite:IsEventTriggered("ReleaseSpin") and sprite:GetAnimation() == "Spindash2" then
-        data.IsSpindashing = true
-        sfx:Play(Isaac.GetSoundIdByName("SpindashRelease"),1)
-        entity.CollisionDamage = 1
 
         local a = data.TargetPos - entity.Position
         local b = data.TargetPos2 - entity.Position
@@ -233,16 +336,32 @@ function mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
         local extraAngle = math.asin( math.abs(cross) / (a:Length() * b:Length()) )
         extraAngle = extraAngle * 180 / math.pi
         if cross < 0 then extraAngle = - extraAngle end
+        data.ExtraAngle = extraAngle
+        
+        --local laser = EntityLaser.ShootAngle(2,entity.Position , (target.Position - entity.Position):GetAngleDegrees(), 120, Vector.Zero, entity)
 
-        local direction = b:Normalized():Rotated(extraAngle)
+    elseif sprite:IsEventTriggered("ReleaseSpin") and sprite:GetAnimation() == "Spindash2" then
+        data.IsSpindashing = true
+        sfx:Play(Isaac.GetSoundIdByName("SpindashRelease"),1)
+        entity.CollisionDamage = 1
+
+
+        local direction = (data.TargetPos2 - entity.Position):Normalized():Rotated(data.ExtraAngle)
 
         --local laser = EntityLaser.ShootAngle(2,entity.Position , direction:GetAngleDegrees(), 120, Vector.Zero, entity)
 
         entity.Velocity = direction * mod.MRConst.spindashSpeed
 
+    elseif sprite:IsEventTriggered("Spin") and sprite:GetAnimation() == "Spindash" then
+        mod:MercurySplash(entity, 2, 2, (-data.TargetPos + entity.Position):GetAngleDegrees())
+    elseif sprite:IsEventTriggered("Spin") and sprite:GetAnimation() == "Spindash2" then
+        mod:MercurySplash(entity, 2, 2, (- (data.TargetPos2 - entity.Position):Rotated(data.ExtraAngle)):GetAngleDegrees())
+
     end
 
     if data.IsSpindashing and entity:CollidesWithGrid() then
+        sprite:SetLastFrame()
+        mod:MercurySplash(entity, 4, 0.8)
         entity.Velocity = Vector.Zero
         game:ShakeScreen(20)
     end
@@ -255,7 +374,11 @@ function mod:MercuryHorn(entity, data, sprite, target,room)
         data.State = mod:MarkovTransition(data.State, mod.chainMR)
         data.StateFrame = 0
 
-
+    elseif sprite:IsEventTriggered("Shot") then
+        local direction = (target.Position - entity.Position):Normalized()
+        local horn = mod:SpawnEntity(mod.Entity.Horn, entity.Position, direction*mod.MRConst.hornSpeed, entity):ToProjectile()
+        horn:GetData().IsHorn_HC = true
+        horn.Parent = entity
     end
 
 end
@@ -273,15 +396,17 @@ function mod:MercurySideJumps(entity, data, sprite, target,room)
     elseif sprite:IsEventTriggered("StartInvulnerable") then
         local direction = (target.Position - entity.Position):Normalized()
         entity.Velocity = direction * mod.MRConst.jumpSpeed
-        sfx:Play(Isaac.GetSoundIdByName("Spring"),1)
+        sfx:Play(Isaac.GetSoundIdByName("Spring"),0.2, 2,false, 1 + 0.5*rng:RandomFloat())
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
         
     elseif sprite:IsEventTriggered("EndInvulnerable") then
         entity.Velocity = Vector.Zero
-        game:ShakeScreen(10)
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
 
-
+        if data.JumpCount > 1 then
+            game:ShakeScreen(10)
+            mod:MercurySplash(entity, 2, 0.75)
+        end
     end
 
 end
@@ -290,12 +415,42 @@ function mod:MercuryDrill(entity, data, sprite, target,room)
         sprite:Play("DrillStart",true)
     elseif sprite:IsFinished("DrillStart") then
         sprite:Play("Drill",true)
+
+        for i = 1, mod.MRConst.nDrillProjectiles do
+            mod:scheduleForUpdate(function()
+                local offset = i*180/mod.MRConst.nDrillProjectiles
+                for j = 1, 4 do
+                    local angle = j*360/4 + offset
+                    local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, Vector.FromAngle(angle)*mod.MRConst.drillRockSpeed, entity):ToProjectile()
+                    
+                    --Color
+                    local roomdesc = game:GetLevel():GetCurrentRoomDesc()
+                    if roomdesc and roomdesc.Data and ((roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant and roomdesc.Data.Variant <= mod.maxvariant) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+                        local newColor = Color(1,1,1,0.65)
+                        newColor:SetColorize(1,1,1.2,1)
+                        tear:GetSprite().Color = newColor
+                    end
+
+                end
+            end, i*6)
+
+        end
+
     elseif sprite:IsFinished("Drill") then
         if data.DrillCount < mod.MRConst.nDrills then
             sprite:Play("Drill",true)
             data.DrillCount = data.DrillCount + 1
         else
             sprite:Play("DrillEnd",true)
+        end
+
+        if data.DrillCount % 3 == 0 then
+            for i = 1, 8 do
+                local angle = i*360/8
+                local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, Vector.FromAngle(angle)*mod.MRConst.drillShotSpeed, entity):ToProjectile()
+                tear:GetSprite().Color = mod.Colors.mercury
+
+            end
         end
     elseif sprite:IsFinished("DrillEnd") then
         data.DrillCount = 0
@@ -310,10 +465,53 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Bird",true)
     elseif sprite:IsFinished("Bird") then
+
+        entity.Visible = true
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+        data.IsExploded = false
+
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.MercuryBird)) do
+            e:Remove()
+        end
+
         data.State = mod:MarkovTransition(data.State, mod.chainMR)
         data.StateFrame = 0
 
+    elseif sprite:IsEventTriggered("Explosion") then
 
+        entity.Visible = false
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        data.IsExploded = true
+
+        --Tear explosion
+        local bouncer = Isaac.Spawn(EntityType.ENTITY_BOUNCER, 0, 0, entity.Position, Vector.Zero, entity):ToNPC()
+        bouncer.SpriteScale = Vector.Zero
+        bouncer.Visible = false
+        bouncer.State = 16
+        bouncer:Die()
+        
+		mod:scheduleForUpdate(function()
+            for _, t in ipairs(Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL)) do
+                t:GetSprite().Color = mod.Colors.mercury
+            end
+		end, 3)
+
+		--Particles
+		game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13, mod.Colors.mercury)
+		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+		bloody:GetSprite().Color = mod.Colors.mercury
+
+        for i=1, mod.MRConst.nBirds do
+            local velocity = Vector(0.25 + 0.5*rng:RandomFloat(),0):Rotated(360*rng:RandomFloat())
+            bird = mod:SpawnEntity(mod.Entity.MercuryBird, entity.Position+3*velocity, velocity, entity)
+            bird.Parent = entity
+            bird:GetSprite():Play("Flying")
+        end 
+
+    end
+
+    if data.IsExploded then
+        mod:MercuryMove(entity, data, room, target)
     end
 
 end
@@ -348,6 +546,25 @@ function mod:MercuryMove(entity, data, room, target)
     --Do the actual movement
     entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.MRConst.speed
     data.targetvelocity = data.targetvelocity * 0.99
+end
+
+--Splash
+function mod:MercurySplash(entity, amount, range, angle)
+    local projectileParams = ProjectileParams()
+    projectileParams.Variant = ProjectileVariant.PROJECTILE_NORMAL
+    projectileParams.Color = mod.Colors.mercury
+    projectileParams.FallingAccelModifier = 1/range
+
+    if angle == nil then
+        local offset = 360*rng:RandomFloat()
+        for i = 1, mod.MRConst.nJumpProj do
+            local newAngle = i*360/mod.MRConst.nJumpProj + offset
+            entity:FireBossProjectiles (amount, entity.Position + Vector(1,0):Rotated(newAngle), 0, projectileParams )
+        end
+    else
+        entity:FireBossProjectiles (amount, entity.Position + Vector(1,0):Rotated(angle), 0, projectileParams )
+    end
+
 end
 
 --Callbacks
@@ -401,7 +618,7 @@ mod.VMSState = {
 }
 mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
     [mod.VMSState.APPEAR] = 	{0,   0,    0,    1,    0,    0,    0,    0,    0,   0,   0},
-    [mod.VMSState.IDLE] = 	    {0,	  0.60, 0.01, 0.2,	0.005,0.01,	0.02, 0.045,0.005,0.005,0.1},
+    [mod.VMSState.IDLE] = 	    {0,	  0.40, 0.01, 0.3,	0.005,0.01,	0.02, 0.045,0.005,0.005,0.2},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    1,	0.08, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
@@ -452,12 +669,11 @@ mod.VConst = {--Some constant variables of Venus
 
     jumpSpeed = 15,
 
-    kissSpeed = 25,
+    kissSpeed = 35,
     kissHomming = 0.7,
 
-    nSlamFireRing = 10,
-    nSlamSpinRing = 5,
-    nSlamFireball = 6,
+    nSlamFireRing = 12,
+    nSlamFireball = 8,
 
     sirenResummonRate = 7,
     sirenSummons = 8,
@@ -869,6 +1085,10 @@ end
 
 --ded
 function mod:VenusDeath(entity)
+    for _, e in ipairs(mod:GetCandles()) do
+        e:Die()
+    end
+
     --Fart:
     mod:NormalDeath(entity)
 end
@@ -885,7 +1105,7 @@ function mod:GetUnburnedPlayer()
     local unburnedPlayers = {}
 	for i=0, game:GetNumPlayers ()-1 do
 		local player = game:GetPlayer(i)
-		if player:GetData().BurnTime and player:GetData().BurnTime <= 1 then 
+		if player:GetData().BurnTime == nil or player:GetData().BurnTime <= 1 then 
 			unburnedPlayers[#unburnedPlayers+1]=player
 		end
 	end
@@ -898,7 +1118,7 @@ end
 
 --Get candle summons
 function mod:GetCandles()
-    local candles = Isaac.FindByType(mod.EntityInf[mod.Entity.Candle].ID,mod.EntityInf[mod.Entity.Candle].VAR)
+    local candles = Isaac.FindByType(mod.EntityInf[mod.Entity.Candle].ID)
     return candles
 end
 
@@ -1016,7 +1236,8 @@ mod.chainM = {--                 App   Mov    UP     DOWN   LEFT   RIGHT  Atk   
     [mod.MMSState.DOWN] =       {0,    0,     0.22,  0.24,  0.22,  0.22,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.LEFT] =       {0,    0,     0.22,  0.22,  0.24,  0.22,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.RIGHT] =      {0,    0,     0.22,  0.22,  0.22,  0.24,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
-    [mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0.05,  0.14,   0.1,    0.1,    0.1,    0.14,   0.3,   0.7},
+    [mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0.05,  0.14,   0.1,    0.1,    0.1,    0.14,   0.3,   0.07},
+    --[mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0,  0,   0,    0,    0,    0,   0,   1},
     [mod.MMSState.CLOCK] =      {0,    1,     0,     0,     0,     0,     0,     0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.LASER] =      {0,    0.3,   0,     0,     0,     0,     0,     0,     0.3,    0.3,    0,      0,      0.1,    0,     0},
     [mod.MMSState.MISSILES] =   {0,    0.5,   0,     0,     0,     0,     0,     0,     0,      0.2,    0.2,    0,      0.1,    0,     0},
@@ -1319,7 +1540,7 @@ function mod:MarsRocket(entity, data, sprite, target,room)
         end
 
         local rocketType = mod.Entity.MarsRocket
-        if rng:RandomFloat() < 0.1 then
+        if rng:RandomFloat() <= 0.02 then
             rocketType = mod.Entity.MarsGigaRocket
         end
 
