@@ -83,7 +83,7 @@ mod.MRConst = {--Some constant variables of Mercury
     spindashSpeed = 75,
     maxBounces = 3,
 
-    nBirds = 12,
+    nBirds = 10,
     idleBirdTimeInterval = Vector(10,20),
     birdShotSpeed = 10,
     birdSpeed = 1.45,
@@ -101,6 +101,8 @@ mod.MRConst = {--Some constant variables of Mercury
 
     hornSpeed = 18,
     nHornDivisions = 12,
+
+    trainsSpeed = 70,
 }
 
 function mod:MercuryUpdate(entity)
@@ -126,51 +128,65 @@ function mod:MercuryUpdate(entity)
             data.IsCircling = false
             data.CircleCount = 0
             data.IsExploded = false
+            data.TrainFlag = false
+            data.TrainReady = false
+            data.TrainDirection = -1
+            data.Regen = false
         end
         
         --Frame
         data.StateFrame = data.StateFrame + 1
-
-        if data.State == mod.MRMSState.APPEAR then
-            if data.StateFrame == 1 then
-                mod:AppearPlanet(entity)
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-            elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-                data.State = mod:MarkovTransition(data.State, mod.chainMR)
-                data.StateFrame = 0
-            elseif sprite:IsEventTriggered("EndAppear") then
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
-            end
-            
-        elseif data.State == mod.MRMSState.IDLE then
-            if data.StateFrame == 1 then
-                sprite:Play("Idle",true)
-            elseif sprite:IsFinished("Idle") then
-                data.State = mod:MarkovTransition(data.State, mod.chainMR)
-                data.StateFrame = 0
-                
-            else
-                mod:MercuryMove(entity, data, room, target)
-            end
-            
-        elseif data.State == mod.MRMSState.CIRCLE then
-            mod:MercuryCircle(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.LINES then
-            mod:MercuryLines(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.SPINDASH then
-            mod:MercurySpindash(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.DOUBLESPINDASH then
-            mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.HORN then
-            mod:MercuryHorn(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.SIDEJUMPS then
-            mod:MercurySideJumps(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.DRILL then
-            mod:MercuryDrill(entity, data, sprite, target,room)
-        elseif data.State == mod.MRMSState.BIRDS then
-            mod:MercuryBirds(entity, data, sprite, target,room)
+        
+        if not data.TrainFlag and entity.HitPoints < entity.MaxHitPoints * 0.12 and data.State ~= mod.MRMSState.BIRDS then
+            data.TrainFlag = true
+            data.StateFrame = 0
         end
+
+        if data.TrainFlag then
+            mod:MercuryTrain(entity, data, sprite, target,room)
+        else
+            if data.State == mod.MRMSState.APPEAR then
+                if data.StateFrame == 1 then
+                    mod:AppearPlanet(entity)
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+                    data.State = mod:MarkovTransition(data.State, mod.chainMR)
+                    data.StateFrame = 0
+                elseif sprite:IsEventTriggered("EndAppear") then
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+                end
+                
+            elseif data.State == mod.MRMSState.IDLE then
+                if data.StateFrame == 1 then
+                    sprite:Play("Idle",true)
+                elseif sprite:IsFinished("Idle") then
+                    data.State = mod:MarkovTransition(data.State, mod.chainMR)
+                    data.StateFrame = 0
+                    
+                else
+                    mod:MercuryMove(entity, data, room, target)
+                end
+                
+            elseif data.State == mod.MRMSState.CIRCLE then
+                mod:MercuryCircle(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.LINES then
+                mod:MercuryLines(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.SPINDASH then
+                mod:MercurySpindash(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.DOUBLESPINDASH then
+                mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.HORN then
+                mod:MercuryHorn(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.SIDEJUMPS then
+                mod:MercurySideJumps(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.DRILL then
+                mod:MercuryDrill(entity, data, sprite, target,room)
+            elseif data.State == mod.MRMSState.BIRDS then
+                mod:MercuryBirds(entity, data, sprite, target,room)
+            end
+        end
+
 
     end
 end
@@ -259,7 +275,6 @@ function mod:MercuryLines(entity, data, sprite, target,room)
     end
 
     if data.IsLining then
-        local room = game:GetRoom()
         entity.Velocity = Vector(0, -mod.MRConst.lineSpeed)
 
         if entity.Position.Y < room:GetCenterPos().Y and mod:IsOutsideRoom(entity.Position + Vector(0,100), room) then
@@ -469,6 +484,7 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
         entity.Visible = true
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
         data.IsExploded = false
+        data.Regen = false
 
         for _, e in ipairs(mod:FindByTypeMod(mod.Entity.MercuryBird)) do
             e:Remove()
@@ -478,16 +494,18 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Explosion") then
-
+        data.IsExploded = true
         entity.Visible = false
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-        data.IsExploded = true
 
         --Tear explosion
         local bouncer = Isaac.Spawn(EntityType.ENTITY_BOUNCER, 0, 0, entity.Position, Vector.Zero, entity):ToNPC()
         bouncer.SpriteScale = Vector.Zero
         bouncer.Visible = false
         bouncer.State = 16
+        bouncer:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+        bouncer:AddEntityFlags(EntityFlag.FLAG_NO_DEATH_TRIGGER)
+        bouncer:AddEntityFlags(EntityFlag.FLAG_REDUCE_GIBS)
         bouncer:Die()
         
 		mod:scheduleForUpdate(function()
@@ -508,10 +526,73 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
             bird:GetSprite():Play("Flying")
         end 
 
+    elseif sprite:IsEventTriggered("Regen") then
+        entity.Velocity = Vector.Zero
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+        entity.Visible = true
+        data.IsExploded = false
+        data.Regen = true
+
     end
 
     if data.IsExploded then
         mod:MercuryMove(entity, data, room, target)
+    end
+
+end
+function mod:MercuryTrain(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("MorphingTime",true)
+    elseif sprite:IsFinished("MorphingTime") then
+        entity.Position = Vector(-100, target.Position.Y)
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+        entity.CollisionDamage = 1
+        data.TrainReady = true
+        
+		sprite:Load("gfx/entity_TankEngine.anm2", true)
+		sprite:LoadGraphics()
+		sprite:Play("Train", true)
+
+    elseif sprite:IsEventTriggered("Jump") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NONE
+        entity.Velocity = Vector(mod.MRConst.jumpSpeed*2, 0)
+
+    elseif sprite:IsFinished("Train") then
+        
+		sprite:Play("Train", true)
+
+    end
+
+    if data.TrainDirection == 1 then
+        if (room:GetRoomShape() >= RoomShape.ROOMSHAPE_2x1 and entity.Position.X > 1900) or (room:GetRoomShape() < RoomShape.ROOMSHAPE_2x1 and entity.Position.X > 1500) then
+            data.TrainDirection = - data.TrainDirection
+            sprite.FlipX = true
+            entity.Position = Vector(entity.Position.X, target.Position.Y)
+        end
+    else
+        if entity.Position.X < -641 then
+            data.TrainDirection = - data.TrainDirection
+            sprite.FlipX = false
+            entity.Position = Vector(entity.Position.X, target.Position.Y)
+        end
+    end
+
+    if data.TrainReady then
+        entity.Velocity = Vector(mod.MRConst.trainsSpeed * data.TrainDirection, 0)
+
+        mod:MercurySplash(entity, 2, 2, (-entity.Velocity):GetAngleDegrees())
+        
+        local posOffset = Vector(80,-120)
+        if sprite.FlipX then
+            posOffset = Vector(-posOffset.X, posOffset.Y)
+        end
+
+		local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DARK_BALL_SMOKE_PARTICLE, 0, entity.Position + posOffset, Vector.Zero, nil):ToEffect()
+		cloud:GetSprite().Scale = 0.8*Vector(1,1)
+		cloud:GetSprite().Color = Color(10,10,10,1)
+
+        game:ShakeScreen(10)
     end
 
 end
@@ -567,9 +648,29 @@ function mod:MercurySplash(entity, amount, range, angle)
 
 end
 
+--ded
+function mod:MercuryDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Mercury].VAR then
+        for _, e in ipairs(mod:GetCandles()) do
+            e:Die()
+        end
+
+        --Fart:
+        mod:NormalDeath(entity)
+    end
+end
+--deding
+function mod:MercuryDying(entity)
+    
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+end
+
 --Callbacks
 --Mercury updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.MercuryUpdate, mod.EntityInf[mod.Entity.Mercury].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.MercuryDeath, mod.EntityInf[mod.Entity.Mercury].ID)
 
 --VENUS---------------------------------------------------------------------------------------------------
 --[[
@@ -618,7 +719,7 @@ mod.VMSState = {
 }
 mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
     [mod.VMSState.APPEAR] = 	{0,   0,    0,    1,    0,    0,    0,    0,    0,   0,   0},
-    [mod.VMSState.IDLE] = 	    {0,	  0.40, 0.01, 0.3,	0.005,0.01,	0.02, 0.045,0.005,0.005,0.2},
+    [mod.VMSState.IDLE] = 	    {0,	  0.30, 0.01, 0.3,	0.005,0.01,	0.02, 0.145,0.005,0.005,0.2},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    1,	0.08, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
@@ -1440,9 +1541,9 @@ function mod:MarsLaser(entity, data, sprite, target,room)
         local position = entity.Position + Vector(0,-40) + direction*distance
         if not mod:IsOutsideRoom(position, room) then
             for i = 0, 1 do
-                local laser = EntityLaser.ShootAngle(160,position , direction:GetAngleDegrees() + 90*(2*i-1), 15, Vector.Zero, entity)
-                laser.Parent = target
-                laser.DisableFollowParent = true
+                local laser = EntityLaser.ShootAngle(7,position , direction:GetAngleDegrees() + 90*(2*i-1), 9, Vector.Zero, entity)
+
+                laser:GetSprite().Color = Color(2,0,0,1)
             end
     
         end
@@ -1581,9 +1682,7 @@ function mod:MarsShots(entity, data, sprite, target,room)
                 for i=0, mod.MConst.nShots-1 do
                     local angle = -mod.MConst.shotAngle/2 + mod.MConst.shotAngle / (mod.MConst.nShots-1) * i
                     local velocity = targetAim:Normalized():Rotated(angle)*mod.MConst.shotSpeed*(1/(j^0.5))
-                    local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
-                    shot.FallingSpeed = 0
-                    shot.FallingAccel = -0.1
+                    local shot = mod:SpawnMarsShot(entity.Position, velocity, entity)
                     shot:AddProjectileFlags(ProjectileFlags.ACCELERATE)
                     shot.Acceleration = 1.02
                 end
@@ -1732,9 +1831,9 @@ end
 function mod:MarsDeath(entity)
     if entity.Variant == mod.EntityInf[mod.Entity.Mars].VAR then
 
-        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Mars)) do
+        for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.Mars].ID)) do
             if e.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
-                e.Die()
+                e:Die()
             end
         end
 
@@ -1777,6 +1876,21 @@ function mod:RocketLeft(bomb)
         bomb.Velocity = mod:Lerp(startVel,targetVel,percent)
         bomb.SpriteRotation = targetVel:GetAngleDegrees()
     end
+end
+
+function mod:SpawnMarsShot(position, velocity, origin)
+    local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, position, velocity, origin):ToProjectile()
+    shot.FallingSpeed = 0
+    shot.FallingAccel = -0.1
+
+    local energy = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TECH_DOT, 0, shot.Position, Vector.Zero, origin):ToEffect()
+    energy.LifeSpan = 1000
+    energy.Parent = shot
+    energy.DepthOffset = 5
+    energy:GetData().MarsShot_HC = true
+    energy:FollowParent(shot)
+
+    return shot
 end
 
 --Callbacks

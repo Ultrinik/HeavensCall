@@ -50,7 +50,7 @@ mod.JMSState = {
 }
 mod.chainJ = {
 	[mod.JMSState.APPEAR] = 	{0, 1,    0,    0,  0,    0,    0,    0},
-	[mod.JMSState.IDLE] = 		{0, 0.4,  0.08, 0,  0.12, 0.17, 0.15, 0.08},
+	[mod.JMSState.IDLE] = 		{0, 0.2,  0.135, 0,  0.175, 0.2,  0.18, 0.11},
 	--[mod.JMSState.IDLE] = 		{0, 0,     1,    0,  0,    0,     0,    0},
 	--[mod.JMSState.IDLE] = 		{0, 0,     0,    0,  0,    0,     0,    1},
 	[mod.JMSState.CHARGE1] = 	{0, 0,    0,    1,  0,    0,    0,    0},
@@ -644,7 +644,7 @@ mod.SMSState = {
 }
 mod.chainS = {
 	[mod.SMSState.APPEAR] = 	{0, 1,    0,    0,    0,    0,    0,    0  , 0},
-	[mod.SMSState.IDLE] = 		{0, 0.35, 0.3, 0,    0,    0,    0,    0.13,0.22},
+	[mod.SMSState.IDLE] = 		{0, 0.2,  0.4,  0,    0,    0,    0,    0.17,0.23},
 	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    0,    0,    0,    1  , 0},
 	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    0,    0,    0,    0  , 1},
 	[mod.SMSState.HIDERING] = 	{0, 0,    0,    0,    0.35, 0.35,  0.3,0,   0},
@@ -1566,7 +1566,7 @@ mod.UMSState = {
 }
 mod.chainU = {
 	[mod.UMSState.APPEAR] = 	{0, 0,    0,    0,      0,      1,    0,   0},
-	[mod.UMSState.IDLE] = 	    {0, 0.4,  0.08,  0.16,  0.12,  0.08,  0.16,0},
+	[mod.UMSState.IDLE] = 	    {0, 0.2,  0.12, 0.2,  	0.16,   0.12, 0.2, 0},
 	[mod.UMSState.TURD] = 	    {0, 1,    0,    0,      0,      0,    0,   0},
 	[mod.UMSState.PROJECTILE] = {0, 0.7,  0.15, 0,      0.15,   0,    0,   0},
 	[mod.UMSState.FARTING] = 	{0, 0.5,  0.2,  0,      0.1,    0,    0.2, 0},
@@ -2128,7 +2128,7 @@ mod.NMSState = {
 }
 mod.chainN = {
 	[mod.NMSState.APPEAR] = 	{0,   1,    0,    0,      0,     0,    0,     0,     0,    0,    0,    0, 0},
-	[mod.NMSState.IDLE] = 		{0,   0.3,  0.7,  0,      0,     0,    0,     0,     0,    0,    0,    0, 0},
+	[mod.NMSState.IDLE] = 		{0,   0.2,  0.8,  0,      0,     0,    0,     0,     0,    0,    0,    0, 0},
 	[mod.NMSState.DEIDLE] = 	{0,   0,    0,    0,      0.28,  0,    0.27,  0,     0.45, 0,    0,    0, 0},
 	[mod.NMSState.REIDLE] = 	{0,   1,    0,    0,      0,     0,    0,     0,     0,    0,    0,    0, 0},
 	[mod.NMSState.SHOT] = 		{0,   0,    0,    0.44,   0.13,  0,    0.13,  0,     0.3,  0,    0,    0, 0},
@@ -2454,7 +2454,7 @@ function mod:NeptuneBubble(entity, data, sprite, target, room)
 		sprite:Play("Bounce",true)
 	elseif sprite:IsFinished("Bounce") then
 		sprite:Play("Bubble",true)
-		sfx:Play(Isaac.GetSoundIdByName("Inflation"),10)
+		sfx:Play(Isaac.GetSoundIdByName("Inflation"),1)
 		data.StateFrame = 1
 		entity.Friction = 1
 	elseif sprite:IsFinished("Bubble") then

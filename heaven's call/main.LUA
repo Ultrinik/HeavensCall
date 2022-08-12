@@ -820,16 +820,12 @@ if HPBars then
 		tooltip = "Styled to resemble the Planetarium but Darker"
 	}
 
-	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {
-		function(entity)
-			return true
-		end,
-	}
-	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {
-		function(entity)
-			return true
-		end,
-	}
+	local truFunc = function(entity)
+		return true
+	end
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Wagon].ID).."."..tostring(mod.EntityInf[mod.Entity.Wagon].VAR)] = {truFunc}
 
 	--Adding the bars
 	Jid = tostring(mod.EntityInf[mod.Entity.Jupiter].ID).."."..tostring(mod.EntityInf[mod.Entity.Jupiter].VAR)

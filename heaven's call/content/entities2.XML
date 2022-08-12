@@ -91,25 +91,18 @@
     </entity>
 
 	<!-- Mercury -->
-	<entity name="Mercury" id="704" variant="370" subtype="0" anm2path="entity_Mercury.anm2" baseHP="800" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Mercury" id="704" variant="370" subtype="0" anm2path="entity_Mercury.anm2" baseHP="1600" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Mercury Bird" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="100" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
-		<bestiary transform="0,0,-5" anim="Flying" />
+	<entity name="Mercury Bird" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="9999" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Tank Engine" id="1000" variant="376" subtype="160" anm2path="effect_TankEngine.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+	<entity name="Wagon" id="723" variant="370" subtype="160" anm2path="entity_Wagon.anm2" baseHP="400" shieldStrength="45" boss="1" champion="0" collisionDamage="1" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
-	<entity name="Wagon" id="1000" variant="376" subtype="161" anm2path="effect_Wagon.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
-    </entity>
-	<!-- entity name="Airplane" id="1000" variant="376" subtype="162" anm2path="effect_Airplane.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
-    </entity -->
 	
 	<entity name="Horn" id="9" variant="377" subtype="160" anm2path="projectile_Horn.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="15" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
@@ -165,6 +158,18 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
+	<!-- Terra -->
+	<entity name="Terra (green)" id="706" variant="370" subtype="0" anm2path="entity_Terra.anm2" baseHP="400" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+		<bestiary transform="0,0,1" anim="Idle" />
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Terra (gray)" id="706" variant="371" subtype="0" anm2path="entity_Terra_2.anm2" baseHP="9999" stageHP="0" shieldStrength="999" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Terra (eden)" id="706" variant="372" subtype="0" anm2path="entity_Terra_3.anm2" baseHP="1200" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+
 	<!-- Mars -->
 	<entity name="Mars" id="707" variant="370" subtype="0" anm2path="entity_Mars.anm2" baseHP="1000" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Idle" />

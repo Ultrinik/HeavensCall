@@ -11,7 +11,9 @@ mod.Entity ={
 
     Mercury = 5,
     Venus = 6,
-    Terra = 7,
+    Terra1 = 7,
+    Terra2 = 56,
+    Terra3 = 57,
     Mars = 8,
 
     Luna = 9,
@@ -52,7 +54,6 @@ mod.Entity ={
     Aurora = 27,
     MarsTarget = 43,
     MarsAirstrike = 44,
-    TankEngine = 52,
     Wagon = 53,
 
     ---------
@@ -90,6 +91,9 @@ mod.EntityInf[mod.Entity.Neptune] = {ID = Isaac.GetEntityTypeByName("Neptune"), 
 
 mod.EntityInf[mod.Entity.Mercury] =  {ID = Isaac.GetEntityTypeByName("Mercury"), VAR = Isaac.GetEntityVariantByName("Mercury"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Venus] =  {ID = Isaac.GetEntityTypeByName("Venus"), VAR = Isaac.GetEntityVariantByName("Venus"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Terra1] =  {ID = Isaac.GetEntityTypeByName("Terra (green)"), VAR = Isaac.GetEntityVariantByName("Terra (green)"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Terra2] =  {ID = Isaac.GetEntityTypeByName("Terra (gray)"), VAR = Isaac.GetEntityVariantByName("Terra (gray)"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Terra3] =  {ID = Isaac.GetEntityTypeByName("Terra (eden)"), VAR = Isaac.GetEntityVariantByName("Terra (eden)"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars"), VAR = Isaac.GetEntityVariantByName("Mars"), SUB = mod.DefaultEntitySub}
 
 --ENEMIES-----------------------------------------------------------------------------------------------
@@ -102,6 +106,7 @@ mod.EntityInf[mod.Entity.IceTurd] = {ID = Isaac.GetEntityTypeByName("Ice Turd"),
 mod.EntityInf[mod.Entity.NeptuneFaker] = {ID = Isaac.GetEntityTypeByName("NeptuneFaker"), VAR = Isaac.GetEntityVariantByName("NeptuneFaker"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.MercuryBird] = {ID = Isaac.GetEntityTypeByName("Mercury Bird"), VAR = Isaac.GetEntityVariantByName("Mercury Bird"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Wagon] = {ID = Isaac.GetEntityTypeByName("Wagon"), VAR = Isaac.GetEntityVariantByName("Wagon"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.Ulcers] = {ID = Isaac.GetEntityTypeByName("Ulcers"), VAR = Isaac.GetEntityVariantByName("Ulcers"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Candle] = {ID = Isaac.GetEntityTypeByName("Candle"), VAR = Isaac.GetEntityVariantByName("Candle"),  SUB = mod.DefaultEntitySub}
@@ -126,9 +131,6 @@ mod.EntityInf[mod.Entity.Snowflake] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaa
 mod.EntityInf[mod.Entity.IceCreep] = {ID = EntityType.ENTITY_EFFECT, VAR = EffectVariant.CREEP_SLIPPERY_BROWN,  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.Tornado] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tornado"),  SUB = mod.DefaultSub}
-
-mod.EntityInf[mod.Entity.TankEngine] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tank Engine"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.Wagon] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Wagon"),  SUB = mod.DefaultSub+1}
 
 mod.EntityInf[mod.Entity.MarsTarget] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Target"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsAirstrike] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Airstrike"),  SUB = mod.DefaultSub+1}

@@ -387,6 +387,8 @@ function mod:CandleUpdate(entity)
 			sprite:Play("Appear", true) 
 		end
 
+		entity.Velocity = Vector.Zero
+
 		if sprite:IsFinished("Appear") then 
 			sprite:Play("Idle", true) 
 			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
@@ -812,9 +814,8 @@ function mod:MartiansUpdate(entity)
 
 			local targetAim = target.Position - entity.Position
 			local velocity = targetAim:Normalized()*mod.MConst.shotSpeed
-			local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
-			shot.FallingSpeed = 0
-			shot.FallingAccel = -0.1
+			local shot =  mod:SpawnMarsShot(entity.Position, velocity, entity)
+
 		end
 	end
 end
@@ -823,6 +824,13 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
 	if entity:GetData().IsMartian and entity.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
 		mod:OrbitParent(entity)
 		mod:MartiansUpdate(entity)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
+	if effect.Variant == EffectVariant.TECH_DOT then
+		if effect.Parent == nil and effect:GetData().MarsShot_HC then
+			effect:Remove()
+		end
 	end
 end)
 
@@ -838,8 +846,13 @@ function mod:BirdUpdate(entity)
 			data.Init = true
 
 			entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+			entity:AddEntityFlags(EntityFlag.FLAG_NO_DEATH_TRIGGER)
+			entity:AddEntityFlags(EntityFlag.FLAG_REDUCE_GIBS)
 			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
 			sprite:Play("Flying", true)
+			sprite:SetFrame(mod:RandomInt(1,10))
 
 			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 			--entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NONE
@@ -866,13 +879,19 @@ function mod:BirdUpdate(entity)
 		--It just basically stays around a something
 		
 		--idleTime == frames moving in the same direction
-		if not data.idleTime then 
-			data.idleTime = mod:RandomInt(mod.MRConst.idleBirdTimeInterval.X, mod.MRConst.idleBirdTimeInterval.Y)
-			data.targetvelocity = ((parent.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-30, 30))
+		if entity.Parent:GetData().Regen then
+			data.idleTime = 1
+			data.targetvelocity = ((parent.Position - entity.Position):Normalized()*10)
+			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ENEMIES
+		else
+			if not data.idleTime then 
+				data.idleTime = mod:RandomInt(mod.MRConst.idleBirdTimeInterval.X, mod.MRConst.idleBirdTimeInterval.Y)
+				data.targetvelocity = ((parent.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-30, 30))
+			end
 		end
 		
 		--If run out of idle time
-		if data.idleTime <= 0 and data.idleTime ~= nil then
+		if data.idleTime and data.idleTime <= 0 then
 			data.idleTime = nil
 		else
 			data.idleTime = data.idleTime - 1
@@ -886,6 +905,20 @@ function mod:BirdUpdate(entity)
 end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.BirdUpdate, mod.EntityInf[mod.Entity.MercuryBird].ID)
+mod:AddCallback(ModCallbacks.MC_PRE_NPC_COLLISION, function(_, entity, collider)
+	if entity.Type == mod.EntityInf[mod.Entity.MercuryBird].ID and collider.Type == mod.EntityInf[mod.Entity.Mercury].ID then
+		if collider:GetData().Regen then
+			entity:Die()
+		end
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
+	if entity.Type == mod.EntityInf[mod.Entity.MercuryBird].ID then
+		if entity.Parent then
+			entity.Parent:TakeDamage(amount/3, flags, source, frames)
+		end
+	end
+end)
 
 
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
@@ -1404,9 +1437,8 @@ function mod:MissileUpdate(tear, collided)
 		--Projectile ring
 		for i=1, mod.MConst.nMissileTears do
 			local angle = i*360/mod.MConst.nMissileTears
-			local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(1,0):Rotated(angle)*mod.MConst.missileTearsSpeed, tear.Parent):ToProjectile()
-			shot.FallingSpeed = 0
-			shot.FallingAccel = -0.1
+			
+			local shot = mod:SpawnMarsShot(tear.Position, Vector(1,0):Rotated(angle)*mod.MConst.missileTearsSpeed, tear.Parent)
 		end
 
 		tear:Remove()
