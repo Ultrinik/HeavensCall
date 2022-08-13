@@ -1066,6 +1066,7 @@ function mod:AirstrikeUpdate(entity)
 			data.Init = true
 			sprite:Play("Blink",true)
 			sprite:SetFrame(mod:RandomInt(1,90))
+			entity.DepthOffset = -50
 		end
 
 		if sprite:IsFinished("Blink") then
@@ -1491,6 +1492,89 @@ mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, coll
 	end
 end)
 
+--Leaf-------------------------------------------------------------------------------------------------------------------------------
+function mod:LeafUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		sprite:Play("Idle")
+		sprite.Rotation = tear.Velocity:GetAngleDegrees()
+		data.Init = true
+	end
+
+	--If tear collided then
+	if tear:IsDead() or collided then
+
+		game:SpawnParticles (tear.Position, EffectVariant.NAIL_PARTICLE, 9, 5, Color(0.6,1,0.6,1))
+		tear:Die()
+	end
+
+	if tear.Height >= -33 and tear.FallingAccel > 0 then
+		tear.FallingSpeed = 0.05
+		tear.Height = -35
+		tear.FallingAccel = 0
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().IsLeaf_HC then
+		mod:LeafUpdate(tear,false)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsLeaf_HC then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:LeafUpdate(tear,true)
+		end
+	end
+end)
+
+--Bubble-------------------------------------------------------------------------------------------------------------------------------
+function mod:BubbleUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		sprite:Play("Idle"..tostring(mod:RandomInt(1,3)))
+		--sprite:Play("Idle")
+		data.Init = true
+
+		local velocity = (rng:RandomFloat() + 0.5) * tear.Velocity
+		local hemo = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HAEMO_TRAIL, 0, tear.Position, velocity, nil):ToEffect()
+		hemo.Visible = false
+		hemo:GetSprite().PlaybackSpeed = 0.1
+		hemo.LifeSpan = 300
+		
+		tear.Parent = hemo
+		tear.Velocity = Vector.Zero
+	end
+
+	if tear.Parent then
+		tear.Position = tear.Parent.Position
+	end
+
+	--If tear collided then
+	if tear:IsDead() or collided or tear.Parent == nil then
+
+		local impact = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.IMPACT, 0, tear.Position, Vector.Zero, nil)
+		tear:Die()
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().IsBubble_HC then
+		mod:BubbleUpdate(tear,false)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsBubble_HC then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:BubbleUpdate(tear,true)
+		end
+	end
+end)
+
 --PLAYER----------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1566,7 +1650,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerBurning, 0)
 
 
 --[[mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_,entity)
-	if entity.Type == 822 then
+	if entity.Type == 820 and entity.Variant == 1 then
 		print(entity.State)
 	end
 

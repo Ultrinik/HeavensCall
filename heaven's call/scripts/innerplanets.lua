@@ -1280,8 +1280,190 @@ end)
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&%%###(((((#######%%&%@@&%@@@@@@@@@@@%%@@@%%@%%
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%@%@@@@%@@@@
 ]]--
+mod.T1MSState = {
+    APPEAR = 0,
+    IDLE = 1,
+    BUBBLES = 2,
+    EMBERS = 3,
+    LEAFS = 4
+}
+mod.chainT1 = {--               App   Id     Bub   Emb   Seed
+    [mod.T1MSState.APPEAR] =    {0,    1,     0,    0,    0,},
+    [mod.T1MSState.IDLE] =      {0,    0.4,   0.2,  0.2,  0.2,},
+    [mod.T1MSState.BUBBLES] =   {0,    0.8,   0,    0.1,  0.1,},
+    [mod.T1MSState.EMBERS] =    {0,    0.8,   0.1,  0,    0.1,},
+    [mod.T1MSState.LEAFS] =     {0,    0.8,   0.1,  0.1,  0,}
+}
+mod.TConst = {
+    
+    idleTimeInterval1 = Vector(5,10),
+    speed1 = 1.5,
+    
+    maxLeafs = 4,
+    leafSpeed = 18,
+
+    nBubbles = 2,
+    bubbleSpeed = 3,
+
+    nCoals = 1,
+}
 
 
+function mod:Terra1Update(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR and entity.SubType == mod.EntityInf[mod.Entity.Terra1].SUB then
+        local data = entity:GetData()
+        local sprite = entity:GetSprite()
+        local target = entity:GetPlayerTarget()
+        local room = game:GetRoom()
+        
+        --Custom data:
+        if data.State == nil then 
+            data.State = 0 
+            data.StateFrame = 0
+
+            data.LeafCount = 0
+        end
+        
+        --Frame
+        data.StateFrame = data.StateFrame + 1
+        
+        if data.State == mod.T1MSState.APPEAR then
+            if data.StateFrame == 1 then
+                mod:AppearPlanet(entity)
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+            elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+                data.State = mod:MarkovTransition(data.State, mod.chainT1)
+                data.StateFrame = 0
+            elseif sprite:IsEventTriggered("EndAppear") then
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+            end
+            
+        elseif data.State == mod.T1MSState.IDLE then
+            if data.StateFrame == 1 then
+                sprite:Play("Idle",true)
+            elseif sprite:IsFinished("Idle") then
+                data.State = mod:MarkovTransition(data.State, mod.chainT1)
+                data.StateFrame = 0
+                
+            else
+                mod:Terra1Move(entity, data, room, target)
+            end
+            
+        elseif data.State == mod.T1MSState.BUBBLES then
+            mod:TerraBubbles(entity, data, sprite, target,room)
+        elseif data.State == mod.T1MSState.EMBERS then
+            mod:TerraEmber(entity, data, sprite, target,room)
+        elseif data.State == mod.T1MSState.LEAFS then
+            mod:TerraLeafs(entity, data, sprite, target,room)
+
+        end
+
+    end
+end
+function mod:TerraEmber(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Ember",true)
+    elseif sprite:IsFinished("Ember") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT1)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Shot") then
+
+        for i=1, mod.TConst.nCoals do
+            local coalboy = Isaac.Spawn(EntityType.ENTITY_DANNY, 1, 0, entity.Position, Vector.Zero, entity):ToNPC()
+            coalboy.Visible = false
+            coalboy.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+            coalboy:GetSprite():SetFrame("Attack" ,12)
+            coalboy.State = 8
+
+            mod:scheduleForUpdate(function()
+                coalboy:Remove()
+            end,2)
+        end
+        mod:scheduleForUpdate(function()
+            for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_ROCK_SPIDER, 2)) do
+                e:Remove()
+            end
+        end,3)
+
+    end
+end
+function mod:TerraBubbles(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Bubbles",true)
+    elseif sprite:IsFinished("Bubbles") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT1)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Shot") then
+        local direction = (target.Position - entity.Position):Normalized()
+        for i=1, mod.TConst.nBubbles do
+            local bubble = mod:SpawnEntity(mod.Entity.Bubble, entity.Position, direction:Rotated(mod:RandomInt(-30,30)) * mod.TConst.bubbleSpeed, entity)
+            bubble:GetData().IsBubble_HC = true
+        end
+    end
+end
+function mod:TerraLeafs(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        data.LeafCount = data.LeafCount + 1
+        if entity.Position.X < target.Position.X then
+            sprite:Play("LeafR",true)
+        else
+            sprite:Play("LeafL",true)
+        end
+    elseif sprite:IsFinished("LeafR") or sprite:IsFinished("LeafL") then
+        data.StateFrame = 0
+        if data.LeafCount > mod.TConst.maxLeafs-1 then
+            data.LeafCount = 0
+            data.State = mod:MarkovTransition(data.State, mod.chainT1)
+        end
+
+    elseif sprite:IsEventTriggered("Shot") then
+        local direction = (target.Position - entity.Position):Normalized()
+        local leaf = mod:SpawnEntity(mod.Entity.Leaf, entity.Position + Vector(-30,0), direction * mod.TConst.leafSpeed, entity):ToProjectile()
+        leaf.Height = -120
+        leaf.FallingAccel = 3
+        leaf:GetData().IsLeaf_HC = true
+    end
+end
+
+--Move
+function mod:Terra1Move(entity, data, room, target)
+	--idle move taken from 'Alt Death' by hippocrunchy
+	--It just basically stays around the center of the room
+	
+	--idleTime == frames moving in the same direction
+	if not data.idleTime then 
+		data.idleTime = mod:RandomInt(mod.TConst.idleTimeInterval1.X, mod.TConst.idleTimeInterval1.Y)
+		--V distance of Terra from the center of the room
+		local distance = room:GetCenterPos():Distance(entity.Position)
+		
+		--If its too far away, return to the center
+		if distance > 80 then
+			data.targetvelocity = ((room:GetCenterPos() - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+		--Else, get closer to the player
+		else
+			data.targetvelocity = ((target.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-50, 50))
+		end
+	end
+	
+	--If run out of idle time
+	if data.idleTime <= 0 and data.idleTime ~= nil then
+		data.idleTime = nil
+	else
+		data.idleTime = data.idleTime - 1
+	end
+	
+	--Do the actual movement
+	entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.TConst.speed1
+	data.targetvelocity = data.targetvelocity * 0.99
+end
+
+--Callbacks
+--Mars updates
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra1Update, mod.EntityInf[mod.Entity.Terra1].ID)
 --MARS---------------------------------------------------------------------------------------------------
 --[[
 @@@@@@@@@@@@@@@@@@@@@@@@&@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -1862,10 +2044,9 @@ function mod:OrbitParent(entity)
 
 end
 
-function mod:Lerp(a,b,p)
-    return p*b + (1-p)*a
+function mod:Lerp(vec1, vec2, percent)
+    return vec1 * (1 - percent) + vec2 * percent
 end
-
 function mod:RocketLeft(bomb)
     if bomb:GetData().ToTheLeft then--From Samael
         local targetVel = 20*Vector(-1,0)

@@ -2200,6 +2200,10 @@ function mod:NeptuneUpdate(entity)
 		
 		if data.State == mod.NMSState.APPEAR then
 			if data.StateFrame == 1 then
+				--KILL
+				if apocrypha then
+					apocrypha:RemoveCallback(ModCallbacks.MC_NPC_UPDATE, apocrypha.hangingSpider)
+				end
 				mod:AppearPlanet(entity)
 
 				data.Blood = false
@@ -2613,4 +2617,3 @@ end
 --Neptune updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.NeptuneUpdate, mod.EntityInf[mod.Entity.Neptune].ID)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.NeptuneDeath, mod.EntityInf[mod.Entity.Neptune].ID)
-
