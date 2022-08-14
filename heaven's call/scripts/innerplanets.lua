@@ -1167,7 +1167,7 @@ function mod:VenusMove(entity, data, room, target, speed)
         end
 
         --Not that close to the plater
-        if target.Position:Distance(entity.Position) < 100 then
+        if target.Position:Distance(entity.Position) < 100  or data.targetvelocity == nil then
             data.targetvelocity = (-(target.Position - entity.Position):Normalized()*6):Rotated(mod:RandomInt(-45, 45))
         end
     end
@@ -1280,6 +1280,29 @@ end)
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&%%###(((((#######%%&%@@&%@@@@@@@@@@@%%@@@%%@%%
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%@%@@@@%@@@@
 ]]--
+mod.TConst = {
+    
+    --Green
+    idleTimeInterval1 = Vector(5,10),
+    speed1 = 1.5,
+    
+    maxLeafs = 4,
+    leafSpeed = 18,
+
+    nBubbles = 2,
+    bubbleSpeed = 3,
+
+    nCoals = 1,
+
+    --Rock
+    idleTimeInterval2 = Vector(30,60),
+    speed2 = 30,
+
+    --Eden
+    idleTimeInterval3 = Vector(5,10),
+    speed3 = 1.4
+}
+
 mod.T1MSState = {
     APPEAR = 0,
     IDLE = 1,
@@ -1294,21 +1317,6 @@ mod.chainT1 = {--               App   Id     Bub   Emb   Seed
     [mod.T1MSState.EMBERS] =    {0,    0.8,   0.1,  0,    0.1,},
     [mod.T1MSState.LEAFS] =     {0,    0.8,   0.1,  0.1,  0,}
 }
-mod.TConst = {
-    
-    idleTimeInterval1 = Vector(5,10),
-    speed1 = 1.5,
-    
-    maxLeafs = 4,
-    leafSpeed = 18,
-
-    nBubbles = 2,
-    bubbleSpeed = 3,
-
-    nCoals = 1,
-}
-
-
 function mod:Terra1Update(entity)
     if entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR and entity.SubType == mod.EntityInf[mod.Entity.Terra1].SUB then
         local data = entity:GetData()
@@ -1351,17 +1359,17 @@ function mod:Terra1Update(entity)
             end
             
         elseif data.State == mod.T1MSState.BUBBLES then
-            mod:TerraBubbles(entity, data, sprite, target,room)
+            mod:Terra1Bubbles(entity, data, sprite, target,room)
         elseif data.State == mod.T1MSState.EMBERS then
-            mod:TerraEmber(entity, data, sprite, target,room)
+            mod:Terra1Ember(entity, data, sprite, target,room)
         elseif data.State == mod.T1MSState.LEAFS then
-            mod:TerraLeafs(entity, data, sprite, target,room)
+            mod:Terra1Leafs(entity, data, sprite, target,room)
 
         end
 
     end
 end
-function mod:TerraEmber(entity, data, sprite, target,room)
+function mod:Terra1Ember(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Ember",true)
     elseif sprite:IsFinished("Ember") then
@@ -1390,7 +1398,7 @@ function mod:TerraEmber(entity, data, sprite, target,room)
 
     end
 end
-function mod:TerraBubbles(entity, data, sprite, target,room)
+function mod:Terra1Bubbles(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Bubbles",true)
     elseif sprite:IsFinished("Bubbles") then
@@ -1405,7 +1413,7 @@ function mod:TerraBubbles(entity, data, sprite, target,room)
         end
     end
 end
-function mod:TerraLeafs(entity, data, sprite, target,room)
+function mod:Terra1Leafs(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         data.LeafCount = data.LeafCount + 1
         if entity.Position.X < target.Position.X then
@@ -1427,6 +1435,275 @@ function mod:TerraLeafs(entity, data, sprite, target,room)
         leaf.FallingAccel = 3
         leaf:GetData().IsLeaf_HC = true
     end
+end
+
+
+mod.T2MSState = {
+    APPEAR = 0,
+    IDLE = 1,
+    MOVE = 2,
+    WHIP = 3,
+
+    BOMB = 4,
+    BLAST = 5,
+    LOCUST = 6,
+}
+mod.chainT2 = {--               App   Id     Mov     Whip
+    [mod.T2MSState.APPEAR] =    {0,    1,     0,     0},
+    [mod.T2MSState.IDLE] =      {0,    0.75,  0.25,  0},
+    [mod.T2MSState.MOVE] =      {0,    1,     0,     0},
+    [mod.T2MSState.WHIP] =      {0,    1,     0,     0},
+    
+    [mod.T2MSState.BOMB] =      {0,    1,     0,     0},
+    [mod.T2MSState.BLAST] =      {0,    1,     0,     0},
+    [mod.T2MSState.LOCUST] =      {0,    1,     0,     0},
+}
+function mod:Terra2Update(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR and entity.SubType == mod.EntityInf[mod.Entity.Terra2].SUB then
+        local data = entity:GetData()
+        local sprite = entity:GetSprite()
+        local target = entity:GetPlayerTarget()
+        local room = game:GetRoom()
+        
+        --Custom data:
+        if data.State == nil then 
+            data.State = 0 
+            data.StateFrame = 0
+
+        end
+        data.Inmovible = true
+        
+        --Frame
+        data.StateFrame = data.StateFrame + 1
+        
+        if data.State == mod.T2MSState.APPEAR then
+            if data.StateFrame == 1 then
+                mod:AppearPlanet(entity)
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                entity:AddEntityFlags(EntityFlag.FLAG_NO_STATUS_EFFECTS)
+                entity:AddEntityFlags(EntityFlag.FLAG_NO_TARGET)
+                entity:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE)
+                entity:AddEntityFlags(EntityFlag.FLAG_NO_KNOCKBACK)
+                entity:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK)
+                entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+                entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+            elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+                data.State = mod:MarkovTransition(data.State, mod.chainT2)
+                data.StateFrame = 0
+
+                local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, Vector.Zero, entity)
+                eden.Parent = entity
+                entity.Parent = eden
+
+            elseif sprite:IsEventTriggered("EndAppear") then
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+            end
+            
+        elseif data.State == mod.T2MSState.IDLE then
+            if data.StateFrame == 1 then
+                sprite:Play("Idle",true)
+            elseif sprite:IsFinished("Idle") then
+                data.State = mod:MarkovTransition(data.State, mod.chainT2)
+                data.StateFrame = 0
+            end
+            
+        elseif data.State == mod.T2MSState.MOVE then
+            data.Inmovible = false
+            mod:Terra2Move(entity, data, sprite, target,room)
+        elseif data.State == mod.T2MSState.WHIP then
+            mod:Terra2Whip(entity, data, sprite, target,room)
+        elseif data.State == mod.T2MSState.BOMB then
+            mod:Terra2Bomb(entity, data, sprite, target,room)
+        elseif data.State == mod.T2MSState.BLAST then
+            mod:Terra2Blast(entity, data, sprite, target,room)
+        elseif data.State == mod.T2MSState.LOCUST then
+            mod:Terra2Locust(entity, data, sprite, target,room)
+
+        end
+
+        if data.Inmovible then
+            entity.Velocity = Vector.Zero
+        end
+
+    end
+end
+function mod:Terra2Whip(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Whip",true)
+    elseif sprite:IsFinished("Whip") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT2)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Whip") then
+
+    end
+end
+function mod:Terra2Bomb(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Bomb",true)
+    elseif sprite:IsFinished("Bomb") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT2)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Shot") then
+        local direction = (target.Position - entity.Position):Normalized()
+    end
+end
+function mod:Terra2Locust(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Summon",true)
+    elseif sprite:IsFinished("Summon") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT2)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Summon") then
+
+    end
+end
+function mod:Terra2Blast(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Blast",true)
+    elseif sprite:IsFinished("Blast") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT2)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Land") then
+
+    end
+end
+
+mod.T3MSState = {
+    APPEAR = 0,
+    IDLE = 1,
+    HORSEMEN = 2,
+    METEORS = 3,
+    BULLETS = 4,
+    LASER = 5,
+}
+mod.chainT3 = {--               App    Id     Hors   Mete    Bull    Lase
+    [mod.T3MSState.APPEAR] =    {0,    1,     0,     0,      0,      0},
+    [mod.T3MSState.IDLE] =      {0,    0.28,  0.18,  0.18,   0.18,   0.18},
+    [mod.T3MSState.HORSEMEN] =  {0,    0.75,  0,     0,      0.25,   0},
+    [mod.T3MSState.METEORS] =   {0,    0.75,  0.25,  0,      0,      0},
+    [mod.T3MSState.BULLETS] =   {0,    0.7,   0.15,  0.15,   0,      0},
+    [mod.T3MSState.LASER] =     {0,    0.75,  0,     0.25,   0,      0}
+}
+mod.chainT32 = {--               Idle  Bomb   Blast  Locst NULL
+    [mod.T3MSState.IDLE] =      {0.94, 0.02,  0.02,  0.02, 0},
+    [mod.T3MSState.HORSEMEN] =  {0.15, 0.45,  0.00,  0.40, 0},
+    [mod.T3MSState.METEORS] =   {0.10, 0.30,  0.30,  0.30, 0},
+    [mod.T3MSState.BULLETS] =   {0.16, 0.42,  0.42,  0.00, 0},
+    [mod.T3MSState.LASER] =     {0.16, 0.00,  0.42,  0.42, 0}
+}
+mod.chainTTrans = {
+    [mod.T3MSState.IDLE - 1] =      mod.T2MSState.IDLE,
+    [mod.T3MSState.HORSEMEN - 1] =  mod.T2MSState.BOMB,
+    [mod.T3MSState.METEORS - 1] =   mod.T2MSState.BLAST,
+    [mod.T3MSState.BULLETS - 1] =   mod.T2MSState.LOCUST
+}
+function mod:Terra3Update(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR and entity.SubType == mod.EntityInf[mod.Entity.Terra3].SUB then
+        local data = entity:GetData()
+        local sprite = entity:GetSprite()
+        local target = entity:GetPlayerTarget()
+        local room = game:GetRoom()
+        
+        --Custom data:
+        if data.State == nil then 
+            data.State = 0 
+            data.StateFrame = 0
+
+        end
+        
+        --Frame
+        data.StateFrame = data.StateFrame + 1
+        
+        if data.State == mod.T3MSState.APPEAR then
+            if data.StateFrame == 1 then
+                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                sprite:Play("Appear")
+            elseif sprite:IsFinished("Appear") then
+                data.State = mod:MarkovTransition(data.State, mod.chainT3)
+                data.StateFrame = 0
+            elseif sprite:IsEventTriggered("EndAppear") then
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+            end
+            
+        elseif data.State == mod.T3MSState.IDLE then
+            if data.StateFrame == 1 then
+                sprite:Play("Idle",true)
+            elseif sprite:IsFinished("Idle") then
+                mod:ChanceEdenTerraState(data, entity.Parent)
+            else
+                mod:Terra3Move(entity, data, room, target)
+            end
+            
+        elseif data.State == mod.T3MSState.HORSEMEN then
+            mod:Terra3Horsemen(entity, data, sprite, target,room)
+        elseif data.State == mod.T3MSState.METEORS then
+            mod:Terra3Meteors(entity, data, sprite, target,room)
+        elseif data.State == mod.T3MSState.BULLETS then
+            mod:Terra3Bullets(entity, data, sprite, target,room)
+        elseif data.State == mod.T3MSState.LASER then
+            mod:Terra3Laser(entity, data, sprite, target,room)
+        end
+
+    end
+end
+function mod:Terra3Horsemen(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Horsemen",true)
+    elseif sprite:IsFinished("Horsemen") then
+        mod:ChanceEdenTerraState(data, entity.Parent)
+
+    elseif sprite:IsEventTriggered("Summon") then
+
+    end
+end
+function mod:Terra3Meteors(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Meteors",true)
+    elseif sprite:IsFinished("Meteors") then
+        mod:ChanceEdenTerraState(data, entity.Parent)
+
+    elseif sprite:IsEventTriggered("Summon") then
+
+    end
+end
+function mod:Terra3Bullets(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Bullets",true)
+    elseif sprite:IsFinished("Bullets") then
+        mod:ChanceEdenTerraState(data, entity.Parent)
+
+    elseif sprite:IsEventTriggered("Attack") then
+
+    end
+end
+function mod:Terra3Laser(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Laser",true)
+    elseif sprite:IsFinished("Laser") then
+        mod:ChanceEdenTerraState(data, entity.Parent)
+
+    elseif sprite:IsEventTriggered("Attack") then
+
+    end
+end
+
+function mod:ChanceEdenTerraState(data, rockTerra)
+    data.State = mod:MarkovTransition(data.State, mod.chainT3)
+    data.StateFrame = 0
+
+    rockData = rockTerra:GetData()
+    if rockData.State and rockData.State == mod.T2MSState.IDLE then
+        local newState = mod:MarkovTransition(data.State, mod.chainT32)
+        newState = mod.chainTTrans[newState]
+        rockData.State = newState
+        rockData.StateFrame = 0
+    end
+
 end
 
 --Move
@@ -1460,10 +1737,90 @@ function mod:Terra1Move(entity, data, room, target)
 	entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.TConst.speed1
 	data.targetvelocity = data.targetvelocity * 0.99
 end
+function mod:Terra2Move(entity, data, sprite, target,room)
+    if data.StateFrame == 1 then
+        sprite:Play("Move",true)
+    elseif sprite:IsFinished("Move") then
+        data.State = mod:MarkovTransition(data.State, mod.chainT2)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Move") then
+        local direction = (target.Position - entity.Position):Normalized()
+        entity.Velocity = direction * mod.TConst.speed2
+    end
+end
+function mod:Terra3Move(entity, data, room, target)
+	--idle move taken from 'Alt Death' by hippocrunchy
+	--It just basically stays around the center of the room
+
+	--idleTime == frames moving in the same direction
+	if not data.idleTime then 
+        data.idleTime = mod:RandomInt(mod.TConst.idleTimeInterval3.X, mod.TConst.idleTimeInterval3.Y)
+
+        local antipode = (target.Position - room:GetCenterPos()):Rotated(180):Normalized()*150 + room:GetCenterPos()
+        --V distance of Eden from the oposite place of the player
+        local distance = antipode:Distance(entity.Position)
+        
+        --If its too far away, return to the center
+        if distance > 80 then
+            data.targetvelocity = ((antipode - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-25, 25))
+        end
+
+        --Not that close to the plater
+        if target.Position:Distance(entity.Position) < 100 or data.targetvelocity == nil then
+            data.targetvelocity = (-(target.Position - entity.Position):Normalized()*6):Rotated(mod:RandomInt(-45, 45))
+        end
+	end
+	
+	--If run out of idle time
+	if data.idleTime <= 0 and data.idleTime ~= nil then
+		data.idleTime = nil
+	else
+		data.idleTime = data.idleTime - 1
+	end
+	
+	--Do the actual movement
+	entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.TConst.speed3
+	data.targetvelocity = data.targetvelocity * 0.99
+end
+
+function mod:TerraDeath(entity)
+    local data = entity:GetData()
+
+    if entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR then
+        local rock = mod:SpawnEntity(mod.Entity.Terra2, entity.Position, Vector.Zero, entity)
+        rock:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+        rock:AddEntityFlags(EntityFlag.FLAG_NO_STATUS_EFFECTS)
+        rock:AddEntityFlags(EntityFlag.FLAG_NO_TARGET)
+        rock:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE)
+        rock:AddEntityFlags(EntityFlag.FLAG_NO_KNOCKBACK)
+        rock:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK)
+        rock:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+        rock:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        rock:GetSprite():Play("Idle",true)
+        rock:GetData().State = mod.T2MSState.IDLE
+        rock:GetData().StateFrame = 0
+        
+        local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, Vector.Zero, rock)
+        eden.Parent = rock
+        rock.Parent = eden
+
+    elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
+
+    elseif entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR then
+
+    end
+
+end
+
 
 --Callbacks
---Mars updates
+--Terra updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra1Update, mod.EntityInf[mod.Entity.Terra1].ID)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra2Update, mod.EntityInf[mod.Entity.Terra2].ID)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra3Update, mod.EntityInf[mod.Entity.Terra3].ID)
+
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.TerraDeath, mod.EntityInf[mod.Entity.Terra1].ID)
 --MARS---------------------------------------------------------------------------------------------------
 --[[
 @@@@@@@@@@@@@@@@@@@@@@@@&@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

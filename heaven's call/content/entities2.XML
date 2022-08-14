@@ -1,11 +1,11 @@
 <entities anm2root="gfx\" version="5" deathanm2="gfx/death_enemies.anm2">
 	<!-- Statue -->
-	<entity name="Astral Statue" id="699" variant="370" subtype="160" anm2path="entity_AstralStatue.anm2"  baseHP="99999" stageHP="0" boss="1" champion="0" collisionDamage="0" collisionMass="90" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none" tags="nodelirium">
+	<entity name="Astral Statue" id="699" variant="370" subtype="160" anm2path="entity_AstralStatue.anm2"  baseHP="99999" stageHP="0" boss="1" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none" tags="nodelirium">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
 	<!-- Jupiter -->
-	<entity name="Jupiter the Gargantuan" id="700" variant="370" subtype="0" anm2path="entity_Jupiter.anm2"  baseHP="325" stageHP="80" shieldStrength="30" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="33" friction="0.9" numGridCollisionPoints="12" shadowSize="60" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="0">
+	<entity name="Jupiter the Gargantuan" id="700" variant="370" subtype="0" anm2path="entity_Jupiter.anm2"  baseHP="325" stageHP="80" shieldStrength="30" boss="1" bossID="44" champion="0" collisionDamage="1" collisionMass="100" collisionRadius="33" friction="0.9" numGridCollisionPoints="12" shadowSize="60" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="0">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -54,7 +54,7 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
-	<entity name="Ice Turd (HC)" id="721" variant="370" subtype="160" anm2path="entity_IceTurd.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="90" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" portrait="2" bestiary="false" gridCollision="none">
+	<entity name="Ice Turd (HC)" id="721" variant="370" subtype="160" anm2path="entity_IceTurd.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" portrait="2" bestiary="false" gridCollision="none">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -82,7 +82,7 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
-	<entity name="NeptuneFaker" id="703" variant="371" subtype="160" anm2path="entity_NeptuneFaker.anm2" baseHP="999" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.8" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
+	<entity name="Neptune Faker (HC)" id="703" variant="371" subtype="160" anm2path="entity_NeptuneFaker.anm2" baseHP="999" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.8" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="false" gridCollision="walls">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -96,7 +96,7 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Mercury Bird" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="9999" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Mercury Bird (HC)" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="9999" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="10" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
@@ -141,7 +141,7 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
     </entity>
 
-	<entity name="Candle Gurdy" id="722" variant="371" subtype="0" anm2path="entity_CandleGurdy.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
+	<entity name="Candle Gurdy" id="722" variant="371" subtype="0" anm2path="entity_CandleGurdy.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="Idle1" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -163,10 +163,10 @@
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Terra the Fatalist (rock)" id="706" variant="371" subtype="0" anm2path="entity_Terra2.anm2" baseHP="9999" stageHP="0" shieldStrength="999" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
+	<entity name="Terra the Fatalist (rock)" id="706" variant="371" subtype="0" anm2path="entity_Terra2.anm2" baseHP="9999" stageHP="0" shieldStrength="999" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Terra the Fatalist (eden)" id="706" variant="372" subtype="0" anm2path="entity_Terra3.anm2" baseHP="1200" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
+	<entity name="Terra the Fatalist (eden)" id="706" variant="372" subtype="0" anm2path="entity_Terra3.anm2" baseHP="1200" stageHP="0" shieldStrength="15" boss="1" bossID="44" champion="0" collisionDamage="0" collisionMass="25" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 

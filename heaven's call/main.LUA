@@ -114,7 +114,6 @@ mod.RoomsPlanet = {
 
 -- Random int between Min and Max, both inclusive
 function mod:RandomInt(Min, Max)
-
     if Min > Max then 
         print("El minimo ta' ma grande Ñ")
     else
@@ -826,6 +825,7 @@ if HPBars then
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Wagon].ID).."."..tostring(mod.EntityInf[mod.Entity.Wagon].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Terra2].ID).."."..tostring(mod.EntityInf[mod.Entity.Terra2].VAR)] = {truFunc}
 
 	--Adding the bars
 	Jid = tostring(mod.EntityInf[mod.Entity.Jupiter].ID).."."..tostring(mod.EntityInf[mod.Entity.Jupiter].VAR)
