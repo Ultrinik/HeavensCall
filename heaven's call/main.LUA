@@ -245,6 +245,13 @@ end)
 function mod:MarkovTransition(state, chain)
 	local roll = math.random()
 	for i = 1, #chain+1 do
+		--[[if chain[state][i] == nil then
+			print(chain == mod.chainT3)
+			print(chain == mod.chainT32)
+			print(chain == mod.chainT2)
+			print(chain == mod.chainTTrans)
+			print(state)
+		end]]
 		roll = roll - chain[state][i]
 		if roll <= 0 then
 			return i - 1
@@ -365,13 +372,13 @@ include("scripts.specialplanets")
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
---Many functions are from Tainted Treasure------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
 
 --Minimapi magic
 if MinimapAPI then
 	local ac_sprite = Sprite()
 	ac_sprite:Load("gfx/ui/minimapapi/astralchallengeicon.anm2", true)
-	ac_sprite:SetFrame("IconTaintedAstralChallenge", 0)
+	ac_sprite:SetFrame("IconAstralChallenge", 0)
 	MinimapAPI:AddIcon("AstralChallenge", ac_sprite)
 end
 mod.minimaprooms = {} --Stores rooms that need to be updated on MinimapAPI
@@ -427,9 +434,10 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
 		mod.savedata = {}
 	end
 
-	if iscontinued and not BasementRenovator then
+	if iscontinued and not BasementRenovator and not mod.roomdata then
 		mod:scheduleForUpdate(function()
-			mod:InitializeRoomData()
+			mod.roomdata = {}
+			mod:InitializeRoomData("dice", mod.minvariant, mod.maxvariant, mod.roomdata)
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
 end)
@@ -441,8 +449,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 	--Handles Astral Challenge spawning
 	
 	--Initialize mod.roomdata
-	if not mod.roomdata and not level:GetStage() ~= LevelStage.STAGE1_1 and not level:GetStage() ~= LevelStage.STAGE1_2 and not BasementRenovator then
-		mod:InitializeRoomData()
+	if not mod.roomdata and level:GetStage() ~= LevelStage.STAGE1_1 and not BasementRenovator then
+		mod.roomdata = {}
+		mod:InitializeRoomData("dice", mod.minvariant, mod.maxvariant, mod.roomdata)
 	end
 
 	local spawnChance = 0
@@ -464,13 +473,13 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 		end
 	end
 	
-	--Aply persistent multiplier
+	--Apply persistent multiplier
 	if mod.savedata.spawnchancemultiplier == nil then mod.savedata.spawnchancemultiplier = 1 end
 	local totalchance = mod.savedata.spawnchancemultiplier*spawnChance
 	if totalchance > 0 then
 		local randomchance = rng:RandomFloat()
 		if randomchance <= totalchance or mod.ModFlags.forceSpawn then
-			--SPAWN IT! (I think it may not spawn if there is absolutelly no avalible space in the stage...)
+			--SPAWN IT! (It may not spawn if there is absolutelly no avalible space in the stage...)
 			local newroomdesc = mod:GenerateRoomFromDataset(mod.roomdata, true)
 			if not newroomdesc then 
 				--print("No avalible place for room to spawn, oh no!")
@@ -484,21 +493,6 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 					local wisp = Isaac.Spawn(EntityType.ENTITY_EFFECT,EffectVariant.WISP,0,game:GetRoom():GetRandomPosition(0),Vector.Zero,nil)
 				end
 			end
-		end
-	end
-end)
-
---Update health of boss, may be delayed by one damage
-mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_,entity,_,_,_,_)
-	
-	if mod.savedata.planetAlive then
-		if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR or 
-		entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR or 
-		entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR or 
-		entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR
-		then
-			mod.savedata.planetHP = entity.HitPoints --There should not be more than 1 planet at the same time so... (we dont talk about meat cleaver)
-			--print(mod.savedata.planetHP)
 		end
 	end
 end)
@@ -624,11 +618,11 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 			local minimaproom = MinimapAPI:GetRoomByIdx(roomidx)
 			mod:scheduleForUpdate(function()
 				if minimaproom then
-					minimaproom.Color = Color.Default
+					minimaproom.Color = Color(MinimapAPI.Config.DefaultRoomColorR, MinimapAPI.Config.DefaultRoomColorG, MinimapAPI.Config.DefaultRoomColorB, 1, 0, 0, 0)
 					if mod:IsRoomDescAstralChallenge(minimaproom.Descriptor) then
 						minimaproom.PermanentIcons = {"AstralChallenge"}
 					end
-					table.remove(mod.minimaprooms, i)
+					mod.minimaprooms[i] = nil
 				end
 			end, 0)
 		end
@@ -637,6 +631,10 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 	end
 
 end)
+
+
+--FUNNY INTERACTIONS----------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
 
 --Reset chances if glowing hourglass was used
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
@@ -693,6 +691,9 @@ mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, function(_,item)
 	end
 end)
 
+--PLANET RESPAWN--------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+
 --Check Spawn Planet in new room
 function mod:CheckSpawnNewRoom()
 	if mod.savedata and mod.savedata.planetAlive and (not mod.savedata.planetKilled) then
@@ -717,7 +718,7 @@ function mod:SpawnPlanet(entityNum)
 	end
 end
 
---Statue things (why onether call instead of using the one above? idk)
+--Statue things (why onether call instead of using the one above? idk) I changed the function order, so I think this doesnt makes sense
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 	--things
 	local level = game:GetLevel()
@@ -732,6 +733,25 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
 end)
+
+--Update health of boss, may be delayed by one damage
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_,entity,_,_,_,_)
+	
+	if mod.savedata.planetAlive then
+		if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR
+		then
+			mod.savedata.planetHP = entity.HitPoints --There should not be more than 1 planet at the same time so... (we dont talk about meat cleaver)
+			--print(mod.savedata.planetHP)
+		end
+	end
+end)
+
+
+--POOL------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
 
 --Item pool in room
 mod:AddCallback(ModCallbacks.MC_PRE_GET_COLLECTIBLE, function(_)

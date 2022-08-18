@@ -1300,7 +1300,22 @@ mod.TConst = {
 
     --Eden
     idleTimeInterval3 = Vector(5,10),
-    speed3 = 1.4
+    speed3 = 1.4,
+
+    laserSpinSpeed = 2.3,
+    laserCountdown = 45,
+
+    meteorTimeout = 30,
+    meteorExplosionRadius = 75,
+    debbriesSpeed = 18,
+
+    nTears = 8,
+    tearSpeed = 12,
+
+    horsemenSpeed = 15,
+    famineShotSpeed = 12,
+    famineShotAngle = 20,
+    pestilenceGasTime = 100,
 }
 
 mod.T1MSState = {
@@ -1450,13 +1465,13 @@ mod.T2MSState = {
 }
 mod.chainT2 = {--               App   Id     Mov     Whip
     [mod.T2MSState.APPEAR] =    {0,    1,     0,     0},
-    [mod.T2MSState.IDLE] =      {0,    0.75,  0.25,  0},
+    [mod.T2MSState.IDLE] =      {0,    0.95,  0.05,  0},
     [mod.T2MSState.MOVE] =      {0,    1,     0,     0},
     [mod.T2MSState.WHIP] =      {0,    1,     0,     0},
     
     [mod.T2MSState.BOMB] =      {0,    1,     0,     0},
-    [mod.T2MSState.BLAST] =      {0,    1,     0,     0},
-    [mod.T2MSState.LOCUST] =      {0,    1,     0,     0},
+    [mod.T2MSState.BLAST] =     {0,    1,     0,     0},
+    [mod.T2MSState.LOCUST] =    {0,    1,     0,     0},
 }
 function mod:Terra2Update(entity)
     if entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR and entity.SubType == mod.EntityInf[mod.Entity.Terra2].SUB then
@@ -1497,7 +1512,7 @@ function mod:Terra2Update(entity)
                 entity.Parent = eden
 
             elseif sprite:IsEventTriggered("EndAppear") then
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
             end
             
         elseif data.State == mod.T2MSState.IDLE then
@@ -1583,8 +1598,9 @@ mod.T3MSState = {
 }
 mod.chainT3 = {--               App    Id     Hors   Mete    Bull    Lase
     [mod.T3MSState.APPEAR] =    {0,    1,     0,     0,      0,      0},
-    [mod.T3MSState.IDLE] =      {0,    0.28,  0.18,  0.18,   0.18,   0.18},
-    [mod.T3MSState.HORSEMEN] =  {0,    0.75,  0,     0,      0.25,   0},
+    [mod.T3MSState.IDLE] =      {0,    0.28,  0.10,  0.19,   0.19,   0.24},
+    --[mod.T3MSState.IDLE] =      {0,    0,     1,     0,      0,      1},
+    [mod.T3MSState.HORSEMEN] =  {0,    0.60,  0,     0,      0.20,   0.20},
     [mod.T3MSState.METEORS] =   {0,    0.75,  0.25,  0,      0,      0},
     [mod.T3MSState.BULLETS] =   {0,    0.7,   0.15,  0.15,   0,      0},
     [mod.T3MSState.LASER] =     {0,    0.75,  0,     0.25,   0,      0}
@@ -1614,11 +1630,13 @@ function mod:Terra3Update(entity)
             data.State = 0 
             data.StateFrame = 0
 
+            data.TearFlag = 0
+
         end
         
         --Frame
         data.StateFrame = data.StateFrame + 1
-        
+
         if data.State == mod.T3MSState.APPEAR then
             if data.StateFrame == 1 then
                 entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
@@ -1658,7 +1676,18 @@ function mod:Terra3Horsemen(entity, data, sprite, target,room)
         mod:ChanceEdenTerraState(data, entity.Parent)
 
     elseif sprite:IsEventTriggered("Summon") then
-
+        local margen = -900
+        for i=0, 2 do
+            local position = Vector(margen*i, room:GetCenterPos().Y + mod:RandomInt(-150,150))
+            local horsemen = mod:SpawnEntity(mod.Entity.Horsemen, position, Vector.Zero, entity):ToNPC()
+            horsemen.I1 = i
+        end
+        
+        local position = Vector(margen*2, room:GetCenterPos().Y + mod:RandomInt(-50,50))
+        for i=-1, 1, 2 do
+            local horsemen = mod:SpawnEntity(mod.Entity.Horsemen, Vector(position.X, position.Y + 150*i), Vector.Zero, entity):ToNPC()
+            horsemen.I1 = i/2 + 7/2
+        end
     end
 end
 function mod:Terra3Meteors(entity, data, sprite, target,room)
@@ -1668,27 +1697,87 @@ function mod:Terra3Meteors(entity, data, sprite, target,room)
         mod:ChanceEdenTerraState(data, entity.Parent)
 
     elseif sprite:IsEventTriggered("Summon") then
+        local meteor = mod:SpawnEntity(mod.Entity.TerraTarget, room:GetRandomPosition(0), Vector.Zero, entity):ToEffect()
+        meteor.Parent = entity
+        meteor:GetSprite().Color = Color.Default
+
+        meteor:SetTimeout(mod.TConst.meteorTimeout)
 
     end
 end
 function mod:Terra3Bullets(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Bullets",true)
+        entity.Velocity = Vector.Zero
     elseif sprite:IsFinished("Bullets") then
+        data.TearFlag = 0
         mod:ChanceEdenTerraState(data, entity.Parent)
 
     elseif sprite:IsEventTriggered("Attack") then
-
+        data.TearFlag = data.TearFlag + 1
     end
+
+    --Isaac from Hard mode major boss patters was of big help here
+    if data.TearFlag == 1 and game:GetFrameCount() % 4 == 0 then --Pretty circle
+
+        local params = ProjectileParams()
+        params.Variant = ProjectileVariant.PROJECTILE_TEAR
+        params.FallingSpeedModifier = 0
+
+        params.BulletFlags = ProjectileFlags.CURVE_LEFT | ProjectileFlags.NO_WALL_COLLIDE
+        params.CurvingStrength = 0.014
+        params.FallingAccelModifier = -0.16
+
+        for i=1, mod.TConst.nTears do
+            local angle = i*360/mod.TConst.nTears
+            entity:FireProjectiles(entity.Position, Vector.FromAngle(angle)*mod.TConst.tearSpeed, 0, params)
+        end
+    elseif data.TearFlag == 2 and game:GetFrameCount() % 5 == 0 then
+
+        local params = ProjectileParams()
+        params.Variant = ProjectileVariant.PROJECTILE_TEAR
+        params.FallingSpeedModifier = 0
+
+        params.BulletFlags = 1 << (18 + entity.FrameCount % 2) | ProjectileFlags.NO_WALL_COLLIDE | ProjectileFlags.CHANGE_FLAGS_AFTER_TIMEOUT | ProjectileFlags.ACCELERATE
+        params.CurvingStrength = 0.014
+        params.Acceleration = 0.98
+        params.FallingAccelModifier = -0.165
+        params.ChangeTimeout = 60
+        params.ChangeFlags = 0
+
+        for i=1, mod.TConst.nTears do
+            local angle = i*360/mod.TConst.nTears
+            entity:FireProjectiles(entity.Position, Vector.FromAngle(angle+entity.ProjectileCooldown*3)*mod.TConst.tearSpeed*9/7, 0, params)
+        end
+    end
+
 end
 function mod:Terra3Laser(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Laser",true)
+        
+		local posCentered = room:GetCenterPos() - entity.Position
+		local posTransformed = Vector(posCentered.X/1.2, posCentered.Y * 1.9 )
+
+        if posTransformed:Length() < 150 then
+            sprite:Play("Laser",true)
+            entity.Velocity = Vector.Zero
+        else
+            mod:ChanceEdenTerraState(data, entity.Parent)
+        end
+
     elseif sprite:IsFinished("Laser") then
         mod:ChanceEdenTerraState(data, entity.Parent)
 
     elseif sprite:IsEventTriggered("Attack") then
-
+        local spin = 1 - mod:RandomInt(0,1)*2
+        for i=1, 4 do
+            local angle = i*360/4
+		    local laser = EntityLaser.ShootAngle(5, entity.Position, angle, 45, Vector.Zero, entity)
+            laser:SetActiveRotation(0, 99999, spin * mod.TConst.laserSpinSpeed)
+            laser.IsActiveRotating = false
+            laser:GetData().FromEden_HC = true
+            laser:GetData().Countdown_HC = mod.TConst.laserCountdown
+        end
     end
 end
 
@@ -1800,8 +1889,9 @@ function mod:TerraDeath(entity)
         rock:GetSprite():Play("Idle",true)
         rock:GetData().State = mod.T2MSState.IDLE
         rock:GetData().StateFrame = 0
+        rock.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
         
-        local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, Vector.Zero, rock)
+        local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, RandomVector()*7, rock)
         eden.Parent = rock
         rock.Parent = eden
 
@@ -1820,7 +1910,21 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra1Update, mod.EntityInf[mod.
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra2Update, mod.EntityInf[mod.Entity.Terra2].ID)
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra3Update, mod.EntityInf[mod.Entity.Terra3].ID)
 
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.TerraDeath, mod.EntityInf[mod.Entity.Terra1].ID)
+
+--Laser
+mod:AddCallback(ModCallbacks.MC_POST_LASER_UPDATE, function(_,entity)
+    if entity:GetData().FromEden_HC then
+        if entity:GetData().Countdown_HC < 20 then
+            entity.IsActiveRotating = true
+            entity:GetData().FromEden_HC = false
+        else
+            entity:GetData().Countdown_HC = entity:GetData().Countdown_HC - 1
+        end
+    end
+end)
+
+
+
 --MARS---------------------------------------------------------------------------------------------------
 --[[
 @@@@@@@@@@@@@@@@@@@@@@@@&@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -2186,8 +2290,9 @@ function mod:MarsRocket(entity, data, sprite, target,room)
 
         local rocket = mod:SpawnEntity(rocketType, entity.Position + direction*50, direction, entity):ToBomb()
         if flag then 
-            rocket:GetData().ToTheLeft = true 
-            rocket:GetSprite().FlipX = true
+            rocket:GetData().IsDirected_HC = true
+            rocket:GetData().Direction = Vector(-1,0)
+            rocket:GetSprite().Rotation = 180
         end
         if rocketType == mod.Entity.MarsGigaRocket then
             rocket.RadiusMultiplier = 1.5
@@ -2404,9 +2509,10 @@ end
 function mod:Lerp(vec1, vec2, percent)
     return vec1 * (1 - percent) + vec2 * percent
 end
-function mod:RocketLeft(bomb)
-    if bomb:GetData().ToTheLeft then--From Samael
-        local targetVel = 20*Vector(-1,0)
+function mod:RocketDirected(bomb)
+    if bomb:GetData().IsDirected_HC then--From Samael
+        bomb:GetSprite().Rotation = bomb:GetData().Direction:GetAngleDegrees()
+        local targetVel = 20 * bomb:GetData().Direction
         local startVel = targetVel*0.25
         local framesUntilFullSpeed = 15
         local counter = bomb.FrameCount
@@ -2437,4 +2543,4 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.MarsUpdate, mod.EntityInf[mod.En
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.MarsDeath, mod.EntityInf[mod.Entity.Mars].ID)
 
 --Rocket
-mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, mod.RocketLeft, BombVariant.BOMB_ROCKET)
+mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, mod.RocketDirected, BombVariant.BOMB_ROCKET)

@@ -921,6 +921,153 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
 end)
 
 
+--Horsemen---------------------------------------------------------------------------------------------------------------------
+function mod:HorsemenUpdate(entity)
+	if mod.EntityInf[mod.Entity.Horsemen].VAR == entity.Variant then
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local parent = entity.Parent
+		local data = entity:GetData()
+
+		if entity.I1 == 0 or entity.I1 == nil then --Famine
+
+			if data.Init == nil then
+				data.Init = true
+	
+				entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+				entity:ClearEntityFlags(EntityFlag.FLAG_NO_TARGET)
+	
+				sprite:Play("Famine", true)
+				sprite:SetFrame(100)
+	
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+				
+				data.Speed = mod.TConst.horsemenSpeed
+	
+			end
+	
+	
+			if sprite:IsEventTriggered("Attack") then
+				local direction = (target.Position - entity.Position):Normalized()
+
+				for i=-1, 1 do
+					local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction:Rotated(i*mod.TConst.famineShotAngle)*mod.TConst.famineShotSpeed, entity):ToProjectile()
+				end
+			end
+			
+			if sprite:IsFinished("Famine") then
+				entity:Remove()
+			end
+
+		elseif entity.I1 == 1 then --Pestilence
+
+				if data.Init == nil then
+					data.Init = true
+		
+					entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+					entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+					entity:ClearEntityFlags(EntityFlag.FLAG_NO_TARGET)
+		
+					sprite:Play("Pestilence", true)
+					sprite:SetFrame(50)
+
+					entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+					data.Speed = mod.TConst.horsemenSpeed
+					data.Farting = false
+		
+				end
+		
+		
+				if sprite:IsEventTriggered("Attack") then
+					data.Speed = mod.TConst.horsemenSpeed*2
+					data.Farting = true
+				end
+				
+				if data.Farting and game:GetFrameCount()%3==0 then
+					local gas = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SMOKE_CLOUD, 0, entity.Position, Vector.Zero, entity):ToEffect()
+					gas.Timeout = mod.TConst.pestilenceGasTime
+					
+					local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
+				end
+
+				if sprite:IsFinished("Pestilence") then
+					entity:Remove()
+				end
+		elseif entity.I1 == 2 then --War
+
+			if data.Init == nil then
+				data.Init = true
+	
+				entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+				entity:ClearEntityFlags(EntityFlag.FLAG_NO_TARGET)
+	
+				sprite:Play("War", true)
+				sprite:SetFrame(24)
+	
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+				data.Speed = mod.TConst.horsemenSpeed + 5
+	
+			end
+	
+	
+			if sprite:IsEventTriggered("Attack") then
+				local direction = (target.Position - entity.Position):Normalized()
+
+				local rocket = mod:SpawnEntity(mod.Entity.MarsRocket, entity.Position + direction*100, direction, entity):ToBomb()
+				rocket:GetData().IsDirected_HC = true
+				rocket:GetData().Direction = direction
+				rocket:GetSprite().Rotation = direction:GetAngleDegrees()
+
+				entity.Velocity = Vector(direction.X, -direction.Y) * data.Speed*2
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+			end
+
+			if sprite:IsFinished("War") then
+				entity:Remove()
+			end
+
+		elseif entity.I1 >= 3 then --Death
+
+			if data.Init == nil then
+				data.Init = true
+	
+				entity:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+				entity:ClearEntityFlags(EntityFlag.FLAG_NO_TARGET)
+	
+				sprite:Play("Death", true)
+				if entity.I1 == 4 then sprite:Play("Conquest", true) end
+				sprite:SetFrame(mod:RandomInt(0,20))
+	
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+				data.Speed = mod.TConst.horsemenSpeed + 2
+	
+			end
+	
+	
+			if sprite:IsEventTriggered("Attack") then
+				local sing = 1
+				if entity.Position.Y > target.Position.Y then sing = -1 end
+
+				entity.Velocity =  Vector(data.Speed, data.Speed*sing*1.4)
+			end
+
+			if sprite:IsFinished("Death") or sprite:IsFinished("Conquest") then
+				entity:Remove()
+			end
+		end
+		
+		entity.Velocity =  Vector(data.Speed, entity.Velocity.Y)
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.HorsemenUpdate, mod.EntityInf[mod.Entity.Horsemen].ID)
+
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1066,7 +1213,7 @@ function mod:AirstrikeUpdate(entity)
 			data.Init = true
 			sprite:Play("Blink",true)
 			sprite:SetFrame(mod:RandomInt(1,90))
-			entity.DepthOffset = -50
+			entity.DepthOffset = -100
 		end
 
 		if sprite:IsFinished("Blink") then
@@ -1102,6 +1249,79 @@ end
 
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.AirstrikeUpdate, mod.EntityInf[mod.Entity.MarsTarget].VAR)
 
+--Meteors---------------------------------------------------------------------------------------------------------------------------
+function mod:MeteorUpdate(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+
+	if data.Init == nil then
+		data.Init = true
+
+		if rng:RandomFloat() < 0.01 then
+			sprite:Play("Type3",true)
+		else
+			sprite:Play("Type"..tostring(mod:RandomInt(1,2)),true)
+		end
+	end
+
+	if sprite:IsFinished("Type1") or sprite:IsFinished("Type2") then
+		--Explosion:
+		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+		explosion:GetSprite().Scale = Vector.One*1.5
+		--Explosion damage
+		for i, entity_ in ipairs(Isaac.FindInRadius(entity.Position, mod.TConst.meteorExplosionRadius)) do
+			if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Terra1].ID then
+				entity_:TakeDamage(mod.MConst.explosionDamage, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity.Parent), 0)
+			elseif entity_.Type == EntityType.ENTITY_PLAYER then
+				entity_:TakeDamage(2, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity.Parent), 0)
+			end
+		end
+
+		for i = 1, 4 do
+			local velocity = Vector.FromAngle(i*360/4)*mod.TConst.debbriesSpeed
+			local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, velocity, entity.Parent)
+		end
+
+		entity:Remove()
+		
+	elseif sprite:IsFinished("Type3") then
+		
+		--Explosion:
+		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+		explosion:GetSprite().Scale = Vector.One*1.5
+		explosion:GetSprite().Color = Color(2,0,0,1)
+		--Impact damage
+		for i, entity_ in ipairs(Isaac.FindInRadius(entity.Position, mod.TConst.meteorExplosionRadius)) do
+			if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Terra1].ID then
+				entity_:TakeDamage(mod.MConst.explosionDamage, DamageFlag.DAMAGE_CRUSH, EntityRef(entity.Parent), 0)
+			elseif entity_.Type == EntityType.ENTITY_PLAYER then
+				entity_:TakeDamage(2, DamageFlag.DAMAGE_CRUSH, EntityRef(entity.Parent), 0)
+			end
+		end
+
+		local creep = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_RED, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+		creep.SpriteScale = Vector.One*3
+		creep:SetTimeout(45)
+
+		for i=1, mod:RandomInt(2,3) do
+			local leech = Isaac.Spawn(EntityType.ENTITY_SMALL_LEECH, 0, 0, entity.Position, RandomVector()*50, entity.Parent)
+		end
+
+		entity:Remove()
+	end
+
+end
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.TerraTarget].VAR then
+		if entity.Timeout <= 1 then
+			local meteor = mod:SpawnEntity(mod.Entity.Meteor, entity.Position, Vector.Zero, entity.Parent)
+			meteor.Parent = entity.Parent
+
+			entity:Remove()
+		end
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.MeteorUpdate, mod.EntityInf[mod.Entity.Meteor].VAR)
 --Effects that dissapear after idle-------------------------------------------------------------------------------------------------
 
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
@@ -1649,9 +1869,22 @@ end)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerBurning, 0)
 
 
---[[mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_,entity)
-	if entity.Type == 820 and entity.Variant == 1 then
-		print(entity.State)
+--[[mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_,entity)
+	if entity.Type == EntityType.ENTITY_PLAYER then
+		local room = game:GetRoom()
+
+		local posCentered = room:GetCenterPos() - entity.Position
+		local posTransformed = Vector(posCentered.X/1.2, posCentered.Y * 1.9 )
+
+		if game:GetFrameCount() % 10 == 0 then
+			for i=1, 32 do
+				local tear = Isaac.Spawn(EntityType.ENTITY_TEAR, 0, 0, room:GetCenterPos() + posTransformed:Rotated(i*360/8), Vector.Zero, entity)
+				if (posTransformed:Rotated(i*360/8):Length())<150 then
+					tear:GetSprite().Color = Color(2,0,0,1)
+					print(1)
+				end
+			end
+		end
 	end
 
 end)]]
