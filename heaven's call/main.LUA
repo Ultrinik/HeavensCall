@@ -39,6 +39,8 @@ mod.Colors = {
 	superFire = Color(0.75,0.75,0.75,1),
 	buttFire = Color(1,1,1,1),
 	mercury = Color(0.3,0.3,0.3,1),
+	tar = Color(0.5,0.5,0.5, 1, 0,0,0),
+	black = Color(0,0,0,1,0,0,0),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -56,6 +58,7 @@ function mod:ColorizeColors()
 	mod.Colors.superFire:SetColorize(20,7,0,1)
 	mod.Colors.buttFire:SetColorize(2,1,0,1)
 	mod.Colors.mercury:SetColorize(7,5,7,1)
+	mod.Colors.tar:SetColorize(1, 1, 1, 1)
 end
 mod:ColorizeColors()
 

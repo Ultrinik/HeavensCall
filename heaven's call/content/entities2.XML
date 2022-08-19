@@ -163,7 +163,7 @@
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Terra the Fatalist (rock)" id="706" variant="371" subtype="0" anm2path="entity_Terra2.anm2" baseHP="9999" stageHP="0" shieldStrength="999" boss="1" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
+	<entity name="Terra the Fatalist (rock)" id="706" variant="371" subtype="0" anm2path="entity_Terra2.anm2" baseHP="9999" stageHP="0" shieldStrength="999" boss="1" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="35" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	<entity name="Terra the Fatalist (eden)" id="706" variant="372" subtype="0" anm2path="entity_Terra3.anm2" baseHP="1200" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="0" collisionMass="25" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="2">
@@ -185,9 +185,20 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
-	<entity name="Horsemen (HC)" id="724" variant="370" subtype="0" anm2path="entity_Horsemen.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="none" tags="nodelirium" portrait="2">
+	<entity name="Horsemen (HC)" id="724" variant="370" subtype="0" anm2path="entity_Horsemen.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="none" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
+
+	<entity name="Tar Bomb (HC)" id="725" variant="370" subtype="160" anm2path="entity_Tarbomb.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="2">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	
+    <entity name="Tongue (HC)" id="39" variant="22" subtype="160" anm2path="entity_Tongue.anm2" baseHP="1000" boss="0" champion="1" collisionDamage="2" collisionInterval="1" collisionMass="10" collisionRadius="13" friction="1" gridCollision="none" numGridCollisionPoints="12" portrait="35" shadowSize="15" stageHP="0">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
+    <entity name="Tongue Cord (HC)" id="865" variant="10" subtype="160" anm2path="entity_TongueCord.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="15" friction="1" numGridCollisionPoints="1" shadowSize="5" shutdoors="false" stageHP="0" tags="noreroll">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
 
 	<!-- Mars -->
 	<entity name="Mars the Vainglorious" id="707" variant="370" subtype="0" anm2path="entity_Mars.anm2" baseHP="1000" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">

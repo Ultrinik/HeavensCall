@@ -1298,15 +1298,23 @@ mod.TConst = {
     idleTimeInterval2 = Vector(30,60),
     speed2 = 30,
 
+    tarExplosionRadius = 60,
+    nTarRingProjectiles = 10,
+    nTarRndProjectiles = 8,
+    nTarBubbles = 8,
+    tarBombSpeed = 30,
+
+    blastAngle = 20,
+
     --Eden
     idleTimeInterval3 = Vector(5,10),
     speed3 = 1.4,
 
-    laserSpinSpeed = 2.3,
+    laserSpinSpeed = 2,
     laserCountdown = 45,
 
     meteorTimeout = 30,
-    meteorExplosionRadius = 75,
+    meteorExplosionRadius = 60,
     debbriesSpeed = 18,
 
     nTears = 8,
@@ -1541,17 +1549,41 @@ function mod:Terra2Update(entity)
             entity.Velocity = Vector.Zero
         end
 
+        if data.State == mod.T2MSState.IDLE and rng:RandomFloat() < 0.075 then
+            local diffY = entity.Position.Y - target.Position.Y
+            local diffX = entity.Position.X - target.Position.X
+            if math.abs(diffY) < 20 and math.abs(diffX) < 300 then
+                data.State = mod.T2MSState.WHIP
+                data.StateFrame = 0
+            end
+        end
+
     end
 end
 function mod:Terra2Whip(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Whip",true)
     elseif sprite:IsFinished("Whip") then
+        --if data.Tonguecord then data.Tonguecord:Remove() end
         data.State = mod:MarkovTransition(data.State, mod.chainT2)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Whip") then
+        --Better vanilla monsters was of help here
+        local worm = mod:SpawnEntity(mod.Entity.Tongue, entity.Position, Vector((target.Position - entity.Position).X, 0):Normalized() * 30, entity)
+        worm.Parent = entity
+        worm.DepthOffset = entity.DepthOffset + 400
+		worm.Mass = 0
+		worm:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK | EntityFlag.FLAG_NO_TARGET | EntityFlag.FLAG_NO_STATUS_EFFECTS)
+		worm:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+		worm.MaxHitPoints = 0
 
+        local cord = mod:SpawnEntity(mod.Entity.TongueCord, entity.Position, Vector.Zero, entity)
+		--local cord = Isaac.Spawn(EntityType.ENTITY_EVIS, 10, 0, entity.Position, Vector.Zero, entity)
+        cord.Parent = worm
+        cord.Target = entity
+        cord.DepthOffset = worm.DepthOffset - 100
+        data.Tonguecord = cord
     end
 end
 function mod:Terra2Bomb(entity, data, sprite, target,room)
@@ -1563,6 +1595,10 @@ function mod:Terra2Bomb(entity, data, sprite, target,room)
 
     elseif sprite:IsEventTriggered("Shot") then
         local direction = (target.Position - entity.Position):Normalized()
+
+        local bomb = mod:SpawnEntity(mod.Entity.TarBomb, entity.Position, direction * mod.TConst.tarBombSpeed, entity)
+        bomb.Parent = entity
+        bomb.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
     end
 end
 function mod:Terra2Locust(entity, data, sprite, target,room)
@@ -1573,7 +1609,7 @@ function mod:Terra2Locust(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Summon") then
-
+        local fly = Isaac.Spawn(EntityType.ENTITY_FLY_BOMB, 0, 0, entity.Position, RandomVector()*10, entity)
     end
 end
 function mod:Terra2Blast(entity, data, sprite, target,room)
@@ -1584,7 +1620,12 @@ function mod:Terra2Blast(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Land") then
+        game:ShakeScreen(50)
 
+        local rock = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BIG_ROCK_EXPLOSION, 0, entity.Position, Vector.Zero, entity):ToEffect()
+        local rockData = rock:GetData()
+        rockData.Direction = (target.Position - entity.Position):Normalized()
+        rockData.IsActive_HC = true
     end
 end
 
@@ -1706,6 +1747,7 @@ function mod:Terra3Meteors(entity, data, sprite, target,room)
     end
 end
 function mod:Terra3Bullets(entity, data, sprite, target,room)
+    entity.Velocity = Vector.Zero
     if data.StateFrame == 1 then
         sprite:Play("Bullets",true)
         entity.Velocity = Vector.Zero
@@ -1753,6 +1795,7 @@ function mod:Terra3Bullets(entity, data, sprite, target,room)
 
 end
 function mod:Terra3Laser(entity, data, sprite, target,room)
+    entity.Velocity = Vector.Zero
     if data.StateFrame == 1 then
         
 		local posCentered = room:GetCenterPos() - entity.Position
@@ -1760,7 +1803,6 @@ function mod:Terra3Laser(entity, data, sprite, target,room)
 
         if posTransformed:Length() < 150 then
             sprite:Play("Laser",true)
-            entity.Velocity = Vector.Zero
         else
             mod:ChanceEdenTerraState(data, entity.Parent)
         end
@@ -1873,8 +1915,10 @@ function mod:Terra3Move(entity, data, room, target)
 	data.targetvelocity = data.targetvelocity * 0.99
 end
 
+--ded
 function mod:TerraDeath(entity)
     local data = entity:GetData()
+
 
     if entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR then
         local rock = mod:SpawnEntity(mod.Entity.Terra2, entity.Position, Vector.Zero, entity)
@@ -1895,14 +1939,28 @@ function mod:TerraDeath(entity)
         eden.Parent = rock
         rock.Parent = eden
 
-    elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
+        mod:NormalDeath(entity)
+    elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR or entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR then
 
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Horsemen)) do
+            e:Remove()
+        end
+
+        if entity.Parent then entity.Parent:Die() end
+        mod:NormalDeath(entity)
+        
     elseif entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR then
+        if entity.Parent then entity.Parent:Die() end
 
     end
+end
+--deding
+function mod:TerraDying(entity)
+    
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
 
 end
-
 
 --Callbacks
 --Terra updates
@@ -1910,6 +1968,12 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra1Update, mod.EntityInf[mod.
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra2Update, mod.EntityInf[mod.Entity.Terra2].ID)
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra3Update, mod.EntityInf[mod.Entity.Terra3].ID)
 
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.TerraDeath, mod.EntityInf[mod.Entity.Terra1].ID)
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
+	if entity.Type == mod.EntityInf[mod.Entity.Terra2].ID and entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
+        return false
+	end
+end)
 
 --Laser
 mod:AddCallback(ModCallbacks.MC_POST_LASER_UPDATE, function(_,entity)
@@ -1922,8 +1986,6 @@ mod:AddCallback(ModCallbacks.MC_POST_LASER_UPDATE, function(_,entity)
         end
     end
 end)
-
-
 
 --MARS---------------------------------------------------------------------------------------------------
 --[[
@@ -2131,9 +2193,9 @@ function mod:MarsCharge(entity, data, sprite, target,room)
 		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity):ToEffect()
         explosion.DepthOffset = 10
 		--Explosion damage
-		for i, entity in ipairs(Isaac.FindInRadius(entity.Position, mod.MConst.chargeExplosionRadius)) do
-			if entity.Type ~= EntityType.ENTITY_PLAYER and not entity:GetData().IsMartian then
-				entity:TakeDamage(mod.MConst.explosionDamage, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity), 0)
+		for i, e in ipairs(Isaac.FindInRadius(entity.Position, mod.MConst.chargeExplosionRadius)) do
+			if e.Type ~= EntityType.ENTITY_PLAYER and not e:GetData().IsMartian then
+				e:TakeDamage(mod.MConst.explosionDamage, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity), 0)
 			end
 		end
 

@@ -842,6 +842,8 @@ function mod:BirdUpdate(entity)
 		local parent = entity.Parent
 		local data = entity:GetData()
 
+		if parent == nil then entity:Die() end
+
 		if data.Init == nil then
 			data.Init = true
 
@@ -1068,12 +1070,78 @@ end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.HorsemenUpdate, mod.EntityInf[mod.Entity.Horsemen].ID)
 
+--TarBomb-----------------------------------------------------------------------------------------------------------------------
+function mod:TarBombUpdate(entity)
+	if mod.EntityInf[mod.Entity.TarBomb].VAR == entity.Variant then
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local parent = entity.Parent
+		local data = entity:GetData()
+
+		if data.Init == nil then
+			data.Init = true
+
+			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+			sprite:Play("Idle"..tostring(mod:RandomInt(1,3)), true)
+
+			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+		end
+		
+		if sprite:IsFinished("Idle1") or sprite:IsFinished("Idle2") or sprite:IsFinished("Idle3") then
+			--Explosion:
+			local explode = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+			explode:GetSprite().Color = mod.Colors.tar
+			
+			--Explosion damage
+			for i, e in ipairs(Isaac.FindInRadius(entity.Position, mod.TConst.tarExplosionRadius)) do
+				if e.Type ~= EntityType.ENTITY_PLAYER and e.Type ~= mod.EntityInf[mod.Entity.Terra1].ID then
+					e:TakeDamage(100, DamageFlag.DAMAGE_EXPLOSION, EntityRef(entity.Parent), 0)
+				end
+			end
+			
+			--Creep
+			local tar = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_BLACK, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+			tar.Timeout = 150
+			tar:GetSprite().Scale = 3 * Vector(1,1)
+			
+			--[[Splash of projectiles:
+			for i=0, mod.TConst.nTarRingProjectiles do
+				--Ring projectiles:
+				local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, Vector(10,0):Rotated(i*360/mod.TConst.nTarRingProjectiles), entity.Parent):ToProjectile()
+				tear:GetSprite().Color = mod.Colors.tar
+				tear.FallingSpeed = -0.1
+				tear.FallingAccel = 0.3
+			end
+			for i=0, mod.TConst.nTarRndProjectiles do
+				--Random projectiles:
+				local angle = mod:RandomInt(0, 360)
+				local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, Vector(7,0):Rotated(angle), entity.Parent):ToProjectile()
+				tear:GetSprite().Color = mod.Colors.tar
+				local randomFall = -1 * mod:RandomInt(1, 500) / 1000
+				tear.FallingSpeed = randomFall
+				tear.FallingAccel = 0.2
+			end]]
+			
+			for i=1, mod.TConst.nTarBubbles do
+				local bubble = mod:SpawnEntity(mod.Entity.Bubble, entity.Position, Vector.Zero, entity)
+				bubble:GetData().IsBubble_HC = true
+				bubble:GetData().IsTar_HC = true
+			end
+
+			entity:Remove()
+		end
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.TarBombUpdate, mod.EntityInf[mod.Entity.TarBomb].ID)
+
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
-
 
 --Red things updates----------------------------------------------------------------------------------------------------------------
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, redthing)
@@ -1312,7 +1380,7 @@ function mod:MeteorUpdate(entity)
 
 end
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, entity)
-	if entity.Variant == mod.EntityInf[mod.Entity.TerraTarget].VAR then
+	if entity.Variant == mod.EntityInf[mod.Entity.TerraTarget].VAR and entity.SubType == mod.EntityInf[mod.Entity.TerraTarget].SUB then
 		if entity.Timeout <= 1 then
 			local meteor = mod:SpawnEntity(mod.Entity.Meteor, entity.Position, Vector.Zero, entity.Parent)
 			meteor.Parent = entity.Parent
@@ -1322,6 +1390,40 @@ mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, entity)
 	end
 end)
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.MeteorUpdate, mod.EntityInf[mod.Entity.Meteor].VAR)
+
+
+--Rockblast---------------------------------------------------------------------------------------------------------------------------
+function mod:RockblastUpdate(entity)
+	local data = entity:GetData()
+	if data.IsActive_HC and entity:GetSprite():GetFrame() == 1 then
+		local position = entity.Position + data.Direction * 50
+
+		local creep = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_BLACK, 0, position, Vector.Zero, entity):ToEffect()
+		creep.Timeout = 30
+		creep.SpriteScale = Vector.One * 2
+
+
+	elseif data.IsActive_HC and entity:GetSprite():GetFrame() == 3 then
+		local position = entity.Position + data.Direction * 40
+		if not mod:IsOutsideRoom(position, game:GetRoom()) then
+			local rock = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BIG_ROCK_EXPLOSION, 0, position, Vector.Zero, entity):ToEffect()
+			local rockData = rock:GetData()
+			rockData.Direction = data.Direction:Rotated(mod.TConst.blastAngle * 2 * rng:RandomFloat() - mod.TConst.blastAngle)
+			rockData.IsActive_HC = true
+		end
+		--Damage
+		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 30)) do
+			if e.Type ~= EntityType.ENTITY_PLAYER and e.Type ~= mod.EntityInf[mod.Entity.Terra1].ID then
+				e:TakeDamage(50, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
+			elseif e.Type == EntityType.ENTITY_PLAYER then
+					e:TakeDamage(2, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
+			end
+		end
+		data.IsActive_HC = false
+	end
+end
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.RockblastUpdate, EffectVariant.BIG_ROCK_EXPLOSION)
+
 --Effects that dissapear after idle-------------------------------------------------------------------------------------------------
 
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
@@ -1756,7 +1858,11 @@ function mod:BubbleUpdate(tear, collided)
 	local data = tear:GetData()
 
 	if data.Init == nil then
-		sprite:Play("Idle"..tostring(mod:RandomInt(1,3)))
+		if data.IsTar_HC then
+			sprite:Play("IdleTar"..tostring(mod:RandomInt(1,3)))
+		else
+			sprite:Play("Idle"..tostring(mod:RandomInt(1,3)))
+		end
 		--sprite:Play("Idle")
 		data.Init = true
 

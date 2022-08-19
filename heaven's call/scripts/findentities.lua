@@ -58,6 +58,9 @@ mod.Entity ={
     Wagon = 53,
     TerraTarget = 59,
     Meteor = 60,
+    TarBomb = 62,
+    Tongue = 63,
+    TongueCord = 64,
 
     ---------
     
@@ -109,8 +112,6 @@ mod.EntityInf[mod.Entity.IceTurd] = {ID = Isaac.GetEntityTypeByName("Ice Turd (H
 
 mod.EntityInf[mod.Entity.NeptuneFaker] = {ID = Isaac.GetEntityTypeByName("Neptune Faker (HC)"), VAR = Isaac.GetEntityVariantByName("Neptune Faker (HC)"),  SUB = mod.DefaultSub}
 
-mod.EntityInf[mod.Entity.Horsemen] = {ID = Isaac.GetEntityTypeByName("Horsemen (HC)"), VAR = Isaac.GetEntityVariantByName("Horsemen (HC)"),  SUB = mod.DefaultEntitySub}
-
 mod.EntityInf[mod.Entity.MercuryBird] = {ID = Isaac.GetEntityTypeByName("Mercury Bird (HC)"), VAR = Isaac.GetEntityVariantByName("Mercury Bird (HC)"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Wagon] = {ID = Isaac.GetEntityTypeByName("Wagon (HC)"), VAR = Isaac.GetEntityVariantByName("Wagon (HC)"),  SUB = mod.DefaultEntitySub}
 
@@ -121,6 +122,11 @@ mod.EntityInf[mod.Entity.CandleSiren] = {ID = Isaac.GetEntityTypeByName("Candle 
 mod.EntityInf[mod.Entity.SirenRag] = {ID = Isaac.GetEntityTypeByName("Siren Rag (HC)"), VAR = Isaac.GetEntityVariantByName("Siren Rag (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.CandleColostomia] = {ID = Isaac.GetEntityTypeByName("Candle Colostomia"), VAR = Isaac.GetEntityVariantByName("Candle Colostomia"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.CandleMist] = {ID = Isaac.GetEntityTypeByName("Candle Maid in the Mist"), VAR = Isaac.GetEntityVariantByName("Candle Maid in the Mist"),  SUB = mod.DefaultEntitySub}
+
+mod.EntityInf[mod.Entity.Horsemen] = {ID = Isaac.GetEntityTypeByName("Horsemen (HC)"), VAR = Isaac.GetEntityVariantByName("Horsemen (HC)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.TarBomb] = {ID = Isaac.GetEntityTypeByName("Tar Bomb (HC)"), VAR = Isaac.GetEntityVariantByName("Tar Bomb (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Tongue] = {ID = Isaac.GetEntityTypeByName("Tongue (HC)"), VAR = Isaac.GetEntityVariantByName("Tongue (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.TongueCord] = {ID = Isaac.GetEntityTypeByName("Tongue Cord (HC)"), VAR = Isaac.GetEntityVariantByName("Tongue Cord (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.Deimos] = {ID = Isaac.GetEntityTypeByName("Deimos the Tarnished"), VAR = Isaac.GetEntityVariantByName("Deimos the Tarnished"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Phobos] = {ID = Isaac.GetEntityTypeByName("Phobos the Tarnished"), VAR = Isaac.GetEntityVariantByName("Phobos the Tarnished"),  SUB = mod.DefaultEntitySub}
