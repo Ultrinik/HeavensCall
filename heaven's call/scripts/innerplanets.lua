@@ -1470,6 +1470,8 @@ mod.T2MSState = {
     BOMB = 4,
     BLAST = 5,
     LOCUST = 6,
+    
+    VANISH = 7,
 }
 mod.chainT2 = {--               App   Id     Mov     Whip
     [mod.T2MSState.APPEAR] =    {0,    1,     0,     0},
@@ -1542,7 +1544,6 @@ function mod:Terra2Update(entity)
             mod:Terra2Blast(entity, data, sprite, target,room)
         elseif data.State == mod.T2MSState.LOCUST then
             mod:Terra2Locust(entity, data, sprite, target,room)
-
         end
 
         if data.Inmovible then
@@ -1562,15 +1563,20 @@ function mod:Terra2Update(entity)
 end
 function mod:Terra2Whip(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Whip",true)
-    elseif sprite:IsFinished("Whip") then
-        --if data.Tonguecord then data.Tonguecord:Remove() end
+        if entity.Position.X < target.Position.X then
+            sprite:Play("WhipR",true)
+        else
+            sprite:Play("WhipL",true)
+        end
+        data.TargetDirection = Vector((target.Position - entity.Position).X, 0):Normalized()
+    elseif sprite:IsFinished("WhipR") or sprite:IsFinished("WhipL") then
+        if data.Tonguecord then data.Tonguecord:Remove() end
         data.State = mod:MarkovTransition(data.State, mod.chainT2)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Whip") then
         --Better vanilla monsters was of help here
-        local worm = mod:SpawnEntity(mod.Entity.Tongue, entity.Position, Vector((target.Position - entity.Position).X, 0):Normalized() * 30, entity)
+        local worm = mod:SpawnEntity(mod.Entity.Tongue, entity.Position, data.TargetDirection * 30, entity)
         worm.Parent = entity
         worm.DepthOffset = entity.DepthOffset + 400
 		worm.Mass = 0
@@ -1579,7 +1585,6 @@ function mod:Terra2Whip(entity, data, sprite, target,room)
 		worm.MaxHitPoints = 0
 
         local cord = mod:SpawnEntity(mod.Entity.TongueCord, entity.Position, Vector.Zero, entity)
-		--local cord = Isaac.Spawn(EntityType.ENTITY_EVIS, 10, 0, entity.Position, Vector.Zero, entity)
         cord.Parent = worm
         cord.Target = entity
         cord.DepthOffset = worm.DepthOffset - 100
@@ -1639,7 +1644,7 @@ mod.T3MSState = {
 }
 mod.chainT3 = {--               App    Id     Hors   Mete    Bull    Lase
     [mod.T3MSState.APPEAR] =    {0,    1,     0,     0,      0,      0},
-    [mod.T3MSState.IDLE] =      {0,    0.28,  0.10,  0.19,   0.19,   0.24},
+    [mod.T3MSState.IDLE] =      {0,    0.38,  0.08,  0.16,   0.16,   0.22},
     --[mod.T3MSState.IDLE] =      {0,    0,     1,     0,      0,      1},
     [mod.T3MSState.HORSEMEN] =  {0,    0.60,  0,     0,      0.20,   0.20},
     [mod.T3MSState.METEORS] =   {0,    0.75,  0.25,  0,      0,      0},
@@ -1827,12 +1832,14 @@ function mod:ChanceEdenTerraState(data, rockTerra)
     data.State = mod:MarkovTransition(data.State, mod.chainT3)
     data.StateFrame = 0
 
-    rockData = rockTerra:GetData()
-    if rockData.State and rockData.State == mod.T2MSState.IDLE then
-        local newState = mod:MarkovTransition(data.State, mod.chainT32)
-        newState = mod.chainTTrans[newState]
-        rockData.State = newState
-        rockData.StateFrame = 0
+    if rockTerra then
+        rockData = rockTerra:GetData()
+        if rockData.State and rockData.State == mod.T2MSState.IDLE then
+            local newState = mod:MarkovTransition(data.State, mod.chainT32)
+            newState = mod.chainTTrans[newState]
+            rockData.State = newState
+            rockData.StateFrame = 0
+        end
     end
 
 end
@@ -1940,17 +1947,28 @@ function mod:TerraDeath(entity)
         rock.Parent = eden
 
         mod:NormalDeath(entity)
-    elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR or entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR then
+    elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
 
         for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Horsemen)) do
             e:Remove()
         end
 
-        if entity.Parent then entity.Parent:Die() end
         mod:NormalDeath(entity)
         
     elseif entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR then
-        if entity.Parent then entity.Parent:Die() end
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Horsemen)) do
+            e:Remove()
+        end
+
+        if entity.Parent then 
+            local rockTerra = entity.Parent
+            rockTerra:GetData().State = mod.T2MSState.VANISH
+            rockTerra.HitPoints = 1
+            rockTerra:AddEntityFlags(EntityFlag.FLAG_NO_DEATH_TRIGGER)
+            rockTerra:GetSprite():Play("Vanish",true)
+
+            entity.Parent = nil
+        end
 
     end
 end
@@ -1971,7 +1989,13 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra3Update, mod.EntityInf[mod.
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.TerraDeath, mod.EntityInf[mod.Entity.Terra1].ID)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
 	if entity.Type == mod.EntityInf[mod.Entity.Terra2].ID and entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
-        return false
+        if entity:GetData().State == mod.T2MSState.VANISH then
+            local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
+            poof.SpriteScale = Vector.One*2
+            entity:Remove()
+        else
+            return false
+        end
 	end
 end)
 
@@ -2038,10 +2062,10 @@ mod.chainM = {--                 App   Mov    UP     DOWN   LEFT   RIGHT  Atk   
     --[mod.MMSState.DOWN] =       {0,    0,     0.22,  0.18,  0.25,  0.25,  0.1,   0,     0,      0,      0,      0,      0,      0,     0},
     --[mod.MMSState.LEFT] =       {0,    0,     0.25,  0.25,  0.18,  0.22,  0.1,   0,     0,      0,      0,      0,      0,      0,     0},
     --[mod.MMSState.RIGHT] =      {0,    0,     0.25,  0.25,  0.22,  0.18,  0.1,   0,     0,      0,      0,      0,      0,      0,     0},
-    [mod.MMSState.UP] =         {0,    0,     0.24,  0.22,  0.22,  0.22,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
-    [mod.MMSState.DOWN] =       {0,    0,     0.22,  0.24,  0.22,  0.22,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
-    [mod.MMSState.LEFT] =       {0,    0,     0.22,  0.22,  0.24,  0.22,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
-    [mod.MMSState.RIGHT] =      {0,    0,     0.22,  0.22,  0.22,  0.24,  0.10,  0,     0,      0,      0,      0,      0,      0,     0},
+    [mod.MMSState.UP] =         {0,    0,     0.21,  0.19,  0.19,  0.19,  0.22,  0,     0,      0,      0,      0,      0,      0,     0},
+    [mod.MMSState.DOWN] =       {0,    0,     0.19,  0.21,  0.19,  0.19,  0.22,  0,     0,      0,      0,      0,      0,      0,     0},
+    [mod.MMSState.LEFT] =       {0,    0,     0.19,  0.19,  0.21,  0.19,  0.22,  0,     0,      0,      0,      0,      0,      0,     0},
+    [mod.MMSState.RIGHT] =      {0,    0,     0.19,  0.19,  0.19,  0.21,  0.22,  0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0.05,  0.14,   0.1,    0.1,    0.1,    0.14,   0.3,   0.07},
     --[mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0,  0,   0,    0,    0,    0,   0,   1},
     [mod.MMSState.CLOCK] =      {0,    1,     0,     0,     0,     0,     0,     0,     0,      0,      0,      0,      0,      0,     0},

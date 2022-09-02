@@ -680,8 +680,7 @@ function mod:CandleUpdate(entity)
 			
 		elseif data.State == mod.MaidMSTATE.ATTACK then
 			if data.StateFrame == 1 then
-				data.TargetPos = target.Position
-				if data.TargetPos.X - entity.Position.X > 0 then
+				if target.Position.X - entity.Position.X > 0 then
 					sprite:Play("AttackR",true)
 				else
 					sprite:Play("AttackL",true)
@@ -691,9 +690,12 @@ function mod:CandleUpdate(entity)
 				data.StateFrame = 0
 
 			elseif sprite:IsEventTriggered("Attack") then
+
 				local direction = (data.TargetPos - entity.Position):Normalized()
 				local velocity = direction*mod.VConst.flameSpeed*1.5
-				local flame = mod:SpawnEntity(mod.Entity.Flame, entity.Position, velocity, entity):ToProjectile()
+				local number = direction.X
+				local sign = number > 0 and 1 or (number == 0 and 0 or -1)
+				local flame = mod:SpawnEntity(mod.Entity.Flame, entity.Position + Vector(sign * 10,0), velocity, entity):ToProjectile()
 				flame.FallingAccel  = -0.1
 				flame.FallingSpeed = 0
 				flame.Scale = 2
@@ -701,6 +703,15 @@ function mod:CandleUpdate(entity)
 				flame:GetData().IsFlamethrower_HC = true
 				flame:GetData().NoGrow = true
 				flame:GetData().EmberPos = -20
+
+			elseif sprite:IsEventTriggered("SetAim") then
+				data.TargetPos = target.Position
+				
+				if data.TargetPos.X - entity.Position.X > 0 then
+					sprite:SetAnimation ("AttackR",false)
+				else
+					sprite:SetAnimation ("AttackL",false)
+				end
 			end
 
 		end
