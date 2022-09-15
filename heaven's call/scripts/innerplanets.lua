@@ -82,6 +82,7 @@ mod.MRConst = {--Some constant variables of Mercury
 
     spindashSpeed = 75,
     maxBounces = 3,
+	angleList = {0, 45, 90, 135, 180, -45, -90, -135, -180},
 
     nBirds = 10,
     idleBirdTimeInterval = Vector(10,20),
@@ -93,7 +94,7 @@ mod.MRConst = {--Some constant variables of Mercury
     nLineShots = 4,
     lineShotSpeed = 15,
 
-    nCircles = 35,
+    nCircles = 10,
     circleSpeed = 100,
     circlingDistance = 575,
     angleSpeed = 20,
@@ -202,24 +203,27 @@ function mod:MercuryCircle(entity, data, sprite, target,room)
         if data.CircleCount >= mod.MRConst.nCircles then
             entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
             data.IsCircling = false
-            data.MercuryTargetVector = nil
-            data.CircleCount = 0
-            music:ResetPitch()
-
-            data.State = mod:MarkovTransition(data.State, mod.chainMR)
-            data.StateFrame = 0
+			sprite:Play("RainbowEnd", true)
         else
             data.CircleCount = data.CircleCount + 1
             sprite:Play("Circle",true)
-
+		end
+		
+    elseif sprite:IsFinished("RainbowEnd") then
+            data.MercuryTargetVector = nil
+            data.CircleCount = 0
+            music:ResetPitch()
+			
+            data.State = mod:MarkovTransition(data.State, mod.chainMR)
+            data.StateFrame = 0
+			
+    elseif sprite:IsEventTriggered("Shot") then
 
             local direction = (target.Position - entity.Position):Normalized()
 
             local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction*mod.MRConst.circleShotSpeed, entity):ToProjectile()
             tear:GetSprite().Color = mod.Colors.mercury
             tear.Height = -30
-        end
-
     end
 
     local player = Isaac.GetPlayer(0)
@@ -239,7 +243,6 @@ function mod:MercuryCircle(entity, data, sprite, target,room)
 		entity.Velocity = data.targetvelocity * mod.MRConst.circleSpeed
 
     end
-
 end
 function mod:MercuryLines(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
@@ -253,11 +256,8 @@ function mod:MercuryLines(entity, data, sprite, target,room)
         if data.LineCount >= mod.MRConst.nLines then
             entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
             data.IsLining = false
-            data.LineCount = 0
-            music:ResetPitch()
-
-            data.State = mod:MarkovTransition(data.State, mod.chainMR)
-            data.StateFrame = 0
+			
+			sprite:Play("RainbowEnd", true)
         else
             data.LineCount = data.LineCount + 1
             sprite:Play("Lines",true)
@@ -271,6 +271,13 @@ function mod:MercuryLines(entity, data, sprite, target,room)
                 end,i*5)
             end
         end
+	
+	elseif sprite:IsFinished("RainbowEnd") then
+            data.LineCount = 0
+            music:ResetPitch()
+
+            data.State = mod:MarkovTransition(data.State, mod.chainMR)
+            data.StateFrame = 0
 
     end
 
@@ -301,6 +308,7 @@ function mod:MercurySpindash(entity, data, sprite, target,room)
         entity.Velocity = Vector.Zero
         sfx:Play(Isaac.GetSoundIdByName("Spindash"),1)
         data.TargetPos = target.Position
+		mod:MercurySpindashAngle(entity, data, target.Position)
 
     elseif sprite:IsEventTriggered("ReleaseSpin") then
         sfx:Play(Isaac.GetSoundIdByName("SpindashRelease"),1)
@@ -318,6 +326,7 @@ function mod:MercurySpindash(entity, data, sprite, target,room)
         entity.CollisionDamage = 0
         data.BounceCount = data.BounceCount + 1
         entity.Velocity = entity.Velocity:Normalized() * (mod.MRConst.spindashSpeed) * (mod.MRConst.maxBounces - data.BounceCount) / mod.MRConst.maxBounces
+		mod:MercurySpindashAngle(entity, data, entity.Velocity + entity.Position)
     end
 
 end
@@ -334,6 +343,7 @@ function mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
         entity.Velocity = Vector.Zero
         sfx:Play(Isaac.GetSoundIdByName("Spindash"),1)
         data.TargetPos = target.Position
+		mod:MercurySpindashAngle(entity, data, target.Position)
 
         
         --local laser = EntityLaser.ShootAngle(2,entity.Position , (target.Position - entity.Position):GetAngleDegrees(), 120, Vector.Zero, entity)
@@ -354,6 +364,7 @@ function mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
         data.ExtraAngle = extraAngle
         
         --local laser = EntityLaser.ShootAngle(2,entity.Position , (target.Position - entity.Position):GetAngleDegrees(), 120, Vector.Zero, entity)
+		mod:MercurySpindashAngle(entity, data, (data.TargetPos2 - entity.Position):Normalized():Rotated(data.ExtraAngle) + entity.Position)
 
     elseif sprite:IsEventTriggered("ReleaseSpin") and sprite:GetAnimation() == "Spindash2" then
         data.IsSpindashing = true
@@ -646,6 +657,15 @@ function mod:MercurySplash(entity, amount, range, angle)
         entity:FireBossProjectiles (amount, entity.Position + Vector(1,0):Rotated(angle), 0, projectileParams )
     end
 
+end
+
+--Spindash anngle
+function mod:MercurySpindashAngle(entity, data, TargetPosition)
+	local angle = (TargetPosition-entity.Position):GetAngleDegrees()
+	local new_angle = mod:Takeclosest(mod.MRConst.angleList,angle)
+	local sprite = entity:GetSprite()
+	sprite:ReplaceSpritesheet (6, "gfx/bosses/spindashes/"..tostring(new_angle)..".png")
+	sprite:LoadGraphics()
 end
 
 --ded
