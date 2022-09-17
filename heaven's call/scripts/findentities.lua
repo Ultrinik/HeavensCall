@@ -61,6 +61,9 @@ mod.Entity ={
     TarBomb = 62,
     Tongue = 63,
     TongueCord = 64,
+    SonicBoom = 65,
+    MarsBoost = 66,
+    LaserSword = 67,
 
     ---------
     
@@ -76,6 +79,7 @@ mod.Entity ={
     Horn = 55,
     Bubble = 51,
     Leaf = 58,
+    ChaosCard = 68,
     
     ---------
 
@@ -144,11 +148,15 @@ mod.EntityInf[mod.Entity.IceCreep] = {ID = EntityType.ENTITY_EFFECT, VAR = Effec
 
 mod.EntityInf[mod.Entity.Tornado] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tornado (HC)"),  SUB = mod.DefaultSub}
 
+mod.EntityInf[mod.Entity.SonicBoom] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Sonic Boom (HC)"),  SUB = mod.DefaultSub}
+
 mod.EntityInf[mod.Entity.TerraTarget] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Terra Target (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Meteor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Meteor (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.MarsTarget] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Target (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsAirstrike] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Airstrike (HC)"),  SUB = mod.DefaultSub+1}
+mod.EntityInf[mod.Entity.MarsBoost] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mars Boost (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.LaserSword] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Laser Sword (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.RedTrapdoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Red Trapdoor (HC)"),  SUB = mod.DefaultSub}
 
@@ -171,6 +179,7 @@ mod.EntityInf[mod.Entity.Fireball] = {ID = EntityType.ENTITY_PROJECTILE, VAR = I
 mod.EntityInf[mod.Entity.Kiss] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Kiss (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.Missile] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Missile (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.ChaosCard] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Chaos Card (HC)"),  SUB = mod.DefaultSub}
 
 --OTHERS-------------------------------------------------------------------------------------------------
 

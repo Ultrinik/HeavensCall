@@ -76,7 +76,7 @@ mod.MRConst = {--Some constant variables of Mercury
     nJumpProj = 8,
 
     nDrills = 14,
-    nDrillProjectiles = 10,
+    nDrillProjectiles = 13,
     drillRockSpeed = 12,
     drillShotSpeed = 10,
 
@@ -129,10 +129,11 @@ function mod:MercuryUpdate(entity)
             data.IsCircling = false
             data.CircleCount = 0
             data.IsExploded = false
+            data.Regen = false
+            
             data.TrainFlag = false
             data.TrainReady = false
             data.TrainDirection = -1
-            data.Regen = false
         end
         
         --Frame
@@ -318,6 +319,11 @@ function mod:MercurySpindash(entity, data, sprite, target,room)
         local direction = (data.TargetPos - entity.Position):Normalized()
         entity.Velocity = direction * mod.MRConst.spindashSpeed
 
+        local sonicBoom = mod:SpawnEntity(mod.Entity.SonicBoom, entity.Position + Vector(0,-40), Vector.Zero, entity):ToEffect()
+        sonicBoom:FollowParent(entity)
+        sonicBoom:GetSprite().Rotation = direction:GetAngleDegrees() - 180
+        sonicBoom.DepthOffset = 60
+
     elseif sprite:IsEventTriggered("Spin") then
         mod:MercurySplash(entity, 2, 2, (-data.TargetPos + entity.Position):GetAngleDegrees())
     end
@@ -377,6 +383,11 @@ function mod:MercuryDoubleSpindash(entity, data, sprite, target,room)
         --local laser = EntityLaser.ShootAngle(2,entity.Position , direction:GetAngleDegrees(), 120, Vector.Zero, entity)
 
         entity.Velocity = direction * mod.MRConst.spindashSpeed
+
+        local sonicBoom = mod:SpawnEntity(mod.Entity.SonicBoom, entity.Position + Vector(0,-40), Vector.Zero, entity):ToEffect()
+        sonicBoom:FollowParent(entity)
+        sonicBoom:GetSprite().Rotation = direction:GetAngleDegrees() - 180
+        sonicBoom.DepthOffset = 60
 
     elseif sprite:IsEventTriggered("Spin") and sprite:GetAnimation() == "Spindash" then
         mod:MercurySplash(entity, 2, 2, (-data.TargetPos + entity.Position):GetAngleDegrees())
@@ -1579,6 +1590,13 @@ function mod:Terra2Update(entity)
             end
         end
 
+        if entity.FrameCount % 20 == 0 then
+            
+            local tar = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_BLACK, 0, entity.Position, Vector.Zero, entity):ToEffect()
+            tar.Timeout = 60
+            tar.SpriteScale = Vector.One*3
+        end
+
     end
 end
 function mod:Terra2Whip(entity, data, sprite, target,room)
@@ -1598,7 +1616,7 @@ function mod:Terra2Whip(entity, data, sprite, target,room)
         --Better vanilla monsters was of help here
         local worm = mod:SpawnEntity(mod.Entity.Tongue, entity.Position, data.TargetDirection * 30, entity)
         worm.Parent = entity
-        worm.DepthOffset = entity.DepthOffset + 400
+        worm.DepthOffset = entity.DepthOffset + 50
 		worm.Mass = 0
 		worm:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK | EntityFlag.FLAG_NO_TARGET | EntityFlag.FLAG_NO_STATUS_EFFECTS)
 		worm:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
@@ -1607,7 +1625,7 @@ function mod:Terra2Whip(entity, data, sprite, target,room)
         local cord = mod:SpawnEntity(mod.Entity.TongueCord, entity.Position, Vector.Zero, entity)
         cord.Parent = worm
         cord.Target = entity
-        cord.DepthOffset = worm.DepthOffset - 100
+        cord.DepthOffset = worm.DepthOffset - 25
         data.Tonguecord = cord
     end
 end
@@ -1651,6 +1669,7 @@ function mod:Terra2Blast(entity, data, sprite, target,room)
         local rockData = rock:GetData()
         rockData.Direction = (target.Position - entity.Position):Normalized()
         rockData.IsActive_HC = true
+        rockData.HeavensCall = true
     end
 end
 
@@ -2087,20 +2106,21 @@ mod.chainM = {--                 App   Mov    UP     DOWN   LEFT   RIGHT  Atk   
     [mod.MMSState.LEFT] =       {0,    0,     0.19,  0.19,  0.21,  0.19,  0.22,  0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.RIGHT] =      {0,    0,     0.19,  0.19,  0.19,  0.21,  0.22,  0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0.05,  0.14,   0.1,    0.1,    0.1,    0.14,   0.3,   0.07},
-    --[mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0,  0,   0,    0,    0,    0,   0,   1},
+    --[mod.MMSState.ATTACK] =     {0,    0,     0,     0,     0,     0,     0,     0,  1,   0,    0,    0,    1,   0,   1},
     [mod.MMSState.CLOCK] =      {0,    1,     0,     0,     0,     0,     0,     0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.LASER] =      {0,    0.3,   0,     0,     0,     0,     0,     0,     0.3,    0.3,    0,      0,      0.1,    0,     0},
     [mod.MMSState.MISSILES] =   {0,    0.5,   0,     0,     0,     0,     0,     0,     0,      0.2,    0.2,    0,      0.1,    0,     0},
     [mod.MMSState.AIRSTRIKE] =  {0,    1,     0,     0,     0,     0,     0,     0,     0,      0,      0,      0,      0,      0,     0},
     [mod.MMSState.DRONES] =     {0,    0.5,   0,     0,     0,     0,     0,     0.2,   0,      0,      0,      0,      0,      0.1,   0.2},
     [mod.MMSState.CHARGE] =     {0,    0.2,   0,     0,     0,     0,     0,     0,     0.4,    0.4,    0,      0,      0,      0,     0},
+    --[mod.MMSState.CHARGE] =     {0,    0,     0,     0,     0,     0,     0,     0,  0,   0,    0,    0,    1,   0,   1},
     [mod.MMSState.SHOTS] =      {0,    0.15,  0,     0,     0,     0,     0,     0,     0,      0,      0.25,   0,      0,      0.6,   0},
     [mod.MMSState.HOMING] =     {0,    1,     0,     0,     0,     0,     0,     0,     0,      0,      0,      0,      0,      0,     0}
 }
 mod.MConst = {
     speed = 2.1,
 
-    chargeSpeed = 70,
+    chargeSpeed = 65,
     chargeExplosionRadius = 50,
     explosionDamage = 300,
 
@@ -2118,6 +2138,11 @@ mod.MConst = {
 
     nTargets = 6,
     airstrikeExplosionRadius = 70,
+
+    nMoonMurderTears = 10,
+    rageSpeed = 25,
+    berserkerHp = 1, -- 0.12,
+    laserSwordRadius = 30,
 }
 
 local PickedIndexes = {}
@@ -2146,87 +2171,112 @@ function mod:MarsUpdate(entity)
             data.Laser = false
             data.TargetDirection = Vector.Zero 
             data.Move = false 
-            data.IsMartian = true 
+            data.IsMartian = true
+
+            data.SwordFlag = false
+            data.Sword = nil
+            data.SwordState = 0
         end
         
         --Frame
         data.StateFrame = data.StateFrame + 1
         
-        if data.State == mod.MMSState.APPEAR then
-            if data.StateFrame == 1 then
-                mod:AppearPlanet(entity)
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-            elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-                data.State = mod:MarkovTransition(data.State, mod.chainM)
-                data.StateFrame = 0
-            elseif sprite:IsEventTriggered("EndAppear") then
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
 
-                local deimos = mod:SpawnEntity(mod.Entity.Deimos, entity.Position, Vector.Zero, entity)
-                deimos.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-                deimos.Parent = entity
-                deimos:GetSprite():Play("Idle",true)
-                deimos:GetSprite().PlaybackSpeed = 0.5
-                local data = deimos:GetData()
-                data.IsMartian = true
-                data.orbitIndex = 0
-                data.orbitTotal = 2
-                data.orbitSpin = 1
-                data.orbitSpeed = 3.1891
-                data.orbitDistance = 23.436
-                
-                local phobos = mod:SpawnEntity(mod.Entity.Phobos, entity.Position, Vector.Zero, entity)
-                phobos.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-                phobos.Parent = entity
-                phobos:GetSprite():Play("Idle",true)
-                phobos:GetSprite().PlaybackSpeed = 0.5
-                local data = phobos:GetData()
-                data.IsMartian = true
-                data.orbitIndex = 1
-                data.orbitTotal = 2
-                data.orbitSpin = 1
-                data.orbitSpeed = 12.6244
-                data.orbitDistance = 9.377
-            end  
-        elseif data.State == mod.MMSState.UP or data.State == mod.MMSState.DOWN or data.State == mod.MMSState.LEFT or data.State == mod.MMSState.RIGHT then
-            if data.StateFrame == 1 then
-                sprite:Play("Idle",true)
-            elseif sprite:IsFinished("Idle") then
-                data.SecondState = data.State
-                data.State = mod:MarkovTransition(data.State, mod.chainM)
-                data.StateFrame = 0
-            else
-                mod:MarsMove(entity, data, room, target)
-            end
-        elseif data.State == mod.MMSState.MOVE or data.State == mod.MMSState.ATTACK then
-            data.State = mod:MarkovTransition(data.State, mod.chainM)
+        if not data.SwordFlag and entity.HitPoints < entity.MaxHitPoints * mod.MConst.berserkerHp and data.State ~= mod.MMSState.LASER then
+            data.SwordFlag = true
             data.StateFrame = 0
+        end
 
-        elseif data.State == mod.MMSState.CLOCK then
-            mod:MarsClock(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.LASER then
-            mod:MarsLaser(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.MISSILES then
-            mod:MarsRocket(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.AIRSTRIKE then
-            mod:MarsAirstrike(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.DRONES then
-            mod:MarsDrones(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.CHARGE then
-            mod:MarsCharge(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.SHOTS then
-            mod:MarsShots(entity, data, sprite, target,room)
-        elseif data.State == mod.MMSState.HOMING then
-            mod:MarsHoming(entity, data, sprite, target,room)
+        if data.SwordFlag then
+            mod:MarsRage(entity, data, sprite, target,room)
+        else
+
+            if data.State == mod.MMSState.APPEAR then
+                if data.StateFrame == 1 then
+                    mod:AppearPlanet(entity)
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+                    data.State = mod:MarkovTransition(data.State, mod.chainM)
+                    data.StateFrame = 0
+                elseif sprite:IsEventTriggered("EndAppear") then
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+                    local deimos = mod:SpawnEntity(mod.Entity.Deimos, entity.Position, Vector.Zero, entity)
+                    deimos.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    deimos.Parent = entity
+                    deimos:GetSprite():Play("Idle",true)
+                    deimos:GetSprite().PlaybackSpeed = 0.5
+                    local data = deimos:GetData()
+                    data.IsMartian = true
+                    data.orbitIndex = 0
+                    data.orbitTotal = 2
+                    data.orbitSpin = 1
+                    data.orbitSpeed = 3.1891
+                    data.orbitDistance = 23.436
+                    
+                    local phobos = mod:SpawnEntity(mod.Entity.Phobos, entity.Position, Vector.Zero, entity)
+                    phobos.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    phobos.Parent = entity
+                    phobos:GetSprite():Play("Idle",true)
+                    phobos:GetSprite().PlaybackSpeed = 0.5
+                    local data = phobos:GetData()
+                    data.IsMartian = true
+                    data.orbitIndex = 1
+                    data.orbitTotal = 2
+                    data.orbitSpin = 1
+                    data.orbitSpeed = 12.6244
+                    data.orbitDistance = 9.377
+                end  
+            elseif data.State == mod.MMSState.UP or data.State == mod.MMSState.DOWN or data.State == mod.MMSState.LEFT or data.State == mod.MMSState.RIGHT then
+                if data.StateFrame == 1 then
+                    sprite:Play("Idle",true)
+                elseif sprite:IsFinished("Idle") then
+                    data.SecondState = data.State
+                    data.State = mod:MarkovTransition(data.State, mod.chainM)
+                    data.StateFrame = 0
+                else
+                    mod:MarsMove(entity, data, room, target)
+                end
+            elseif data.State == mod.MMSState.MOVE or data.State == mod.MMSState.ATTACK then
+                data.State = mod:MarkovTransition(data.State, mod.chainM)
+                data.StateFrame = 0
+
+            elseif data.State == mod.MMSState.CLOCK then
+                mod:MarsClock(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.LASER then
+                mod:MarsLaser(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.MISSILES then
+                mod:MarsRocket(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.AIRSTRIKE then
+                mod:MarsAirstrike(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.DRONES then
+                mod:MarsDrones(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.CHARGE then
+                mod:MarsCharge(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.SHOTS then
+                mod:MarsShots(entity, data, sprite, target,room)
+            elseif data.State == mod.MMSState.HOMING then
+                mod:MarsHoming(entity, data, sprite, target,room)
+            end
         end
     end
 end
-function mod:MarsCharge(entity, data, sprite, target,room)
+function mod:MarsCharge(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
+
         sprite:Play("Charge",true)
+
+        local angle = (target.Position - entity.Position):GetAngleDegrees()
+        local boost = mod:SpawnEntity(mod.Entity.MarsBoost, entity.Position + Vector(0,-50), Vector.Zero, entity):ToEffect()
+        boost:FollowParent(entity)
+        boost.DepthOffset = -50
+        boost:GetSprite().Rotation = angle-180
+        data.Boost = boost
+        
     elseif sprite:IsFinished("Charge") then
         entity.Velocity = Vector.Zero
+        data.IsCharging = false
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
     elseif entity:CollidesWithGrid() then
@@ -2247,20 +2297,37 @@ function mod:MarsCharge(entity, data, sprite, target,room)
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
         
+        data.Boost:GetSprite():SetFrame("Idle",48)
+        data.IsCharging = false
+
     elseif sprite:IsEventTriggered("SetAim") then
         data.TargetPos = target.Position
         entity.Velocity = Vector.Zero
     elseif sprite:IsEventTriggered("Charge") then
-        entity.Velocity = (data.TargetPos - entity.Position):Normalized()*mod.MConst.chargeSpeed
+        data.IsCharging = true
+        data.Angle = (data.TargetPos - entity.Position):GetAngleDegrees()
+
+        local angle = data.Angle
+        if data.Boost then
+            local boost = data.Boost 
+            boost:FollowParent(entity)
+            boost.DepthOffset = -10
+            boost:GetSprite().Rotation = angle-180
+        end
+    end
+
+    if data.IsCharging and not entity:CollidesWithGrid() then
+        entity.Velocity = Vector.FromAngle(data.Angle)*mod.MConst.chargeSpeed
     end
 end
-function mod:MarsLaser(entity, data, sprite, target,room)
+function mod:MarsLaser(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Laser",true)
     elseif sprite:IsFinished("Laser") then
         data.Laser = false
         data.ExtraLaserCount = 0
         data.ExtraLaserWarningCount = 0
+
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
 
@@ -2274,6 +2341,8 @@ function mod:MarsLaser(entity, data, sprite, target,room)
         data.TargetDirection = (data.TargetPos - entity.Position):Normalized()
         local direction = data.TargetDirection
 		local laser = EntityLaser.ShootAngle(1, entity.Position + Vector(0,-40) + direction*45 , direction:GetAngleDegrees(), 85, Vector.Zero, entity)
+        laser:GetData().IsMartian = true
+        data.LaserEntity = laser
 
         local sprite = laser:GetSprite()
         sprite:ReplaceSpritesheet (0, "gfx/effects/energy_laser.png")
@@ -2294,7 +2363,9 @@ function mod:MarsLaser(entity, data, sprite, target,room)
 
                 laser:GetSprite().Color = Color(2,0,0,1)
             end
-    
+        else
+            --sprite:SetFrame("Laser", sprite:GetFrame())
+            data.LaserEntity.Timeout = data.LaserEntity.Timeout - 10
         end
 
     elseif sprite:IsEventTriggered("ExtraLaser") then
@@ -2309,7 +2380,9 @@ function mod:MarsLaser(entity, data, sprite, target,room)
                 local sprite = laser:GetSprite()
                 sprite:ReplaceSpritesheet (0, "gfx/effects/energy_laser.png")
                 sprite:LoadGraphics()
+                laser:GetData().IsMartian = true
             end
+        else
     
         end
     end
@@ -2318,13 +2391,23 @@ function mod:MarsLaser(entity, data, sprite, target,room)
     if data.Laser then
         data.targetvelocity = -data.TargetDirection
         entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.MConst.speed
+
+        if data.LaserEntity and data.LaserEntity.Timeout <= 2 then
+            for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER),1) do
+                if e:GetData().IsMartian then
+                    e:Die()
+                end
+            end
+
+            sprite:SetFrame("Laser", 115)
+        end
     end
 
     if entity:CollidesWithGrid() then
         entity.Velocity = Vector.Zero
     end
 end
-function mod:MarsAirstrike(entity, data, sprite, target,room)
+function mod:MarsAirstrike(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Airstrike",true)
     elseif sprite:IsFinished("Airstrike") then
@@ -2366,7 +2449,7 @@ function mod:MarsAirstrike(entity, data, sprite, target,room)
     --mod:MarsMove(entity, data, room, target, true)
 
 end
-function mod:MarsClock(entity, data, sprite, target,room)
+function mod:MarsClock(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Idle",true)
     elseif sprite:IsFinished("Idle") then
@@ -2374,28 +2457,30 @@ function mod:MarsClock(entity, data, sprite, target,room)
         data.StateFrame = 0
     end
 end
-function mod:MarsRocket(entity, data, sprite, target,room)
+function mod:MarsRocket(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
-        sprite:Play("Rocket",true)
-    elseif sprite:IsFinished("Rocket") then
+        data.TargetDir = Vector(1,0)
+        if entity.Position.X > target.Position.X then
+            data.TargetDir = Vector(-1,0)
+            data.Flag = true
+            sprite:Play("RocketL",true)
+        else
+            data.Flag = false
+            sprite:Play("RocketR",true)
+        end
+    elseif sprite:IsFinished("RocketR") or sprite:IsFinished("RocketL") then
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Missile") then
-        local direction = Vector(1,0)
-        local flag = false
-        if entity.Position.X > target.Position.X then
-            direction = Vector(-1,0)
-            flag = true
-        end
 
         local rocketType = mod.Entity.MarsRocket
         if rng:RandomFloat() <= 0.02 then
             rocketType = mod.Entity.MarsGigaRocket
         end
 
-        local rocket = mod:SpawnEntity(rocketType, entity.Position + direction*50, direction, entity):ToBomb()
-        if flag then 
+        local rocket = mod:SpawnEntity(rocketType, entity.Position + data.TargetDir*120, data.TargetDir, entity):ToBomb()
+        if data.Flag then 
             rocket:GetData().IsDirected_HC = true
             rocket:GetData().Direction = Vector(-1,0)
             rocket:GetSprite().Rotation = 180
@@ -2406,7 +2491,7 @@ function mod:MarsRocket(entity, data, sprite, target,room)
         end
     end
 end
-function mod:MarsDrones(entity, data, sprite, target,room)
+function mod:MarsDrones(entity, data, sprite, target, room)
     if data.StateFrame == 1 then--Now the moons always attack
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
@@ -2416,7 +2501,7 @@ function mod:MarsDrones(entity, data, sprite, target,room)
         data.StateFrame = 0
     end
 end
-function mod:MarsShots(entity, data, sprite, target,room)
+function mod:MarsShots(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Shot",true)
     elseif sprite:IsFinished("Shot") then
@@ -2443,7 +2528,7 @@ function mod:MarsShots(entity, data, sprite, target,room)
     mod:MarsMove(entity, data, room, target, true)
 
 end
-function mod:MarsHoming(entity, data, sprite, target,room)
+function mod:MarsHoming(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Homing",true)
     elseif sprite:IsFinished("Homing") then
@@ -2458,10 +2543,10 @@ function mod:MarsHoming(entity, data, sprite, target,room)
         data.SecondState = mod.chainM2[mod:RandomInt(1,#mod.chainM2)]
 
     elseif sprite:IsEventTriggered("Missile") then
-        for i=0, 1 do
-            local angle = (1 + i)*180
+        for i=-1, 1, 2 do
+            local angle = ((i+1)/2)*180
             local velocity = Vector(1,0):Rotated(angle+mod:RandomInt(-30,30))*mod.MConst.missileSpeed*(0.5*rng:RandomFloat()+0.5)
-            local missile = mod:SpawnEntity(mod.Entity.Missile, entity.Position, velocity, entity)
+            local missile = mod:SpawnEntity(mod.Entity.Missile, entity.Position + Vector(-i, 0)*70, velocity, entity)
             missile.Parent = entity
 
             missile:GetData().IsMissile_HC = true
@@ -2470,6 +2555,75 @@ function mod:MarsHoming(entity, data, sprite, target,room)
 
     if data.Move then
         mod:MarsMove(entity, data, room, target, true)
+    end
+end
+function mod:MarsRage(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("RageStart",true)
+
+        local sword = mod:SpawnEntity(mod.Entity.LaserSword, entity.Position, Vector.Zero, entity):ToEffect()
+        entity.Child = sword
+        sword.Parent = entity
+        sword:FollowParent(entity)
+        sword.DepthOffset = 10
+        data.Sword = sword
+
+    elseif sprite:IsFinished("RageStart") then
+        sprite:Play("Rage",true)
+        
+    elseif sprite:IsEventTriggered("SetAim") then
+        data.TargetPos = target.Position
+
+    elseif sprite:IsEventTriggered("Attack") then
+        local angle = (data.TargetPos - entity.Position):GetAngleDegrees()
+
+        --local sword = data.Sword
+        local sword = entity.Child
+        local swordSprite = sword:GetSprite()
+
+        if data.SwordState == 0 then
+            data.SwordState = 1
+                
+            for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.Mars].ID)) do
+                if e.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
+                    
+                    --Summon projectile
+                    for i=1, mod.MConst.nMoonMurderTears do
+                        
+                        local angle = mod:RandomInt(0, 359)
+                        local speed = mod:RandomInt(mod.SConst.horfMurderTearSpeed.X, mod.SConst.horfMurderTearSpeed.Y)
+                        local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, 0, 0, e.Position, Vector(1,0):Rotated(angle)*speed, e.Parent):ToProjectile()
+                        tear.FallingSpeed = -1 * mod:RandomInt(1, 500) / 1000
+                        tear.FallingAccel = mod:RandomInt(1, 30) / 100
+                        tear.Height = -1 *  mod:RandomInt(18, 30)
+                    end
+
+                    e:Die()
+                end
+            end
+
+            swordSprite:Play("Spin",true)
+            
+        else
+            entity.Velocity = Vector.FromAngle(angle) * mod.MConst.rageSpeed
+
+            if data.SwordState <= 2 then
+                data.SwordState = data.SwordState + 1
+                
+                if data.SwordState == 1 then
+                    swordSprite:Play("AttackCW",true)
+                else
+                    swordSprite:Play("AttackCCW",true)
+                end
+                swordSprite.Rotation = angle - 90
+
+            elseif data.SwordState == 3 then
+                data.SwordState = 1
+
+                swordSprite:Play("Spin",true)
+                swordSprite.Rotation = 0
+            end
+        end
     end
 end
 
@@ -2587,6 +2741,8 @@ function mod:MarsDeath(entity)
             end
         end
 
+        if entity.Child and entity.Child.Type == EntityType.ENTITY_EFFECT then entity.Child:Remove() end
+
         --Fart:
         mod:NormalDeath(entity)
     end
@@ -2637,6 +2793,7 @@ function mod:SpawnMarsShot(position, velocity, origin)
     energy.LifeSpan = 1000
     energy.Parent = shot
     energy.DepthOffset = 5
+    energy:GetData().HeavensCall = true
     energy:GetData().MarsShot_HC = true
     energy:FollowParent(shot)
 

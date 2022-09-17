@@ -78,24 +78,27 @@ function mod:StatueRenderUpdate(entity)
 	if entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
 		--IAM DOING AN Isaac.FindByType EVERY RENDER, AND NOBODY CAN STOP ME!!!!!
 		for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
-			pedestal:Remove()
-			mod:StatueDie(entity)
-			entity:GetSprite():Play("Ded")
+			if pedestal:GetData().WasDeleted ~= true then
+				pedestal:Remove()
+				mod:StatueDie(entity)
 
-			--Turn pickups into poop if the items was taken in the same frame... or not, cuz its commented :)
-			--[[mod:scheduleForUpdate(function()
-				for _, pickup in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP)) do
-					if pickup:GetData().isAstral then
-						pickup = pickup:ToPickup()
-						pickup:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1))
+				--Turn pickups into poop if the items was taken in the same frame... or not, cuz its commented :)
+				--[[mod:scheduleForUpdate(function()
+					for _, pickup in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP)) do
+						if pickup:GetData().isAstral then
+							pickup = pickup:ToPickup()
+							pickup:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_POOP, mod:RandomInt(0,1))
+						end
 					end
-				end
-			end,0)]]--
+				end,0)]]--
+			end
 		end
 	end
 end
 
 function mod:StatueDie(entity)
+	entity:GetSprite():Play("Ded")
+
 	local room = game:GetRoom()
 	local level = game:GetLevel()
 	local roomdesc = level:GetCurrentRoomDesc()
@@ -125,7 +128,6 @@ function mod:StatueDie(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.StatueUpdate, mod.EntityInf[mod.Entity.Statue].ID)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.StatueRenderUpdate, mod.EntityInf[mod.Entity.Statue].ID)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, damageFlag, _, _)
 	if entity.Type == mod.EntityInf[mod.Entity.Statue].ID and  entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
@@ -141,7 +143,6 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, damageFl
 
 			entity:GetData().Spawnflag = true--For double in same frame explosions
 			mod:StatueDie(entity)
-			entity:GetSprite():Play("Ded")
 		end
 		return false
 	end
@@ -157,11 +158,10 @@ end)
 
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, function(_,pickup,entity)
 	if pickup.Type == EntityType.ENTITY_PICKUP and pickup.Variant == PickupVariant.PICKUP_COLLECTIBLE then
-		if entity.Type == EntityType.ENTITY_PLAYER then
+		if entity.Type == EntityType.ENTITY_PLAYER and pickup:GetData().WasDeleted ~= true then
 			local statues = mod:FindByTypeMod(mod.Entity.Statue)
 			if #statues>0 then
 				mod:StatueDie(statues[1])
-				statues[1]:GetSprite():Play("Ded")
 			end
 		end
 	end
@@ -174,7 +174,7 @@ function mod:DieInstantly(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.DieInstantly, mod.EntityInf[mod.Entity.IETDDATD].ID)
+--mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.DieInstantly, mod.EntityInf[mod.Entity.IETDDATD].ID)
 
 
 --Hyperion---------------------------------------------------------------------------------------------------------------------------
@@ -265,8 +265,6 @@ function mod:IceTurdDeath(entity)
 		end
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.IceTurdUpdate, mod.EntityInf[mod.Entity.IceTurd].ID)
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, mod.EntityInf[mod.Entity.IceTurd].ID)
 
 --Ulcers---------------------------------------------------------------------------------------------------------------------------
@@ -296,8 +294,6 @@ function mod:UlcersUpdate(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.UlcersUpdate, mod.EntityInf[mod.Entity.Ulcers].ID)
-
 --Candles---------------------------------------------------------------------------------------------------------------------------
 mod.CandleGirs = {
 	[1] = mod.Entity.CandleSiren,
@@ -305,7 +301,6 @@ mod.CandleGirs = {
 	[3] = mod.Entity.CandleColostomia,
 	[4] = mod.Entity.CandleMist
 }
-
 
 --States and matrix
 mod.SirenMSTATE = {
@@ -717,8 +712,6 @@ function mod:CandleUpdate(entity)
 		end
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.CandleUpdate, mod.EntityInf[mod.Entity.Candle].ID)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsKiss_HC then
 		if collider.Type == mod.EntityInf[mod.Entity.Candle].ID then
@@ -800,8 +793,6 @@ function mod:SirenRagSprite(entity)
 	sprite:LoadGraphics()
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SirenRagUpdate, EntityType.ENTITY_SIREN)
-
 --Deimos & Phobos-------------------------------------------------------------------------------------------------------------------
 function mod:MartiansUpdate(entity)
 	local data = entity:GetData()
@@ -830,20 +821,6 @@ function mod:MartiansUpdate(entity)
 		end
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
-	if entity:GetData().IsMartian and entity.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
-		mod:OrbitParent(entity)
-		mod:MartiansUpdate(entity)
-	end
-end)
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
-	if effect.Variant == EffectVariant.TECH_DOT then
-		if effect.Parent == nil and effect:GetData().MarsShot_HC then
-			effect:Remove()
-		end
-	end
-end)
 
 --Mercury Bird---------------------------------------------------------------------------------------------------------------------
 function mod:BirdUpdate(entity)
@@ -916,12 +893,10 @@ function mod:BirdUpdate(entity)
 		
 		end
 end
-
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.BirdUpdate, mod.EntityInf[mod.Entity.MercuryBird].ID)
 mod:AddCallback(ModCallbacks.MC_PRE_NPC_COLLISION, function(_, entity, collider)
 	if entity.Type == mod.EntityInf[mod.Entity.MercuryBird].ID and collider.Type == mod.EntityInf[mod.Entity.Mercury].ID then
 		if collider:GetData().Regen then
-			entity:Die()
+			entity:Remove()
 		end
 	end
 end)
@@ -932,7 +907,6 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
 		end
 	end
 end)
-
 
 --Horsemen---------------------------------------------------------------------------------------------------------------------
 function mod:HorsemenUpdate(entity)
@@ -1079,8 +1053,6 @@ function mod:HorsemenUpdate(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.HorsemenUpdate, mod.EntityInf[mod.Entity.Horsemen].ID)
-
 --TarBomb-----------------------------------------------------------------------------------------------------------------------
 function mod:TarBombUpdate(entity)
 	if mod.EntityInf[mod.Entity.TarBomb].VAR == entity.Variant then
@@ -1146,31 +1118,48 @@ function mod:TarBombUpdate(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.TarBombUpdate, mod.EntityInf[mod.Entity.TarBomb].ID)
 
+--Entity updates
+function mod:UpdateEntity(entity, data)
+	local id = entity.Type
+	local variant = entity.Variant
+	local subType = entity.SubType
+	local sprite = entity:GetSprite()
+
+	if id == mod.EntityInf[mod.Entity.TarBomb].ID then
+		mod:TarBombUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.Horsemen].ID then
+		mod:HorsemenUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.MercuryBird].ID then
+		mod:BirdUpdate(entity)
+	elseif data.IsMartian and variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
+		mod:OrbitParent(entity)
+		mod:MartiansUpdate(entity)
+	elseif id == EntityType.ENTITY_SIREN then
+		mod:SirenRagUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.Candle].ID then
+		mod:CandleUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.Ulcers].ID then
+		mod:UlcersUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.IceTurd].ID then
+		mod:IceTurdUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.Statue].ID then
+		mod:StatueUpdate(entity)
+	end
+
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
+	local data = entity:GetData()
+	if data.HeavensCall then
+		mod:UpdateEntity(entity, data)
+	end
+end)
 --EFFECTS---------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
-
---Red things updates----------------------------------------------------------------------------------------------------------------
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, redthing)
-	if redthing.Variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and redthing.SubType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB then
-		if redthing:GetSprite():IsEventTriggered("Sound") then
-			sfx:Play(Isaac.GetSoundIdByName("TrapdoorOC"),1)
-		end
-	end
-end)
-
---Thunder---------------------------------------------------------------------------------------------------------------------------
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, light)
-	if light.Variant == mod.EntityInf[mod.Entity.Thunder].VAR and light.SubType == mod.EntityInf[mod.Entity.Thunder].SUB then
-		if light:GetSprite():IsEventTriggered("Hit") then
-			sfx:Play(Isaac.GetSoundIdByName("Thunder"),1)
-		end
-	end
-end)
 
 --Snowflake
 function mod:SpawnSnowflake(entity, room, speed)
@@ -1188,15 +1177,6 @@ function mod:SpawnSnowflake(entity, room, speed)
 		end
 	end
 end
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, snow)
-	if snow.Variant == mod.EntityInf[mod.Entity.Snowflake].VAR and snow.SubType == mod.EntityInf[mod.Entity.Snowflake].SUB then
-		local sprite = snow:GetSprite()
-		local finished = sprite:IsFinished("Drop01") or sprite:IsFinished("Drop02") or sprite:IsFinished("Drop03") or sprite:IsFinished("Drop04")
-		if finished then
-			snow:Remove()
-		end
-	end
-end)
 
 --Ice updates-----------------------------------------------------------------------------------------------------------------------
 function mod:IceCreep(entity)
@@ -1207,12 +1187,6 @@ function mod:IceCreep(entity)
 		entity:GetData().iceCount = entity:GetData().iceCount - 1
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_RENDER, function(_, creep)
-	if creep:GetData().isIce then
-		mod:IceCreep(creep)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_POST_EFFECT_INIT, function(_, creep)
 	if creep:GetData().isIce then
 		mod:IceCreep(creep)
@@ -1280,8 +1254,6 @@ function mod:TornadoUpdate(entity)
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.TornadoUpdate, mod.EntityInf[mod.Entity.Tornado].VAR)
-
 --Airstrike---------------------------------------------------------------------------------------------------------------------------
 function mod:AirstrikeUpdate(entity)
 	if entity.SubType == mod.EntityInf[mod.Entity.MarsTarget].SUB then
@@ -1325,8 +1297,6 @@ function mod:AirstrikeUpdate(entity)
 
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.AirstrikeUpdate, mod.EntityInf[mod.Entity.MarsTarget].VAR)
 
 --Meteors---------------------------------------------------------------------------------------------------------------------------
 function mod:MeteorUpdate(entity)
@@ -1390,18 +1360,6 @@ function mod:MeteorUpdate(entity)
 	end
 
 end
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, entity)
-	if entity.Variant == mod.EntityInf[mod.Entity.TerraTarget].VAR and entity.SubType == mod.EntityInf[mod.Entity.TerraTarget].SUB then
-		if entity.Timeout <= 1 then
-			local meteor = mod:SpawnEntity(mod.Entity.Meteor, entity.Position, Vector.Zero, entity.Parent)
-			meteor.Parent = entity.Parent
-
-			entity:Remove()
-		end
-	end
-end)
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.MeteorUpdate, mod.EntityInf[mod.Entity.Meteor].VAR)
-
 
 --Rockblast---------------------------------------------------------------------------------------------------------------------------
 function mod:RockblastUpdate(entity)
@@ -1421,6 +1379,7 @@ function mod:RockblastUpdate(entity)
 			local rockData = rock:GetData()
 			rockData.Direction = data.Direction:Rotated(mod.TConst.blastAngle * 2 * rng:RandomFloat() - mod.TConst.blastAngle)
 			rockData.IsActive_HC = true
+			rockData.HeavensCall = true
 		end
 		--Damage
 		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 30)) do
@@ -1433,22 +1392,179 @@ function mod:RockblastUpdate(entity)
 		data.IsActive_HC = false
 	end
 end
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.RockblastUpdate, EffectVariant.BIG_ROCK_EXPLOSION)
 
---Effects that dissapear after idle-------------------------------------------------------------------------------------------------
+--Laser sword-------------------------------------------------------------------------------------------------------------------------
+function mod:LaserSwordSpin(entity)
+	local sprite = entity:GetSprite()
 
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
-	local valid = effect.Variant == mod.EntityInf[mod.Entity.Aurora].VAR and effect.SubType == mod.EntityInf[mod.Entity.Aurora].SUB or
-	effect.Variant == mod.EntityInf[mod.Entity.TimeFreezeSource].VAR and effect.SubType == mod.EntityInf[mod.Entity.TimeFreezeSource].SUB or
-	effect.Variant == mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR and effect.SubType == mod.EntityInf[mod.Entity.TimeFreezeObjective].SUB or
-	effect.Variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and effect.SubType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB
+	local distance = 50
+	local center = nil
+
+	if sprite:IsEventTriggered("Hit1") then
+		center = entity.Position + Vector(-distance,distance)
+	elseif sprite:IsEventTriggered("Hit2") then
+		center = entity.Position + Vector(-distance,-distance)
+	elseif sprite:IsEventTriggered("Hit3") then
+		center = entity.Position + Vector(distance,-distance)
+	elseif sprite:IsEventTriggered("Hit4") then
+		center = entity.Position + Vector(distance,distance)
+	end
+
+	mod:LaserSwordDamage(entity,center)
+end
+function mod:LaserSwordAttack(entity)
+	local sprite = entity:GetSprite()
+
+	local center_ = Vector(71,0)
+	local center = nil
+	local angle = sprite.Rotation + 90
+	
+	if sprite:IsEventTriggered("Hit1") then
+		center = entity.Position + center_:Rotated(angle-30)
+	elseif sprite:IsEventTriggered("Hit2") then
+		center = entity.Position + center_:Rotated(angle)
+	elseif sprite:IsEventTriggered("Hit3") then
+		center = entity.Position + center_:Rotated(angle+30)
+	end
+
+	mod:LaserSwordDamage(entity,center)
+end
+function mod:LaserSwordUpdate(entity)
+	local sprite = entity:GetSprite()
+
+	if sprite:IsPlaying("Spin") then
+		mod:LaserSwordSpin(entity)
+	elseif sprite:IsPlaying("AttackCW") or sprite:IsPlaying("AttackCCW") then
+		mod:LaserSwordAttack(entity)
+	end
+
+end
+
+function mod:LaserSwordDamage(entity,center)
+	if center then
+		--Damage
+		for i, e in ipairs(Isaac.FindInRadius(center, mod.MConst.laserSwordRadius)) do
+			--print(e.Type)
+			if e.Type ~= EntityType.ENTITY_PLAYER and not e:GetData().IsMartian then
+				e:TakeDamage(50, 0, EntityRef(entity.Parent), 0)
+			elseif e.Type == EntityType.ENTITY_PLAYER then
+				e:TakeDamage(1, 0, EntityRef(entity.Parent), 0)
+			end
+			
+			if e.Type == EntityType.ENTITY_TEAR then
+
+				local projectile = nil
+				if e.Variant == TearVariant.CHAOS_CARD then
+					projectile = mod:SpawnEntity(mod.Entity.ChaosCard, e.Position, e.Velocity, entity.Parent):ToProjectile()
+					projectile:GetData().IsChaos_HC = true
+					projectile:GetSprite():Play("Rotate",true)
+					projectile:AddProjectileFlags(ProjectileFlags.EXPLODE)
+				else
+					projectile = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, e.Position, e.Velocity, entity.Parent):ToProjectile()
+				end
+
+				projectile.Velocity = -e.Velocity*1.5
+				if e.Height then projectile.Height = e.Height end
+				if e.FallingAcceleration then projectile.FallingAccel = e.FallingAcceleration end
+				if e.FallingSpeed then projectile.FallingSpeed = e.FallingSpeed end
+				
+				e:Remove()
+
+			elseif e.Type == EntityType.ENTITY_BOMB then
+				local direction = Vector.FromAngle((center - entity.Position):GetAngleDegrees())
+				e.Velocity = 40 * direction
+
+				if e.Variant == BombVariant.BOMB_ROCKET then
+					e:GetData().IsDirected_HC = true
+					e:GetData().Direction = direction
+					if direction.X > 0 then 
+						e:GetSprite().FlipX = true 
+					end
+				end
+			end
+		end
+	end
+end
+
+
+--Effects updates
+function mod:UpdateEffect(effect, data)
+	local variant = effect.Variant
+	local subType = effect.SubType
+	local sprite = effect:GetSprite()
+
+	if variant == mod.EntityInf[mod.Entity.Meteor].VAR then
+		mod:MeteorUpdate(effect)
+	elseif variant == EffectVariant.BIG_ROCK_EXPLOSION then
+		mod:RockblastUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.TerraTarget].VAR and subType == mod.EntityInf[mod.Entity.TerraTarget].SUB then
+		if effect.Timeout <= 1 then
+			local meteor = mod:SpawnEntity(mod.Entity.Meteor, effect.Position, Vector.Zero, effect.Parent)
+			meteor.Parent = effect.Parent
+
+			effect:Remove()
+		end
+	elseif variant == mod.EntityInf[mod.Entity.MarsTarget].VAR then
+		mod:AirstrikeUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.Tornado].VAR then
+		mod:TornadoUpdate(effect)
+	elseif data.isIce then
+		mod:IceCreep(effect)
+	elseif variant == mod.EntityInf[mod.Entity.Thunder].VAR and subType == mod.EntityInf[mod.Entity.Thunder].SUB then
+		if sprite:IsEventTriggered("Hit") then
+			sfx:Play(Isaac.GetSoundIdByName("Thunder"),1)
+		end
+	elseif variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and subType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB then
+		if sprite:IsEventTriggered("Sound") then
+			sfx:Play(Isaac.GetSoundIdByName("TrapdoorOC"),1)
+		end
+	elseif variant == EffectVariant.TECH_DOT then
+		if effect.Parent == nil and data.MarsShot_HC then
+			effect:Die()
+		end
+	elseif variant == mod.EntityInf[mod.Entity.LaserSword].VAR then
+		mod:LaserSwordUpdate(effect)
+	end
+
+end
+
+--Disappear after animation
+function mod:DisappearEffect(effect, data)
+
+	local variant = effect.Variant
+	local subType = effect.SubType
+
+	local valid = 
+	variant == mod.EntityInf[mod.Entity.Aurora].VAR and subType == mod.EntityInf[mod.Entity.Aurora].SUB or
+	variant == mod.EntityInf[mod.Entity.TimeFreezeSource].VAR and subType == mod.EntityInf[mod.Entity.TimeFreezeSource].SUB or
+	variant == mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR and subType == mod.EntityInf[mod.Entity.TimeFreezeObjective].SUB or
+	variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and subType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB or
+	variant == mod.EntityInf[mod.Entity.SonicBoom].VAR and subType == mod.EntityInf[mod.Entity.SonicBoom].SUB or
+	variant == mod.EntityInf[mod.Entity.MarsBoost].VAR and subType == mod.EntityInf[mod.Entity.MarsBoost].SUB
 	if valid then
 		if effect:GetSprite():IsFinished("Idle") then
 			effect:Remove()
+			return
 		end
 	end
-end)
 
+	local sprite = effect:GetSprite()
+	if variant == mod.EntityInf[mod.Entity.Snowflake].VAR and subType == mod.EntityInf[mod.Entity.Snowflake].SUB then
+		local finished = sprite:IsFinished("Drop01") or sprite:IsFinished("Drop02") or sprite:IsFinished("Drop03") or sprite:IsFinished("Drop04")
+		if finished then
+			effect:Remove()
+		end
+	end
+
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, function(_, effect)
+	local data = effect:GetData()
+	if data.HeavensCall then
+		mod:UpdateEffect(effect, data)
+		mod:DisappearEffect(effect, data)
+	end
+end)
 --PROJECTILES-----------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1467,12 +1583,6 @@ function mod:KeyUpdate(key)
 		data.Lifespan = data.Lifespan-1
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, key)
-	if key.Variant == mod.EntityInf[mod.Entity.KeyKnife].VAR or key.Variant == mod.EntityInf[mod.Entity.KeyKnifeRed].VAR then
-		mod:KeyUpdate(key)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, key, collider)
 	if key.Variant == mod.EntityInf[mod.Entity.KeyKnife].VAR or key.Variant == mod.EntityInf[mod.Entity.KeyKnifeRed].VAR then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1537,12 +1647,6 @@ function mod:HailProjectile(tear,collided)
 		tear:Die()
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsIcicle_HC then
-		mod:HailProjectile(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsIcicle_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1550,7 +1654,6 @@ mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, coll
 		end
 	end
 end)
-
 
 --Flame-----------------------------------------------------------------------------------------------------------------------------
 function mod:FireUpdate(tear, collided)
@@ -1587,12 +1690,6 @@ function mod:FireUpdate(tear, collided)
 		tear:Die()
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsFlamethrower_HC then
-		mod:FireUpdate(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsFlamethrower_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1648,12 +1745,6 @@ function mod:FireballUpdate(tear, collided)
 		tear:Die()
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsFireball_HC then
-		mod:FireballUpdate(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsFireball_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1661,7 +1752,6 @@ mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, coll
 		end
 	end
 end)
-
 
 --Kiss---------------------------------------------------------------------------------------------------------------------------
 function mod:KissUpdate(tear, collided)
@@ -1694,12 +1784,6 @@ function mod:KissUpdate(tear, collided)
 		tear:Die()
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsKiss_HC then
-		mod:KissUpdate(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsKiss_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1781,12 +1865,6 @@ function mod:MissileUpdate(tear, collided)
 
 end
 
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsMissile_HC then
-		mod:MissileUpdate(tear,false)
-	end
-end)
-
 --Horn-------------------------------------------------------------------------------------------------------------------------------
 function mod:HornUpdate(tear, collided)
 	local sprite = tear:GetSprite()
@@ -1811,12 +1889,6 @@ function mod:HornUpdate(tear, collided)
 		tear:Die()
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsHorn_HC then
-		mod:HornUpdate(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsHorn_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1849,12 +1921,6 @@ function mod:LeafUpdate(tear, collided)
 		tear.FallingAccel = 0
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsLeaf_HC then
-		mod:LeafUpdate(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsLeaf_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
@@ -1898,17 +1964,65 @@ function mod:BubbleUpdate(tear, collided)
 		tear:Die()
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
-	if tear:GetData().IsBubble_HC then
-		mod:BubbleUpdate(tear,false)
-	end
-end)
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsBubble_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
 			mod:BubbleUpdate(tear,true)
 		end
+	end
+end)
+
+--ChaosCard-------------------------------------------------------------------------------------------------------------------------------
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().IsChaos_HC then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			collider:Kill()
+
+			
+			local projectile = mod:SpawnEntity(mod.Entity.ChaosCard, tear.Position, tear.Velocity, nil):ToProjectile()
+			projectile:GetData().IsChaos_HC = true
+			projectile:GetSprite():Play("Rotate",true)
+			projectile:AddProjectileFlags(ProjectileFlags.EXPLODE)
+			
+			if tear.Height then projectile.Height = tear.Height end
+			if tear.FallingAcceleration then projectile.FallingAccel = tear.FallingAcceleration end
+			if tear.FallingSpeed then projectile.FallingSpeed = tear.FallingSpeed end
+
+			tear:Remove()
+		end
+	end
+end)
+
+--Projectile Updates
+function mod:UpdateProjectile(projectile, data)
+	local variant = projectile.Variant
+	local subType = projectile.SubType
+
+	if data.IsBubble_HC then
+		mod:BubbleUpdate(projectile,false)
+	elseif data.IsLeaf_HC then
+		mod:LeafUpdate(projectile,false)
+	elseif data.IsHorn_HC then
+		mod:HornUpdate(projectile,false)
+	elseif data.IsMissile_HC then
+		mod:MissileUpdate(projectile,false)
+	elseif data.IsKiss_HC then
+		mod:KissUpdate(projectile,false)
+	elseif data.IsFireball_HC then
+		mod:FireballUpdate(projectile,false)
+	elseif data.IsFlamethrower_HC then
+		mod:FireUpdate(projectile,false)
+	elseif data.IsIcicle_HC then
+		mod:HailProjectile(projectile,false)
+	elseif variant == mod.EntityInf[mod.Entity.KeyKnife].VAR or variant == mod.EntityInf[mod.Entity.KeyKnifeRed].VAR then
+		mod:KeyUpdate(projectile)
+	end
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, projectile)
+	local data = projectile:GetData()
+	if data.HeavensCall then
+		mod:UpdateProjectile(projectile, data)
 	end
 end)
 

@@ -331,7 +331,9 @@ end
 
 --Spawn entity from mod
 function mod:SpawnEntity(entityNum, position, velocity, origin)
-	return Isaac.Spawn(mod.EntityInf[entityNum].ID, mod.EntityInf[entityNum].VAR, mod.EntityInf[entityNum].SUB, position, velocity, origin)
+	local entity = Isaac.Spawn(mod.EntityInf[entityNum].ID, mod.EntityInf[entityNum].VAR, mod.EntityInf[entityNum].SUB, position, velocity, origin)
+	entity:GetData().HeavensCall = true
+	return entity
 end
 
 --Find mod entity
@@ -693,6 +695,18 @@ mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, function(_,item)
 		return true
 	end
 end)
+--Eternal D6
+mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
+	mod:RemoveCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.StatueRenderUpdate)
+	if item == CollectibleType.COLLECTIBLE_ETERNAL_D6 then
+		mod:scheduleForUpdate(function()
+			mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.StatueRenderUpdate, mod.EntityInf[mod.Entity.Statue].ID)
+			for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
+				pedestal:GetData().WasDeleted = true
+			end
+		end,1)
+	end
+end)
 
 --PLANET RESPAWN--------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -809,7 +823,7 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_,entity)--Dont reroll
 		end
 	end
 end)
-mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, function(_,item)--Dont reroll player items intro astral challenge items if d6 or d100
+mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, function(_,item)--Dont reroll player items intro astral challenge items if d4 or d100
 	if item == CollectibleType.COLLECTIBLE_D4 or item == CollectibleType.COLLECTIBLE_D100 then
 		mod:PausePool()
 	end
