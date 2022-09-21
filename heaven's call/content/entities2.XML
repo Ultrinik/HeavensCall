@@ -99,16 +99,18 @@
 	<entity name="Mercury Bird (HC)" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="9999" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="0" collisionMass="10" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="2">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-
-	<entity name="Wagon (HC)" id="723" variant="370" subtype="0" anm2path="entity_Wagon.anm2" baseHP="400" shieldStrength="45" boss="1" champion="0" collisionDamage="1" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
-    </entity>
 	
-	<entity name="Horn (HC)" id="9" variant="377" subtype="160" anm2path="projectile_Horn.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="15" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+	<entity name="Bismuth (HC)" id="9" variant="377" subtype="160" anm2path="projectile_Bismuth.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="15" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
     <entity name="Sonic Boom (HC)" id="1000" variant="377" subtype="160" anm2path="effect_SonicBoom.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="1" friction="1" numGridCollisionPoints="0" shadowSize="22" stageHP="0" >
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
+    <entity name="Horn (HC)" id="1000" variant="380" subtype="160" anm2path="effect_Horn.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="1" friction="1" numGridCollisionPoints="0" shadowSize="22" stageHP="0" >
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
+    <entity name="Mercury Trace (HC)" id="1000" variant="381" subtype="160" anm2path="effect_MercuryTrace.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="1" friction="1" numGridCollisionPoints="0" shadowSize="22" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 
@@ -153,7 +155,7 @@
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Candle Colostomia" id="722" variant="373" subtype="0" anm2path="entity_CandleColostomia.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="ground">
+	<entity name="Candle Colostomia" id="722" variant="373" subtype="0" anm2path="entity_CandleColostomia.anm2" baseHP="250" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="150" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="3" bestiary="true" gridCollision="ground">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -163,7 +165,7 @@
 	</entity>
 	
 	<!-- Terra -->
-	<entity name="Terra the Fatalist (green)" id="706" variant="370" subtype="0" anm2path="entity_Terra1.anm2" baseHP="350" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Terra the Fatalist (green)" id="706" variant="370" subtype="0" anm2path="entity_Terra1.anm2" baseHP="200" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>

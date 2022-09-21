@@ -41,6 +41,8 @@ mod.Colors = {
 	mercury = Color(0.3,0.3,0.3,1),
 	tar = Color(0.5,0.5,0.5, 1, 0,0,0),
 	black = Color(0,0,0,1,0,0,0),
+	ghost = Color(1,1,1,0.6,1,1,1),
+	greenEden = Color(0.5,1,0.5,0.6,0.4,1,0.4),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -199,7 +201,7 @@ function mod:IsOutsideRoom(point, room)
 end
 
 --ded
-function mod:NormalDeath(entity, notExplosion)
+function mod:NormalDeath(entity, notExplosion, mamaMega)
 	local data = entity:GetData()
 
 	if mod.ModFlags.currentMusic then
@@ -214,19 +216,21 @@ function mod:NormalDeath(entity, notExplosion)
 
 	--Explosion
 	if not notExplosion then
-		--game:GetRoom():MamaMegaExplosion(entity.Position)
+		if mamaMega then
+			game:GetRoom():MamaMegaExplosion(entity.Position)
+		else
+			--local gigaBomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_GIGA, 0, entity.Position, Vector.Zero, entity ):ToBomb()
+			--gigaBomb:SetExplosionCountdown(0)
+			--game: BombExplosionEffects  ( entity.Position, 100, 120, true, entity, TearFlags.TEAR_NORMAL, DamageFlag.DAMAGE_EXPLOSION, false )
 
-		--local gigaBomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_GIGA, 0, entity.Position, Vector.Zero, entity ):ToBomb()
-		--gigaBomb:SetExplosionCountdown(0)
-		--game: BombExplosionEffects  ( entity.Position, 100, 120, true, entity, TearFlags.TEAR_NORMAL, DamageFlag.DAMAGE_EXPLOSION, false )
+			--game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
 
-		--game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
-
-		local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_BIG, 0, entity.Position, Vector.Zero, entity ):ToBomb()
-		bomb:SetExplosionCountdown(0)
-		bomb.ExplosionDamage = 150
-		bomb.RadiusMultiplier = 1.45
-		
+			local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_BIG, 0, entity.Position, Vector.Zero, entity ):ToBomb()
+			bomb:SetExplosionCountdown(0)
+			bomb.ExplosionDamage = 150
+			bomb.RadiusMultiplier = 1.45
+			bomb.Visible = false
+		end
 		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
         game:ShakeScreen(60)
 	end
@@ -365,6 +369,13 @@ function mod:AppearPlanet(entity)
 	end
 
 	entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
+
+	--Pedestals
+	for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
+		if pedestal:GetData().WasDeleted ~= true then
+			pedestal:Remove()
+		end
+	end
 
 end
 

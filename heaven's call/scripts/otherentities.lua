@@ -851,10 +851,15 @@ function mod:BirdUpdate(entity)
 
 
 		if sprite:IsEventTriggered("Shot") then
-			local direction = (target.Position - entity.Position):Normalized()
 
-			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction*mod.MRConst.birdShotSpeed, entity):ToProjectile()
-			tear:GetSprite().Color = mod.Colors.mercury
+			if (target.Position - entity.Position):Length() >= 150 then
+
+				local direction = (target.Position - entity.Position):Normalized()
+
+				local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction*mod.MRConst.birdShotSpeed, entity):ToProjectile()
+				tear:GetSprite().Color = mod.Colors.mercury
+
+			end
 
 		end
 
@@ -869,7 +874,7 @@ function mod:BirdUpdate(entity)
 		--It just basically stays around a something
 		
 		--idleTime == frames moving in the same direction
-		if entity.Parent:GetData().Regen then
+		if entity.Parent and entity.Parent:GetData().Regen then
 			data.idleTime = 1
 			data.targetvelocity = ((parent.Position - entity.Position):Normalized()*10)
 			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ENEMIES
@@ -931,6 +936,8 @@ function mod:HorsemenUpdate(entity)
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 				
 				data.Speed = mod.TConst.horsemenSpeed
+
+				entity.CollisionDamage = 0
 	
 			end
 	
@@ -964,6 +971,7 @@ function mod:HorsemenUpdate(entity)
 					data.Speed = mod.TConst.horsemenSpeed
 					data.Farting = false
 		
+					entity.CollisionDamage = 0
 				end
 		
 		
@@ -998,6 +1006,7 @@ function mod:HorsemenUpdate(entity)
 
 				data.Speed = mod.TConst.horsemenSpeed + 5
 	
+				entity.CollisionDamage = 0
 			end
 	
 	
@@ -1113,6 +1122,11 @@ function mod:TarBombUpdate(entity)
 				bubble:GetData().IsTar_HC = true
 			end
 
+			
+			game:SpawnParticles (entity.Position, EffectVariant.POOP_PARTICLE, 20, 13, mod.Colors.black)
+			local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+			bloody:GetSprite().Color = mod.Colors.black
+			
 			entity:Remove()
 		end
 	end
@@ -1328,7 +1342,8 @@ function mod:MeteorUpdate(entity)
 
 		for i = 1, 4 do
 			local velocity = Vector.FromAngle(i*360/4)*mod.TConst.debbriesSpeed
-			local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, velocity, entity.Parent)
+			local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, velocity, entity.Parent):ToProjectile()
+			rock.FallingSpeed = 2
 		end
 
 		entity:Remove()
@@ -1390,6 +1405,26 @@ function mod:RockblastUpdate(entity)
 			end
 		end
 		data.IsActive_HC = false
+	end
+end
+
+--Horn---------------------------------------------------------------------------------------------------------------------------
+function mod:HornUpdate(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+
+	if sprite:IsFinished("Idle") then
+		for i=1, mod.MRConst.nHornDivisions do
+			local angle = 360 * rng:RandomFloat()
+			local speed = Vector.FromAngle(angle) *  ( mod.MRConst.bismuthSpeed * rng:RandomFloat() + 2 )
+			local shot = mod:SpawnEntity(mod.Entity.Bismuth, entity.Position, speed, entity.Parent):ToProjectile()
+			shot.FallingSpeed = -20;
+			shot.FallingAccel = 1.5;
+			shot.Parent = entity.Parent
+			shot:GetData().IsBismuth_HC = true
+		end
+
+		entity:Remove()
 	end
 end
 
@@ -1493,11 +1528,13 @@ function mod:UpdateEffect(effect, data)
 	local subType = effect.SubType
 	local sprite = effect:GetSprite()
 
+
 	if variant == mod.EntityInf[mod.Entity.Meteor].VAR then
 		mod:MeteorUpdate(effect)
 	elseif variant == EffectVariant.BIG_ROCK_EXPLOSION then
 		mod:RockblastUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.TerraTarget].VAR and subType == mod.EntityInf[mod.Entity.TerraTarget].SUB then
+		effect.DepthOffset = -50
 		if effect.Timeout <= 1 then
 			local meteor = mod:SpawnEntity(mod.Entity.Meteor, effect.Position, Vector.Zero, effect.Parent)
 			meteor.Parent = effect.Parent
@@ -1524,6 +1561,8 @@ function mod:UpdateEffect(effect, data)
 		end
 	elseif variant == mod.EntityInf[mod.Entity.LaserSword].VAR then
 		mod:LaserSwordUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.Horn].VAR then
+		mod:HornUpdate(effect)
 	end
 
 end
@@ -1540,7 +1579,8 @@ function mod:DisappearEffect(effect, data)
 	variant == mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR and subType == mod.EntityInf[mod.Entity.TimeFreezeObjective].SUB or
 	variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and subType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB or
 	variant == mod.EntityInf[mod.Entity.SonicBoom].VAR and subType == mod.EntityInf[mod.Entity.SonicBoom].SUB or
-	variant == mod.EntityInf[mod.Entity.MarsBoost].VAR and subType == mod.EntityInf[mod.Entity.MarsBoost].SUB
+	variant == mod.EntityInf[mod.Entity.MarsBoost].VAR and subType == mod.EntityInf[mod.Entity.MarsBoost].SUB or
+	variant == mod.EntityInf[mod.Entity.MercuryTrace].VAR and subType == mod.EntityInf[mod.Entity.MercuryTrace].SUB
 	if valid then
 		if effect:GetSprite():IsFinished("Idle") then
 			effect:Remove()
@@ -1865,24 +1905,25 @@ function mod:MissileUpdate(tear, collided)
 
 end
 
---Horn-------------------------------------------------------------------------------------------------------------------------------
-function mod:HornUpdate(tear, collided)
+--Bismuth-------------------------------------------------------------------------------------------------------------------------------
+function mod:BismuthUpdate(tear, collided)
 	local sprite = tear:GetSprite()
 	local data = tear:GetData()
 
 	if data.Init == nil then
-		sprite:Play("Idle")
-		sprite.Rotation = tear.Velocity:GetAngleDegrees()
+		sprite:Play("Rotate"..tostring(mod:RandomInt(0,2)), true)
 		data.Init = true
 	end
 
 	--If tear collided then
 	if tear:IsDead() or collided then
 
-		local offset = 360 * rng:RandomFloat()
-		for i=1, mod.MRConst.nHornDivisions do
-			local angle = i*360/mod.MRConst.nHornDivisions + offset
-			local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector.FromAngle(angle)*mod.MRConst.hornSpeed*0.5, tear.Parent):ToProjectile()
+		for i=1, mod.MRConst.nBismuthDivisions do
+			local angle = 360 * rng:RandomFloat()
+			local speed = Vector.FromAngle(angle) * ( mod.MRConst.bismuthDivisionsSpeed * rng:RandomFloat() + 5 )
+			local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, speed, tear.Parent):ToProjectile()
+			shot.FallingSpeed = -10;
+			shot.FallingAccel = 1.5;
 			shot:GetSprite().Color = mod.Colors.mercury
 		end
 
@@ -1890,9 +1931,9 @@ function mod:HornUpdate(tear, collided)
 	end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
-	if tear:GetData().IsHorn_HC then
+	if tear:GetData().IsBismuth_HC then
 		if collider.Type == EntityType.ENTITY_PLAYER then
-			mod:HornUpdate(tear,true)
+			mod:BismuthUpdate(tear,true)
 		end
 	end
 end)
@@ -1961,6 +2002,12 @@ function mod:BubbleUpdate(tear, collided)
 	if tear:IsDead() or collided or tear.Parent == nil then
 
 		local impact = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.IMPACT, 0, tear.Position, Vector.Zero, nil)
+
+		if data.IsTar_HC then
+            local tar = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_BLACK, 0, tear.Position, Vector.Zero, tear.Parent):ToEffect()
+            tar.Timeout = 30
+		end
+
 		tear:Die()
 	end
 end
@@ -2002,8 +2049,6 @@ function mod:UpdateProjectile(projectile, data)
 		mod:BubbleUpdate(projectile,false)
 	elseif data.IsLeaf_HC then
 		mod:LeafUpdate(projectile,false)
-	elseif data.IsHorn_HC then
-		mod:HornUpdate(projectile,false)
 	elseif data.IsMissile_HC then
 		mod:MissileUpdate(projectile,false)
 	elseif data.IsKiss_HC then
@@ -2016,6 +2061,8 @@ function mod:UpdateProjectile(projectile, data)
 		mod:HailProjectile(projectile,false)
 	elseif variant == mod.EntityInf[mod.Entity.KeyKnife].VAR or variant == mod.EntityInf[mod.Entity.KeyKnifeRed].VAR then
 		mod:KeyUpdate(projectile)
+	elseif data.IsBismuth_HC then
+		mod:BismuthUpdate(projectile)
 	end
 end
 

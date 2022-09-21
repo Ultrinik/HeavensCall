@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="" CreatedOn="12-09-2022 18:37:41" Version="262" Fps="30"/>
+	<Info CreatedBy="" CreatedOn="19-09-2022 18:24:44" Version="263" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="bosses\mercury.png" Id="0"/>
@@ -547,7 +547,7 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
-				<Trigger EventId="9" AtFrame="11"/>
+				<Trigger EventId="9" AtFrame="25"/>
 			</Triggers>
 		</Animation>
 		<Animation Name="Bird" FrameNum="260" Loop="false">

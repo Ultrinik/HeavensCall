@@ -55,7 +55,7 @@ mod.Entity ={
     Aurora = 27,
     MarsTarget = 43,
     MarsAirstrike = 44,
-    Wagon = 53,
+    Bismuth = 53,
     TerraTarget = 59,
     Meteor = 60,
     TarBomb = 62,
@@ -64,6 +64,7 @@ mod.Entity ={
     SonicBoom = 65,
     MarsBoost = 66,
     LaserSword = 67,
+    MercuryTrace = 69,
 
     ---------
     
@@ -80,6 +81,7 @@ mod.Entity ={
     Bubble = 51,
     Leaf = 58,
     ChaosCard = 68,
+    Bismuth = 70,
     
     ---------
 
@@ -117,7 +119,6 @@ mod.EntityInf[mod.Entity.IceTurd] = {ID = Isaac.GetEntityTypeByName("Ice Turd (H
 mod.EntityInf[mod.Entity.NeptuneFaker] = {ID = Isaac.GetEntityTypeByName("Neptune Faker (HC)"), VAR = Isaac.GetEntityVariantByName("Neptune Faker (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.MercuryBird] = {ID = Isaac.GetEntityTypeByName("Mercury Bird (HC)"), VAR = Isaac.GetEntityVariantByName("Mercury Bird (HC)"),  SUB = mod.DefaultEntitySub}
-mod.EntityInf[mod.Entity.Wagon] = {ID = Isaac.GetEntityTypeByName("Wagon (HC)"), VAR = Isaac.GetEntityVariantByName("Wagon (HC)"),  SUB = mod.DefaultEntitySub}
 
 mod.EntityInf[mod.Entity.Ulcers] = {ID = Isaac.GetEntityTypeByName("Ulcers"), VAR = Isaac.GetEntityVariantByName("Ulcers"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Candle] = {ID = Isaac.GetEntityTypeByName("Candle"), VAR = Isaac.GetEntityVariantByName("Candle"),  SUB = mod.DefaultEntitySub}
@@ -148,7 +149,9 @@ mod.EntityInf[mod.Entity.IceCreep] = {ID = EntityType.ENTITY_EFFECT, VAR = Effec
 
 mod.EntityInf[mod.Entity.Tornado] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tornado (HC)"),  SUB = mod.DefaultSub}
 
+mod.EntityInf[mod.Entity.Horn] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Horn (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.SonicBoom] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Sonic Boom (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.MercuryTrace] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mercury Trace (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.TerraTarget] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Terra Target (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Meteor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Meteor (HC)"),  SUB = mod.DefaultSub}
@@ -169,7 +172,7 @@ mod.EntityInf[mod.Entity.Icicle] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isa
 mod.EntityInf[mod.Entity.BigIcicle] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Big Icicle (HC)"),  SUB = mod.DefaultSub+1}
 mod.EntityInf[mod.Entity.Hail] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Hail (HC)"),  SUB = mod.DefaultSub}
 
-mod.EntityInf[mod.Entity.Horn] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Horn (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Bismuth] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Bismuth (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.Bubble] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Bubble (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Leaf] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Leaf (HC)"),  SUB = mod.DefaultSub}
