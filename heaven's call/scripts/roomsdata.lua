@@ -5,8 +5,11 @@
 
 local mod = HeavensCall
 
-mod.maxvariant = 8503
-mod.minvariant = 8500
+mod.maxvariant1 = 8503
+mod.minvariant1 = 8500
+
+mod.maxvariant2 = 8508
+mod.minvariant2 = 8505
 
 -- ROOM GEN
 mod.adjindexes = {

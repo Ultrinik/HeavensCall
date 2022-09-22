@@ -151,8 +151,13 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_, entity)--You can kil
 	if entity.Type == mod.EntityInf[mod.Entity.Statue].ID and entity.Variant == mod.EntityInf[mod.Entity.Statue].VAR then
 		game:SpawnParticles (entity.Position, EffectVariant.DIAMOND_PARTICLE, 75, 9)
 		sfx:Play(SoundEffect.SOUND_MIRROR_BREAK,1)
-		mod.savedata.planetKilled = true
 		mod.savedata.planetAlive = false
+		
+		if roomdesc.Data.Variant <= 8504 then
+			mod.savedata.planetKilled1 = true
+		elseif roomdesc.Data.Variant >= 8505 then
+			mod.savedata.planetKilled2 = true
+		end
 	end
 end)
 
@@ -241,7 +246,7 @@ function mod:IceTurdFinishedAppear(entity)
 
 	--Sprite
 	local roomdesc = game:GetLevel():GetCurrentRoomDesc()
-	if roomdesc and roomdesc.Data and ((roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant and roomdesc.Data.Variant <= mod.maxvariant) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+	if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
 		entity:GetSprite():Play("IdlePlanetarium", true)
 	else
 		entity:GetSprite():Play("Idle", true)
@@ -362,6 +367,12 @@ function mod:CandleUpdate(entity)
 
 	--Frame
 	data.StateFrame = data.StateFrame + 1
+
+	if data.GlowInit == nil then
+		data.GlowInit = true
+		local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
+		glow:FollowParent(entity)
+	end
 
 	if mod.EntityInf[mod.Entity.Candle].VAR == entity.Variant then
 
@@ -570,6 +581,9 @@ function mod:CandleUpdate(entity)
 			end
 			
 		elseif data.State == mod.ColostomiaMSTATE.IDLE then
+
+			entity.Velocity = entity.Velocity / 2
+
 			if data.StateFrame == 1 then
 				sprite:Play("Idle",true)
 			elseif sprite:IsFinished("Idle") then
@@ -725,10 +739,13 @@ mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, coll
 end)
 
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
-	if entity.Type == mod.EntityInf[mod.Entity.CandleSiren].ID and entity.Variant == mod.EntityInf[mod.Entity.CandleSiren].VAR and entity.SubType == mod.EntityInf[mod.Entity.CandleSiren].SUB then
+	if entity.Type == mod.EntityInf[mod.Entity.Candle].ID then
 		for _, e in ipairs(mod:FindByTypeMod(mod.Entity.SirenRag)) do
 			e:Remove()
 		end
+
+		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+		bloody:GetSprite().Color = mod.Colors.wax
 	end
 end)
 
@@ -1126,7 +1143,7 @@ function mod:TarBombUpdate(entity)
 			game:SpawnParticles (entity.Position, EffectVariant.POOP_PARTICLE, 20, 13, mod.Colors.black)
 			local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 			bloody:GetSprite().Color = mod.Colors.black
-			
+
 			entity:Remove()
 		end
 	end

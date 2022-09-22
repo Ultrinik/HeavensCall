@@ -43,6 +43,7 @@ mod.Colors = {
 	black = Color(0,0,0,1,0,0,0),
 	ghost = Color(1,1,1,0.6,1,1,1),
 	greenEden = Color(0.5,1,0.5,0.6,0.4,1,0.4),
+	wax = Color(1,0.95,0.9,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -61,6 +62,7 @@ function mod:ColorizeColors()
 	mod.Colors.buttFire:SetColorize(2,1,0,1)
 	mod.Colors.mercury:SetColorize(7,5,7,1)
 	mod.Colors.tar:SetColorize(1, 1, 1, 1)
+	--mod.Colors.wax:SetColorize(1, 1, 1, 1)
 end
 mod:ColorizeColors()
 
@@ -95,7 +97,8 @@ mod.ModFlags = {
 mod.ModConfigs = {
 	noRain = false,
 	noSnow = false,
-	roomSpawnChance = 20
+	roomSpawnChance = 7,
+	roomSpawnChance2 = 30,
 }
 mod.ModConstants = {
 	burningFrames = 350
@@ -109,6 +112,10 @@ mod.RoomsPlanet = {
 	[8501] = mod.Entity.Saturn,
 	[8502] = mod.Entity.Uranus,
 	[8503] = mod.Entity.Neptune,
+	[8505] = mod.Entity.Mercury,
+	[8506] = mod.Entity.Venus,
+	[8507] = mod.Entity.Terra1,
+	[8508] = mod.Entity.Mars,
 }
 
 --SILLY FUCTIONS--------------------------------------------------------------------------------------------------------------------
@@ -210,7 +217,11 @@ function mod:NormalDeath(entity, notExplosion, mamaMega)
 	end
 
 	if mod.savedata.planetAlive then
-		mod.savedata.planetKilled = true
+		if mamaMega then
+			mod.savedata.planetKilled2 = true
+		else
+			mod.savedata.planetKilled1 = true
+		end
 	end
 	mod.savedata.planetAlive = false
 
@@ -237,14 +248,20 @@ function mod:NormalDeath(entity, notExplosion, mamaMega)
 end
 --deding
 mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, function(_, entity)
-	if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR then
-		mod:JupiterDying(entity)
-	elseif entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR then
-		mod:SaturnDying(entity)
-	elseif entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR then
-		mod:UranusDying(entity)
-	elseif entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR then
-		mod:NeptuneDying(entity)
+	if entity:GetData().HeavensCall then
+		if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR then
+			mod:JupiterDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR then
+			mod:SaturnDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR then
+			mod:UranusDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR then
+			mod:NeptuneDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Mercury].ID and entity.Variant == mod.EntityInf[mod.Entity.Mercury].VAR then
+			mod:MercuryDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Mars].ID and entity.Variant == mod.EntityInf[mod.Entity.Mars].VAR then
+			mod:MarsDying(entity)
+		end
 	end
 end)
 
@@ -252,13 +269,6 @@ end)
 function mod:MarkovTransition(state, chain)
 	local roll = math.random()
 	for i = 1, #chain+1 do
-		--[[if chain[state][i] == nil then
-			print(chain == mod.chainT3)
-			print(chain == mod.chainT32)
-			print(chain == mod.chainT2)
-			print(chain == mod.chainTTrans)
-			print(state)
-		end]]
 		roll = roll - chain[state][i]
 		if roll <= 0 then
 			return i - 1
@@ -328,7 +338,8 @@ end)
 function mod:EqualSaves(save1, save2)
 	if save2.planetNum ~= nil then save1.planetNum = save2.planetNum end
 	if save2.planetAlive ~= nil then save1.planetAlive = save2.planetAlive end
-	if save2.planetKilled ~= nil then save1.planetKilled = save2.planetKilled end
+	if save2.planetKilled1 ~= nil then save1.planetKilled1 = save2.planetKilled1 end
+	if save2.planetKilled2 ~= nil then save1.planetKilled2 = save2.planetKilled2 end
 	if save2.planetHP ~= nil then save1.planetHP = save2.planetHP end
 	if save2.spawnchancemultiplier ~= nil then save1.spawnchancemultiplier = save2.spawnchancemultiplier end
 end
@@ -400,7 +411,7 @@ end
 mod.minimaprooms = {} --Stores rooms that need to be updated on MinimapAPI
 
 function mod:IsRoomDescAstralChallenge(roomdesc)
-	if roomdesc and roomdesc.Data and roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant and roomdesc.Data.Variant <= mod.maxvariant then
+	if roomdesc and roomdesc.Data and roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant1 and roomdesc.Data.Variant <= mod.maxvariant2 then
 		return true
 	else
 		return false
@@ -415,7 +426,8 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
 		--In new run do that
 		mod.savedata.spawnchancemultiplier = 1
 		mod.savedata.planetAlive = false
-		mod.savedata.planetKilled = false
+		mod.savedata.planetKilled1 = false
+		mod.savedata.planetKilled2 = false
 		mod.savedata.planetNum = 0
 		mod.savedata.planetHP = 1
 
@@ -453,7 +465,7 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
 	if iscontinued and not BasementRenovator and not mod.roomdata then
 		mod:scheduleForUpdate(function()
 			mod.roomdata = {}
-			mod:InitializeRoomData("dice", mod.minvariant, mod.maxvariant, mod.roomdata)
+			mod:InitializeRoomData("dice", mod.minvariant1, mod.maxvariant2, mod.roomdata)
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
 end)
@@ -467,7 +479,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 	--Initialize mod.roomdata
 	if not mod.roomdata and level:GetStage() ~= LevelStage.STAGE1_1 and not BasementRenovator then
 		mod.roomdata = {}
-		mod:InitializeRoomData("dice", mod.minvariant, mod.maxvariant, mod.roomdata)
+		mod:InitializeRoomData("dice", mod.minvariant1, mod.maxvariant2, mod.roomdata)
 	end
 
 	local spawnChance = 0
@@ -480,7 +492,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 
 	--If the room can spawn, the chance is 0.2
 	if level:GetStage() >= stageMin and level:GetStage() <= stageLimit and not game:IsGreedMode() and not level:IsAscent() then
-		if mod.ModConfigs.roomSpawnChance == nil then mod.ModConfigs.roomSpawnChance = 20 end
+		if mod.ModConfigs.roomSpawnChance == nil then mod.ModConfigs.roomSpawnChance = 7 end
 
 		if level:GetCurses() & LevelCurse.CURSE_OF_LABYRINTH == LevelCurse.CURSE_OF_LABYRINTH then
 			spawnChance = spawnChance + (1 - (1-mod.ModConfigs.roomSpawnChance/100)^2)--You dont add probabilities
@@ -492,6 +504,14 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 	--Apply persistent multiplier
 	if mod.savedata.spawnchancemultiplier == nil then mod.savedata.spawnchancemultiplier = 1 end
 	local totalchance = mod.savedata.spawnchancemultiplier*spawnChance
+
+
+	--Second astral challenge room, overwrites things above
+	if level:GetStage() == LevelStage.STAGE5 and not mod.savedata.planetAlive then
+		if mod.ModConfigs.roomSpawnChance2 == nil then mod.ModConfigs.roomSpawnChance2 = 30 end
+		totalchance = mod.ModConfigs.roomSpawnChance2/100
+	end
+
 	if totalchance > 0 then
 		local randomchance = rng:RandomFloat()
 		if randomchance <= totalchance or mod.ModFlags.forceSpawn then
@@ -607,7 +627,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 		sprite:Play("1x1_room", true)
 
 		--What planet should spawn
-		if mod.RoomsPlanet[roomdesc.Data.Variant] ~= nil then
+		if mod.RoomsPlanet[roomdesc.Data.Variant] ~= nil and not (mod.savedata.planetNum == mod.Entity.Terra2 and mod.RoomsPlanet[roomdesc.Data.Variant] == mod.Entity.Terra1) then
 			mod.savedata.planetNum = mod.RoomsPlanet[roomdesc.Data.Variant]
 		end
 
@@ -696,7 +716,8 @@ end)
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
 	if item == CollectibleType.COLLECTIBLE_R_KEY and not mod.savedata.planetAlive then
 		mod.savedata.spawnchancemultiplier = 1
-		mod.savedata.planetKilled = false
+		mod.savedata.planetKilled1 = false
+		mod.savedata.planetKilled2 = false
 	end
 end)
 --Not Death Certificate or Genesis
@@ -724,7 +745,7 @@ end)
 
 --Check Spawn Planet in new room
 function mod:CheckSpawnNewRoom()
-	if mod.savedata and mod.savedata.planetAlive and (not mod.savedata.planetKilled) then
+	if mod.savedata and mod.savedata.planetAlive then
 		mod:scheduleForUpdate(function()
 			mod:SpawnPlanet(mod.savedata.planetNum)
 		end, 0, ModCallbacks.MC_POST_RENDER)
@@ -733,6 +754,7 @@ end
 --SpawnPlanet if room changed or continued
 function mod:SpawnPlanet(entityNum)
 	local validType = entityNum==mod.Entity.Jupiter or entityNum==mod.Entity.Saturn or entityNum==mod.Entity.Uranus or entityNum==mod.Entity.Neptune
+	or entityNum==mod.Entity.Mercury or entityNum==mod.Entity.Venus or entityNum==mod.Entity.Terra1 or entityNum==mod.Entity.Terra2 or entityNum==mod.Entity.Mars
 	if validType and #(mod:FindByTypeMod(entityNum))==0 then
 		
 		local position = Isaac.GetRandomPosition()
@@ -755,8 +777,10 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 	if mod:IsRoomDescAstralChallenge(roomdesc) then
 		
 		mod:scheduleForUpdate(function()
-			if (not mod.savedata.planetAlive) and (not mod.savedata.planetKilled) then
-				local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos()+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
+			if (not mod.savedata.planetAlive) then
+				if ((not mod.savedata.planetKilled1) and roomdesc.Data.Variant <= mod.maxvariant2) or ((not mod.savedata.planetKilled2) and roomdesc.Data.Variant >= mod.minvariant1) then
+					local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos()+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
+				end
 			end
 		end, 0, ModCallbacks.MC_POST_RENDER)
 	end
@@ -765,14 +789,19 @@ end)
 --Update health of boss, may be delayed by one damage
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_,entity,_,_,_,_)
 	
-	if mod.savedata.planetAlive then
+	if mod.savedata.planetAlive and entity:GetData().HeavensCall then
 		if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR or 
 		entity.Type == mod.EntityInf[mod.Entity.Saturn].ID and entity.Variant == mod.EntityInf[mod.Entity.Saturn].VAR or 
 		entity.Type == mod.EntityInf[mod.Entity.Uranus].ID and entity.Variant == mod.EntityInf[mod.Entity.Uranus].VAR or 
 		entity.Type == mod.EntityInf[mod.Entity.Neptune].ID and entity.Variant == mod.EntityInf[mod.Entity.Neptune].VAR
+		or 
+		entity.Type == mod.EntityInf[mod.Entity.Mercury].ID and entity.Variant == mod.EntityInf[mod.Entity.Mercury].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Venus].ID and entity.Variant == mod.EntityInf[mod.Entity.Venus].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Terra1].ID and entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Terra3].ID and entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR or 
+		entity.Type == mod.EntityInf[mod.Entity.Mars].ID and entity.Variant == mod.EntityInf[mod.Entity.Mars].VAR
 		then
 			mod.savedata.planetHP = entity.HitPoints --There should not be more than 1 planet at the same time so... (we dont talk about meat cleaver)
-			--print(mod.savedata.planetHP)
 		end
 	end
 end)

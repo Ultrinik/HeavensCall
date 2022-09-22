@@ -473,7 +473,7 @@ function mod:MercuryDrill(entity, data, sprite, target,room)
                     
                     --Color
                     local roomdesc = game:GetLevel():GetCurrentRoomDesc()
-                    if roomdesc and roomdesc.Data and ((roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant and roomdesc.Data.Variant <= mod.maxvariant) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+                    if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
                         local newColor = Color(1,1,1,0.65)
                         newColor:SetColorize(1,1,1.2,1)
                         tear:GetSprite().Color = newColor
@@ -711,6 +711,17 @@ function mod:MercuryDying(entity)
     local sprite = entity:GetSprite()
     local data = entity:GetData()
 
+	if data.deathFrame == nil then data.deathFrame = 1 end
+	if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+
+		if sprite:IsEventTriggered("Explosion") then
+            local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+		end
+        
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+        entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NOPITS
+	end
 end
 
 --Callbacks
@@ -826,6 +837,11 @@ mod.VConst = {--Some constant variables of Venus
     sirenSummons = 8,
     coloJumpSpeed = 15,
 
+    nRageFire = 10,
+    rageFireSpeed = 5,
+    rageFireAngle = 12,
+    rageHp = 0.18,
+
 }
 
 function mod:VenusUpdate(entity)
@@ -845,58 +861,71 @@ function mod:VenusUpdate(entity)
             data.TargetPos = target.Position
             data.FireWaveType = 0
             data.FlameAngle = mod.VConst.flameAngleStart
+
+            data.RageFlag = false
         end
         
         --Frame
         data.StateFrame = data.StateFrame + 1
         
-        if data.State == mod.VMSState.APPEAR then
-            if data.StateFrame == 1 then
-                mod:AppearPlanet(entity)
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-                entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-                
-                local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
-                glow:FollowParent(entity)
-
-            elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-                data.State = mod:MarkovTransition(data.State, mod.chainV)
-                data.StateFrame = 0
-            elseif sprite:IsEventTriggered("EndAppear") then
-                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
-            end
-            
-        elseif data.State == mod.VMSState.IDLE then
-            if data.StateFrame == 1 then
-                sprite:Play("Idle",true)
-            elseif sprite:IsFinished("Idle") then
-                data.State = mod:MarkovTransition(data.State, mod.chainV)
-                data.StateFrame = 0
-                
-            else
-                mod:VenusMove(entity, data, room, target)
-            end
-            
-        elseif data.State == mod.VMSState.KISS then
-            mod:VenusKiss(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.FLAME then
-            mod:VenusFlamethrower(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.IPECAC then
-            mod:VenusIpecac(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.BLAZE then
-            mod:VenusBlaze(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.SWARM then
-            mod:VenusSwarm(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.SLAM then
-            mod:VenusSlam(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.LIT then
-            mod:VenusLit(entity, data, sprite, target,room)
-        elseif data.State == mod.VMSState.JUMPS then
-            --mod:VenusJumps(entity, data, sprite, target,room) --Too many attacks, need to make space for the summons
-            data.State = mod:MarkovTransition(data.State, mod.chainV)
+        if not data.RageFlag and entity.HitPoints < entity.MaxHitPoints * mod.VConst.rageHp then
+            data.RageFlag = true
+            sprite:Play("RageStart", true)
             data.StateFrame = 0
-        elseif data.State == mod.VMSState.SUMMON then
-            mod:VenusSummon(entity, data, sprite, target,room)
+        end
+
+        if data.RageFlag then
+            mod:VenusFire(entity, data, sprite, target, room)
+        else
+                
+            if data.State == mod.VMSState.APPEAR then
+                if data.StateFrame == 1 then
+                    mod:AppearPlanet(entity)
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                    
+                    local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
+                    glow:FollowParent(entity)
+
+                elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+                    data.State = mod:MarkovTransition(data.State, mod.chainV)
+                    data.StateFrame = 0
+                elseif sprite:IsEventTriggered("EndAppear") then
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+                end
+                
+            elseif data.State == mod.VMSState.IDLE then
+                if data.StateFrame == 1 then
+                    sprite:Play("Idle",true)
+                elseif sprite:IsFinished("Idle") then
+                    data.State = mod:MarkovTransition(data.State, mod.chainV)
+                    data.StateFrame = 0
+                    
+                else
+                    mod:VenusMove(entity, data, room, target)
+                end
+                
+            elseif data.State == mod.VMSState.KISS then
+                mod:VenusKiss(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.FLAME then
+                mod:VenusFlamethrower(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.IPECAC then
+                mod:VenusIpecac(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.BLAZE then
+                mod:VenusBlaze(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.SWARM then
+                mod:VenusSwarm(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.SLAM then
+                mod:VenusSlam(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.LIT then
+                mod:VenusLit(entity, data, sprite, target,room)
+            elseif data.State == mod.VMSState.JUMPS then
+                --mod:VenusJumps(entity, data, sprite, target,room) --Too many attacks, need to make space for the summons
+                data.State = mod:MarkovTransition(data.State, mod.chainV)
+                data.StateFrame = 0
+            elseif data.State == mod.VMSState.SUMMON then
+                mod:VenusSummon(entity, data, sprite, target,room)
+            end
         end
 
         
@@ -1201,6 +1230,82 @@ function mod:VenusLit(entity, data, sprite, target,room)
         kiss:GetData().IsKiss_HC = true
     end
 end
+function mod:VenusFire(entity, data, sprite, target, room)
+
+    if sprite:IsFinished("RageStart") then
+        sprite:Play("Rage", true)
+
+    elseif sprite:IsEventTriggered("Blaze") then
+        local direction = (target.Position - entity.Position):Normalized()
+
+        for i=1, mod.VConst.nRageFire do
+            local newDirection = direction:Rotated( (2*rng:RandomFloat() - 1) * mod.VConst.rageFireAngle )
+            local speed = (3 * rng:RandomFloat() + 1) * mod.VConst.rageFireSpeed
+
+            local fire = mod:SpawnEntity(mod.Entity.Flame, entity.Position, newDirection * speed, entity):ToProjectile()
+            fire:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
+            fire:GetData().IsFlamethrower_HC = true
+
+            if rng:RandomFloat() <= 0.3 then
+                fire:AddProjectileFlags(ProjectileFlags.DECELERATE)
+            end
+            if rng:RandomFloat() <= 0.1 then
+                fire:AddProjectileFlags(ProjectileFlags.MEGA_WIGGLE)
+            end
+        end
+
+        for i=0, game:GetNumPlayers ()-1 do
+            local player = game:GetPlayer(i)
+            player:GetData().BurnTime = 1000
+        end
+
+
+    elseif sprite:IsEventTriggered("Slam") then
+        
+		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+		bloody:GetSprite().Color = mod.Colors.wax
+
+
+
+        local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
+        flame:AddProjectileFlags(ProjectileFlags.FIRE_WAVE)
+        flame:Die()
+        
+        local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
+        flame:AddProjectileFlags(ProjectileFlags.FIRE_WAVE_X)
+        flame:Die()
+
+        game:ShakeScreen(20)
+
+        for i=1, mod.VConst.nSlamFireRing do
+            local angle = i*360/mod.VConst.nSlamFireRing
+            local velocity = Vector(1,0):Rotated(angle)*mod.VConst.flameSpeed*1.5
+            local flame = mod:SpawnEntity(mod.Entity.Flame, entity.Position, velocity, entity):ToProjectile()
+            flame.FallingAccel  = -0.1
+            flame.FallingSpeed = 0
+            flame.Scale = 2
+    
+            flame:GetData().IsFlamethrower_HC = true
+            flame:GetData().NoGrow = true
+            flame:GetData().EmberPos = -20
+        end
+            
+        for i=1, mod.VConst.nSlamFireball do
+            local angle = i*360/mod.VConst.nSlamFireball
+            local velocity = Vector(1,0):Rotated(angle)*mod.VConst.blazeSpeedSlow
+            local fireball = mod:SpawnEntity(mod.Entity.Fireball, entity.Position, velocity, entity):ToProjectile()
+
+            fireball:GetData().IsFireball_HC = true
+            
+            fireball.FallingSpeed = -10
+            fireball.FallingAccel = 1.5
+            
+            fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
+        end
+    end
+
+    mod:VenusMove(entity, data, room, target, 0.9)
+end
 
 --Move
 function mod:VenusMove(entity, data, room, target, speed)   
@@ -1244,7 +1349,14 @@ function mod:VenusDeath(entity)
     for _, e in ipairs(mod:GetCandles()) do
         e:Die()
     end
+    for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT)) do
+        e:Remove()
+    end
 
+    for i=0, game:GetNumPlayers ()-1 do
+        local player = game:GetPlayer(i)
+        player:GetData().BurnTime = 0
+    end
     --Fart:
     mod:NormalDeath(entity, false, true)
 end
@@ -1576,6 +1688,10 @@ function mod:Terra2Update(entity)
                 local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, Vector.Zero, entity)
                 eden.Parent = entity
                 entity.Parent = eden
+
+                if mod.savedata.planetAlive then
+                    eden.HitPoints = mod.savedata.planetHP
+                end
 
             elseif sprite:IsEventTriggered("EndAppear") then
                 entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
@@ -2034,7 +2150,17 @@ function mod:TerraDeath(entity)
         eden.Parent = rock
         rock.Parent = eden
 
+        --Save things
+        if mod.savedata.planetAlive then
+            mod.savedata.planetNum = mod.Entity.Terra2
+        end
+
+
+
         mod:NormalDeath(entity)
+        mod.savedata.planetAlive = true
+        mod.savedata.planetKilled2 = false
+
     elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
 
         for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Horsemen)) do
@@ -2045,6 +2171,9 @@ function mod:TerraDeath(entity)
         
     elseif entity.Variant == mod.EntityInf[mod.Entity.Terra3].VAR then
         for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Horsemen)) do
+            e:Remove()
+        end
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT)) do
             e:Remove()
         end
 
@@ -2843,6 +2972,13 @@ function mod:MarsDying(entity)
     local sprite = entity:GetSprite()
     local data = entity:GetData()
 
+	if data.deathFrame == nil then data.deathFrame = 1 end
+	if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+		if sprite:IsEventTriggered("Sound") then
+
+		end
+	end
 end
 
 

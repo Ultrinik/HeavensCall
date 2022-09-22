@@ -110,7 +110,16 @@ function mod:GenerateRoomFromDataset(dataset, onnewlevel)
 
 	mod:Shuffle(floordeadends)
 
-	local data = dataset[mod:RandomInt(mod.minvariant,mod.maxvariant)]
+	
+	local level = game:GetLevel()
+	local data = nil
+
+	if level:GetStage() == LevelStage.STAGE5 then
+		data = dataset[mod:RandomInt(mod.minvariant2,mod.maxvariant2)]
+	else
+		data = dataset[mod:RandomInt(mod.minvariant1,mod.maxvariant1)]
+	end
+
 	for i, entry in pairs(floordeadends) do
 		local deadendslot = entry.Slot
 		local deadendidx = entry.GridIndex
@@ -145,8 +154,10 @@ function mod:InitializeRoomData(roomtype, minvariant, maxvariant, dataset)
 	end
 	
 	for i = minvariant, maxvariant, 1 do
-		Isaac.ExecuteCommand("goto s."..roomtype.."."..i)
-		dataset[i] = level:GetRoomByIdx(-3,0).Data
+		if i ~= 8504 then
+			Isaac.ExecuteCommand("goto s."..roomtype.."."..i)
+			dataset[i] = level:GetRoomByIdx(-3,0).Data
+		end
 	end
 	game:StartRoomTransition(currentroomidx, 0, RoomTransitionAnim.FADE)
 	
