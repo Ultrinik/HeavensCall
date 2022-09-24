@@ -106,6 +106,7 @@ function mod:StatueDie(entity)
 	if mod:IsRoomDescAstralChallenge(roomdesc) and mod.savedata.planetNum and #(mod:FindByTypeMod(mod.savedata.planetNum))==0 then
 
 		mod.savedata.planetAlive = true --Yes, I know about FLAG_PERSISTENT
+		mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.Dyings)
 
 		local planet = mod:SpawnEntity(mod.savedata.planetNum, entity.Position, Vector.Zero, entity)
 		planet:GetData().SlowSpawn = true
@@ -153,9 +154,10 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_, entity)--You can kil
 		sfx:Play(SoundEffect.SOUND_MIRROR_BREAK,1)
 		mod.savedata.planetAlive = false
 		
-		if roomdesc.Data.Variant <= 8504 then
+		local roomdesc = game:GetLevel():GetCurrentRoomDesc()
+		if roomdesc.Data.Variant <= mod.maxvariant1 then
 			mod.savedata.planetKilled1 = true
-		elseif roomdesc.Data.Variant >= 8505 then
+		elseif roomdesc.Data.Variant >= mod.minvariant2 then
 			mod.savedata.planetKilled2 = true
 		end
 	end
@@ -195,7 +197,7 @@ end)--]]
 
 --Ice turd---------------------------------------------------------------------------------------------------------------------------
 function mod:IceTurdUpdate(entity)
-	if mod.EntityInf[mod.Entity.IceTurd].VAR == entity.Variant then
+	if mod.EntityInf[mod.Entity.IceTurd].VAR == entity.Variant or mod.EntityInf[mod.Entity.Turd].VAR == entity.Variant then
 		--Dont freeze the ice duh
 		entity:ClearEntityFlags(EntityFlag.FLAG_ICE_FROZEN)
 		entity:ClearEntityFlags(EntityFlag.FLAG_ICE)
@@ -246,15 +248,23 @@ function mod:IceTurdFinishedAppear(entity)
 
 	--Sprite
 	local roomdesc = game:GetLevel():GetCurrentRoomDesc()
+	entity:GetSprite():Play("Idle", true)
+	if entity.Variant == mod.EntityInf[mod.Entity.IceTurd].VAR then
+		entity:GetSprite():SetFrame(mod:RandomInt(0,40))
+		entity:GetSprite().PlaybackSpeed = 0.2
+	end
 	if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
-		entity:GetSprite():Play("IdlePlanetarium", true)
-	else
-		entity:GetSprite():Play("Idle", true)
+		local reflection = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0, entity.Position, Vector.Zero, entity)
+		local refSprite = reflection:GetSprite()
+		refSprite:Load("gfx/entity_IceTurdGlass.anm2", true)
+		refSprite:LoadGraphics()
+		refSprite:Play("Idle", true)
+		entity.Child = reflection
 	end
 
 end
 function mod:IceTurdDeath(entity)
-	if mod.EntityInf[mod.Entity.IceTurd].VAR == entity.Variant then
+	if mod.EntityInf[mod.Entity.IceTurd].VAR == entity.Variant or mod.EntityInf[mod.Entity.Turd].VAR == entity.Variant then
 		sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
 		game:SpawnParticles (entity.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
 		for i=0, mod.UConst.nTurdIcicles do
@@ -266,11 +276,37 @@ function mod:IceTurdDeath(entity)
 			hail:GetData().iceSize = mod.UConst.turdIcicleIceSize
 			hail:GetData().hailTrace = false
 			hail:GetData().hailSplash = false
+
+			if entity.Child then entity.Child:Remove() end
 			
 		end
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.IceTurdDeath, mod.EntityInf[mod.Entity.IceTurd].ID)
+
+function mod:IceTurd2Update(entity)
+	local sprite = entity:GetSprite()
+	local target = entity:GetPlayerTarget()
+
+	entity:ClearEntityFlags(EntityFlag.FLAG_NO_TARGET)
+	if sprite:IsFinished("Idle") then
+		sprite:Play("Attack", true)
+	elseif sprite:IsFinished("Attack") then
+		sprite:Play("Idle", true)
+	elseif sprite:IsEventTriggered("Attack") then
+		local direction = (target.Position - entity.Position):Normalized()
+
+		local poop = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction * 8, entity):ToProjectile()
+		poop:GetSprite().Color = mod.Colors.poop
+		poop.Height = -12
+	end
+end
+
+function mod:IceTurd1Update(entity)
+	if entity:GetSprite():IsFinished("Idle") then
+		entity:Die()
+	end
+end
 
 --Ulcers---------------------------------------------------------------------------------------------------------------------------
 function mod:UlcersUpdate(entity)
@@ -368,10 +404,12 @@ function mod:CandleUpdate(entity)
 	--Frame
 	data.StateFrame = data.StateFrame + 1
 
-	if data.GlowInit == nil then
+	if data.GlowInit == nil and entity.Variant ~= mod.EntityInf[mod.Entity.Candle].VAR then
 		data.GlowInit = true
 		local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
 		glow:FollowParent(entity)
+		glow.SpriteScale = Vector.One*1.5
+		glow:GetSprite().Color = mod.Colors.fire
 	end
 
 	if mod.EntityInf[mod.Entity.Candle].VAR == entity.Variant then
@@ -637,7 +675,7 @@ function mod:CandleUpdate(entity)
 
 				local bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_BUTT, 0, entity.Position + velocity, velocity, entity):ToBomb()
 				bomb:GetSprite().Color = mod.Colors.buttFire
-				bomb:SetExplosionCountdown(120)
+				bomb:SetExplosionCountdown(mod.VConst.colostomiaBombTime)
 				bomb:AddTearFlags(TearFlags.TEAR_BURN)
 			end
 
@@ -728,12 +766,19 @@ function mod:CandleUpdate(entity)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().IsKiss_HC then
-		if collider.Type == mod.EntityInf[mod.Entity.Candle].ID then
+		if collider.Type == mod.EntityInf[mod.Entity.Candle].ID and collider.Variant == mod.EntityInf[mod.Entity.Candle].VAR then
 			collider:GetSprite():Play("IdleLit",true)
+			collider:GetData().GlowInit = true
+			local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, collider.Position, Vector.Zero, collider):ToEffect()
+			glow:FollowParent(collider)
+			glow.SpriteScale = Vector.One*1.5
+			glow:GetSprite().Color = mod.Colors.fire
+			collider.Child = glow
 
 			local cloud = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, tear.Position, Vector.Zero, nil):ToEffect()
 			cloud:GetSprite().Color = mod.Colors.fire
 			tear:Remove()
+			
 		end
 	end
 end)
@@ -746,6 +791,10 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
 
 		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 		bloody:GetSprite().Color = mod.Colors.wax
+		
+		game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13, mod.Colors.wax)
+
+		if entity.Child then entity.Child:Die() end
 	end
 end)
 
@@ -819,8 +868,14 @@ function mod:MartiansUpdate(entity)
     if entity.Variant == mod.EntityInf[mod.Entity.Deimos].VAR and entity.SubType == mod.EntityInf[mod.Entity.Deimos].SUB then
 		if sprite:IsEventTriggered("SetAim") and entity.Parent:GetData().State ~= mod.MMSState.AIRSTRIKE then
 			data.targetAim = target.Position
+
 			local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TARGET, 0, target.Position, Vector.Zero, entity):ToEffect()
 			target.Timeout = 38
+
+			local targetSprite = target:GetSprite()
+			targetSprite:ReplaceSpritesheet (0, "gfx/effects/deimos_target.png")
+			targetSprite:LoadGraphics()
+
 		elseif sprite:IsEventTriggered("Shot") and data.targetAim then
 			local direction = data.targetAim - entity.Position
 			local laser = EntityLaser.ShootAngle(2, entity.Position + Vector(0,-10), direction:GetAngleDegrees(), 1, Vector.Zero, entity)
@@ -838,6 +893,11 @@ function mod:MartiansUpdate(entity)
 		end
 	end
 end
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
+	if entity.Type == mod.EntityInf[mod.Entity.Mars].ID then
+		game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13)
+	end
+end)
 
 --Mercury Bird---------------------------------------------------------------------------------------------------------------------
 function mod:BirdUpdate(entity)
@@ -1174,6 +1234,11 @@ function mod:UpdateEntity(entity, data)
 		mod:UlcersUpdate(entity)
 	elseif id == mod.EntityInf[mod.Entity.IceTurd].ID then
 		mod:IceTurdUpdate(entity)
+		if variant == mod.EntityInf[mod.Entity.Turd].VAR then
+			mod:IceTurd2Update(entity)
+		else
+			mod:IceTurd1Update(entity)
+		end
 	elseif id == mod.EntityInf[mod.Entity.Statue].ID then
 		mod:StatueUpdate(entity)
 	end
@@ -2163,22 +2228,15 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, ref, 
 end)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerBurning, 0)
 
+--[[
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_,entity)
 
---[[mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_,entity)
-	if entity.Type == EntityType.ENTITY_PLAYER then
-		local room = game:GetRoom()
-
-		local posCentered = room:GetCenterPos() - entity.Position
-		local posTransformed = Vector(posCentered.X/1.2, posCentered.Y * 1.9 )
-
-		if game:GetFrameCount() % 10 == 0 then
-			for i=1, 32 do
-				local tear = Isaac.Spawn(EntityType.ENTITY_TEAR, 0, 0, room:GetCenterPos() + posTransformed:Rotated(i*360/8), Vector.Zero, entity)
-				if (posTransformed:Rotated(i*360/8):Length())<150 then
-					tear:GetSprite().Color = Color(2,0,0,1)
-					print(1)
-				end
-			end
+	for i, e in ipairs(Isaac.FindInRadius(entity.Position, 10)) do
+		if e.Type ~= EntityType.ENTITY_PLAYER then
+			print(e.Type)
+			print(e.Variant)
+			print(e.Subtype)
+			print()
 		end
 	end
 

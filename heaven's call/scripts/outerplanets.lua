@@ -423,6 +423,8 @@ function mod:JupiterLaser(entity, data, sprite, target,room)
 	
 	if data.LaserFlag then
 		data.TargetPosition_aim = (data.TargetPosition_aim - entity.Position):Rotated(data.Spin*mod.JConst.laserSpinSpeed) + entity.Position
+
+		entity.Velocity = Vector.Zero
 	end
 	
 end
@@ -645,8 +647,7 @@ mod.SMSState = {
 mod.chainS = {
 	[mod.SMSState.APPEAR] = 	{0, 1,    0,    0,    0,    0,    0,    0  , 0},
 	[mod.SMSState.IDLE] = 		{0, 0.2,  0.4,  0,    0,    0,    0,    0.17,0.23},
-	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    0,    0,    0,    1  , 0},
-	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    0,    0,    0,    0  , 1},
+	--[mod.SMSState.IDLE] = 		{0, 0,    0,    0,    1,    1,    0,    0  , 1},
 	[mod.SMSState.HIDERING] = 	{0, 0,    0,    0,    0.35, 0.35,  0.3,0,   0},
 	[mod.SMSState.SUMMONRING] = {0, 1,    0,    0,    0,    0,    0,    0  , 0},
 	[mod.SMSState.SPIN] = 		{0, 0,    0,    0.55, 0.45, 0,    0,    0  , 0},
@@ -675,6 +676,7 @@ mod.SConst = {--Some constant variables of Saturn
 	bombCountdown = 55,
 	bombSpeed = 30,
 	bombOrbitSpeed = 7,
+	specialBombChance = 0.2,
 
 	nSpecialKeys = 60,
 	nNormalKeys = 15,
@@ -801,18 +803,22 @@ function mod:SaturnSpin(entity, data, sprite, target, room)
 		local asteroidAmount = mod:RandomInt(mod.SConst.nAsteroids.X,mod.SConst.nAsteroids.Y)
 		for i=1, asteroidAmount do
 			local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_COIN, 0, entity.Position, Vector.Zero, entity):ToProjectile()
-			tear.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+			tear.Parent = entity
+
 			tear:GetData().orbitingSaturn = true
 			tear:GetData().orbitIndex = i
 			tear:GetData().orbitTotal = asteroidAmount
-			tear.Parent = entity
 			tear:GetData().Spin = data.Spin
 			tear:GetData().orbitOffset = orbitOffset
+
 			tear:AddScale(mod.SConst.asteroidScale)
-			
-			--This is stupid... but kinda works? 
-			tear.FallingSpeed = 2.000000834467
+
 			tear.FallingAccel = -0.1
+			tear.FallingSpeed = 0
+
+			local tearSprite = tear:GetSprite()
+			tearSprite:ReplaceSpritesheet (0, "gfx/effects/saturn_coin_tears.png")
+			tearSprite:LoadGraphics()
 		end
 		
 		sfx:Play(SoundEffect.SOUND_COIN_INSERT,0.9,2,false,0.9)
@@ -828,7 +834,8 @@ function mod:SaturnBomb(entity, data, sprite, target, room)
 	elseif sprite:IsEventTriggered("BombSummon") then
 		for i=1, mod.SConst.nBombs do
 			local angle = i*360/mod.SConst.nBombs
-			local bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL, 0, entity.Position, Vector.Zero, entity):ToBomb()
+			local bomb = mod:RandomizeBomb(bomb, entity, false)
+
 			bomb:SetExplosionCountdown(9999)
 			bomb:GetData().orbitingSaturn = true
 			bomb:GetData().orbitIndex = i
@@ -837,6 +844,10 @@ function mod:SaturnBomb(entity, data, sprite, target, room)
 			bomb.ExplosionDamage = mod.SConst.bombDamage
 			bomb.Parent = entity
 			bomb.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+			if bomb.Variant == BombVariant.BOMB_MR_MEGA then
+				bomb.RadiusMultiplier = bomb.RadiusMultiplier * 1.5
+			end
 		end
 		
 	elseif sprite:IsFinished("BombIdle") then
@@ -844,7 +855,7 @@ function mod:SaturnBomb(entity, data, sprite, target, room)
 	
 	elseif sprite:IsEventTriggered("Bomb") then
 	
-		local bombs = Isaac.FindByType(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL)
+		local bombs = Isaac.FindByType(EntityType.ENTITY_BOMBDROP)
 		local saturnBomb = nil
 		local minDistance = 99999999
 		for i=1, #bombs do
@@ -870,7 +881,7 @@ function mod:SaturnBomb(entity, data, sprite, target, room)
 	
 	elseif sprite:IsFinished("Bomb") then
 		local count = 0
-		local bombs = Isaac.FindByType(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL)
+		local bombs = Isaac.FindByType(EntityType.ENTITY_BOMBDROP)
 		for i=1, #bombs do
 			if (bombs[i]):GetData().orbitingSaturn then 
 				count = count + 1
@@ -1118,7 +1129,7 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 		entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 		
 
-		local center = entity.Position + Vector(0,-60)
+		local center = entity.Position + Vector(0,-45)
 		--Check damage range v
 		--for i=1, 50 do
 			--Isaac.Spawn(EntityType.ENTITY_TEAR, 0, 0, center + Vector(mod.SConst.sawRadius,0):Rotated(i*360/50),Vector.Zero, nil)
@@ -1394,6 +1405,8 @@ function mod:OrbitRing(tear)
 	if tear.Parent==nil then
 		tear:Die()
 	else
+		if tear.FrameCount >= 350 then tear:Die() end
+
 		tear.Position  = tear.Parent.Position + Vector.FromAngle(data.orbitAngle):Resized(data.orbitDistance)
 		data.orbitAngle = (data.orbitAngle + data.Spin*mod.SConst.asteroidOrbitSpeed/data.orbitDistance) % 360
 		data.orbitAngle = data.orbitAngle 
@@ -1426,10 +1439,12 @@ function mod:SaturnDeath(entity)
 		ring:GetSprite().Color = Color(0.5,0,0,1)
 
 		--remaining bombs
-		for _,b in ipairs(Isaac.FindByType(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_TROLL)) do
-			b = b:ToBomb()
-			b.ExplosionDamage = 0
-			b:SetExplosionCountdown(0)
+		for _,b in ipairs(Isaac.FindByType(EntityType.ENTITY_BOMBDROP)) do
+			if b:GetData().orbitingSaturn then
+				b = b:ToBomb()
+				b.ExplosionDamage = 0
+				b:SetExplosionCountdown(0)
+			end
 		end
 
 		sfx:Play(Isaac.GetSoundIdByName("TouhouDeath"), 0.05)
@@ -1472,6 +1487,39 @@ function mod:SaturnDying(entity)
 	end
 end
 
+--Special bomb
+function mod:RandomizeBomb(bomb, entity, hardmode)
+	local bomb = nil
+
+	if not hardmode then
+		if rng:RandomFloat() < mod.SConst.specialBombChance then
+			local random = mod:RandomInt(1,4)
+
+			if random == 1 then
+				bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_NORMAL, 0, entity.Position, Vector.Zero, entity):ToBomb()
+				bomb:AddTearFlags(TearFlags.TEAR_SCATTER_BOMB)
+			elseif random == 2 then
+				bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_MR_MEGA, 0, entity.Position, Vector.Zero, entity):ToBomb()
+			elseif random == 3 then
+				bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_SAD_BLOOD, 0, entity.Position, Vector.Zero, entity):ToBomb()
+				bomb:AddTearFlags(TearFlags.TEAR_SAD_BOMB)
+			elseif random == 4 then
+				bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_THROWABLE, 0, entity.Position, Vector.Zero, entity):ToBomb()
+				local bombSprite = bomb:GetSprite()
+				bombSprite:ReplaceSpritesheet (0, "gfx/effects/saturn_creep_bomb.png")
+				bombSprite:LoadGraphics()
+				bomb:GetData().saturnCreep = true
+			end
+		else
+			bomb = Isaac.Spawn(EntityType.ENTITY_BOMBDROP, BombVariant.BOMB_NORMAL, 0, entity.Position, Vector.Zero, entity):ToBomb()
+		end
+	else
+		--Not yet
+	end
+
+	return bomb
+end
+
 --Callbacks
 --Saturn updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SaturnUpdate, mod.EntityInf[mod.Entity.Saturn].ID)
@@ -1494,6 +1542,15 @@ mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
 		mod:OrbitRing(tear,false)
 	end
 end)
+mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, function(_, bomb)
+	if bomb:GetData().saturnCreep and bomb:GetSprite():IsPlaying("Explode") then
+		local creep = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_STATIC, 0, bomb.Position, Vector.Zero, entity):ToEffect()
+		creep.Timeout = 180
+		creep.SpriteScale = Vector.One*3
+		creep:GetSprite().Color = Color(1,0,0,1)
+	end
+end)
+
 
 --URANUS---------------------------------------------------------------------------------------------------
 
@@ -1710,12 +1767,16 @@ function mod:UranusTurd(entity, data, sprite, target, room)
 		local turds = mod:FindByTypeMod(mod.Entity.IceTurd)
 		if(#turds<mod.UConst.maxTurds) then
 			mod:FaceTarget(entity, target)
-			sprite:Play("Turd",true)
+			if rng:RandomFloat() < 0.1 then
+				sprite:Play("Turd2",true)
+			else
+				sprite:Play("Turd",true)
+			end
 		else
 			data.State = mod:MarkovTransition(data.State, mod.chainU)
 			data.StateFrame = 0
 		end
-	elseif sprite:IsFinished("Turd") then
+	elseif sprite:IsFinished("Turd") or sprite:IsFinished("Turd2") then
 		data.State = mod:MarkovTransition(data.State, mod.chainU)
 		data.StateFrame = 0
 		
@@ -1727,7 +1788,12 @@ function mod:UranusTurd(entity, data, sprite, target, room)
 	elseif sprite:IsEventTriggered("Turd3") then
 		--Tactical nuke in comming
 		sfx:Play(SoundEffect.SOUND_BULLET_SHOT,4);
-		local iceTurd = mod:SpawnEntity(mod.Entity.IceTurd, target.Position, Vector.Zero, entity)
+		local iceTurd = nil
+		if sprite:IsPlaying("Turd") then
+			iceTurd = mod:SpawnEntity(mod.Entity.IceTurd, target.Position, Vector.Zero, entity)
+		else
+			iceTurd = mod:SpawnEntity(mod.Entity.Turd, target.Position, Vector.Zero, entity)
+		end
 		mod:IceTurdInit(iceTurd)
 	
 	--Move a little
@@ -1990,6 +2056,13 @@ function mod:UranusDeath(entity)
 		end
 		
 		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.IceTurd)) do
+			if i.Child then i.Child:Remove() end
+			i:Remove()
+			sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
+			game:SpawnParticles (i.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)
+		end
+		for _, i in ipairs(mod:FindByTypeMod(mod.Entity.Turd)) do
+			if i.Child then i.Child:Remove() end
 			i:Remove()
 			sfx:Play(Isaac.GetSoundIdByName("IceBreak"),1)
 			game:SpawnParticles (i.Position, EffectVariant.DIAMOND_PARTICLE, 50, 9)

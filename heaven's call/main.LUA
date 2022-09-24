@@ -43,7 +43,7 @@ mod.Colors = {
 	black = Color(0,0,0,1,0,0,0),
 	ghost = Color(1,1,1,0.6,1,1,1),
 	greenEden = Color(0.5,1,0.5,0.6,0.4,1,0.4),
-	wax = Color(1,0.95,0.9,1),
+	wax = Color(1,1,1,1,1,0.85,0.8),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -216,38 +216,61 @@ function mod:NormalDeath(entity, notExplosion, mamaMega)
 		mod.ModFlags.currentMusic = nil
 	end
 
-	if mod.savedata.planetAlive then
-		if mamaMega then
-			mod.savedata.planetKilled2 = true
-		else
-			mod.savedata.planetKilled1 = true
-		end
-	end
-	mod.savedata.planetAlive = false
-
 	--Explosion
 	if not notExplosion then
 		if mamaMega then
 			game:GetRoom():MamaMegaExplosion(entity.Position)
+
+			if mod.savedata.planetAlive then
+				local center = game:GetRoom():GetCenterPos()
+
+				mod:PausePool()
+				local reward = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, -1, entity.Position, Vector.Zero, nil)
+
+				if game:GetLevel():GetStage() == LevelStage.STAGE5 then
+					local winChest = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_BIGCHEST, 0, center, Vector.Zero, nil)
+					if rng:RandomFloat() <= 0.5 then
+						
+						local voidPortal = Isaac.GridSpawn(GridEntityType.GRID_TRAPDOOR, 1, center + Vector(0,75), true)
+						voidPortal.VarData = 1
+						
+						-- Replace the spritesheet to make it look like a Void Portal
+						local sprite = voidPortal:GetSprite()
+						sprite:Load("gfx/grid/voidtrapdoor.anm2", true)
+					end
+				end
+
+			end
 		else
 			--local gigaBomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_GIGA, 0, entity.Position, Vector.Zero, entity ):ToBomb()
 			--gigaBomb:SetExplosionCountdown(0)
 			--game: BombExplosionEffects  ( entity.Position, 100, 120, true, entity, TearFlags.TEAR_NORMAL, DamageFlag.DAMAGE_EXPLOSION, false )
 
-			--game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+			game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
 
-			local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_BIG, 0, entity.Position, Vector.Zero, entity ):ToBomb()
-			bomb:SetExplosionCountdown(0)
-			bomb.ExplosionDamage = 150
-			bomb.RadiusMultiplier = 1.45
-			bomb.Visible = false
+			--local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_BIG, 0, entity.Position, Vector.Zero, entity ):ToBomb()
+			--bomb:SetExplosionCountdown(0)
+			--bomb.ExplosionDamage = 150
+			--bomb.RadiusMultiplier = 1.45
+			--bomb.Visible = false
 		end
 		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
         game:ShakeScreen(60)
+
+	
+		if mod.savedata.planetAlive then
+			mod:RemoveCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.Dyings)
+			if mamaMega then
+				mod.savedata.planetKilled2 = true
+			else
+				mod.savedata.planetKilled1 = true
+			end
+		end
+		mod.savedata.planetAlive = false
 	end
 end
 --deding
-mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, function(_, entity)
+function mod:Dyings(entity)
 	if entity:GetData().HeavensCall then
 		if entity.Type == mod.EntityInf[mod.Entity.Jupiter].ID and entity.Variant == mod.EntityInf[mod.Entity.Jupiter].VAR then
 			mod:JupiterDying(entity)
@@ -263,7 +286,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, function(_, entity)
 			mod:MarsDying(entity)
 		end
 	end
-end)
+end
 
 --U know this thing
 function mod:MarkovTransition(state, chain)
@@ -362,6 +385,13 @@ function mod:AppearPlanet(entity)
 	local data = entity:GetData()
 	if data.SlowSpawn then
 		sprite:Play("AppearSlow",true)
+		mod:scheduleForUpdate(function()
+			local game = Game()
+			local hud = game:GetHUD()
+	
+			local planetName = mod.PlanetName[mod.savedata.planetNum]
+			hud:ShowItemText(planetName.." has awakened","")
+		end, 95)
 	else
 		sprite:Play("Appear",true)
 		local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position, Vector.Zero, entity)
@@ -373,20 +403,23 @@ function mod:AppearPlanet(entity)
 	end
 	mod.ModFlags.glowingHourglass = 0
 
-	--Music
-	if mod.savedata.planetAlive then
-		mod.ModFlags.currentMusic = music:GetCurrentMusicID ()
-		music:Crossfade (Music.MUSIC_DARKROOM_BOSS, 2)
-	end
 
 	entity:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
 
-	--Pedestals
-	for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
-		if pedestal:GetData().WasDeleted ~= true then
-			pedestal:Remove()
+	mod:scheduleForUpdate(function()
+		--Pedestals
+		for _,pedestal in ipairs(Isaac.FindByType(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, 0)) do
+				pedestal:Remove()
 		end
-	end
+
+		--Music
+		if mod.savedata.planetAlive then
+			mod.ModFlags.currentMusic = music:GetCurrentMusicID ()
+			music:Crossfade (Music.MUSIC_DARKROOM_BOSS, 2)
+		end
+
+	end,5)
+
 
 end
 
@@ -416,6 +449,9 @@ function mod:IsRoomDescAstralChallenge(roomdesc)
 	else
 		return false
 	end
+end
+function mod:IsRedRoom(roomdesc)
+	return roomdesc.Flags & RoomDescriptor.FLAG_RED_ROOM == RoomDescriptor.FLAG_RED_ROOM
 end
 
 --Load (or reset) things when the run is started or continued
@@ -490,27 +526,30 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 		stageLimit = LevelStage.STAGE4_2
 	end
 
-	--If the room can spawn, the chance is 0.2
-	if level:GetStage() >= stageMin and level:GetStage() <= stageLimit and not game:IsGreedMode() and not level:IsAscent() then
-		if mod.ModConfigs.roomSpawnChance == nil then mod.ModConfigs.roomSpawnChance = 7 end
+	local totalchance = 0
 
-		if level:GetCurses() & LevelCurse.CURSE_OF_LABYRINTH == LevelCurse.CURSE_OF_LABYRINTH then
-			spawnChance = spawnChance + (1 - (1-mod.ModConfigs.roomSpawnChance/100)^2)--You dont add probabilities
-		else
-			spawnChance = spawnChance + mod.ModConfigs.roomSpawnChance/100
+	if level:GetStage() < LevelStage.STAGE5 and not mod.savedata.planetAlive and not mod.savedata.planetKilled1 then
+
+		--If the room can spawn, the chance is 0.2
+		if level:GetStage() >= stageMin and level:GetStage() <= stageLimit and not game:IsGreedMode() and not level:IsAscent() then
+			if mod.ModConfigs.roomSpawnChance == nil then mod.ModConfigs.roomSpawnChance = 7 end
+
+			if level:GetCurses() & LevelCurse.CURSE_OF_LABYRINTH == LevelCurse.CURSE_OF_LABYRINTH then
+				spawnChance = spawnChance + (1 - (1-mod.ModConfigs.roomSpawnChance/100)^2)--You dont add probabilities
+			else
+				spawnChance = spawnChance + mod.ModConfigs.roomSpawnChance/100
+			end
 		end
-	end
-	
-	--Apply persistent multiplier
-	if mod.savedata.spawnchancemultiplier == nil then mod.savedata.spawnchancemultiplier = 1 end
-	local totalchance = mod.savedata.spawnchancemultiplier*spawnChance
+		
+		--Apply persistent multiplier
+		if mod.savedata.spawnchancemultiplier == nil then mod.savedata.spawnchancemultiplier = 1 end
+		totalchance = mod.savedata.spawnchancemultiplier*spawnChance
 
-
-	--Second astral challenge room, overwrites things above
-	if level:GetStage() == LevelStage.STAGE5 and not mod.savedata.planetAlive then
+	elseif level:GetStage() == LevelStage.STAGE5 and not mod.savedata.planetAlive and not mod.savedata.planetKilled2 then
 		if mod.ModConfigs.roomSpawnChance2 == nil then mod.ModConfigs.roomSpawnChance2 = 30 end
 		totalchance = mod.ModConfigs.roomSpawnChance2/100
 	end
+
 
 	if totalchance > 0 then
 		local randomchance = rng:RandomFloat()
@@ -518,10 +557,8 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 			--SPAWN IT! (It may not spawn if there is absolutelly no avalible space in the stage...)
 			local newroomdesc = mod:GenerateRoomFromDataset(mod.roomdata, true)
 			if not newroomdesc then 
-				--print("No avalible place for room to spawn, oh no!")
 				mod.ModFlags.forceSpawn = true
 			else
-				--print("ROOM SPAWNED!")
 				mod.ModFlags.forceSpawn = false
 					
 				--The little wisps to mark that the room spawned
@@ -648,6 +685,28 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 		end
 	end
 	
+	if mod:IsRedRoom(roomdesc) and room:GetRoomShape() == RoomShape.ROOMSHAPE_1x1 then
+		local position = nil
+		local extra = 110
+		if mod:RandomInt(0,1) == 0 then
+			local random = mod:RandomInt(63, 577)
+			if mod:RandomInt(0,1) == 0 then
+				position = Vector(random, 142-extra)
+			else
+				position = Vector(random, 417+extra)
+			end
+		else
+			local random = mod:RandomInt(142, 417)
+			if mod:RandomInt(0,1) == 0 then
+				position = Vector(63-extra, random)
+			else
+				position = Vector(577+extra, random)
+			end
+		end
+
+		mod:SpawnEntity(mod.Entity.ICUP, position, Vector.Zero, nil)
+	end
+
 	--Minimapi things
 	if MinimapAPI and #mod.minimaprooms > 0 then
 		for i, roomidx in pairs(mod.minimaprooms) do
@@ -778,7 +837,8 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 		
 		mod:scheduleForUpdate(function()
 			if (not mod.savedata.planetAlive) then
-				if ((not mod.savedata.planetKilled1) and roomdesc.Data.Variant <= mod.maxvariant2) or ((not mod.savedata.planetKilled2) and roomdesc.Data.Variant >= mod.minvariant1) then
+				if ((not mod.savedata.planetKilled1) and mod.minvariant1 <= roomdesc.Data.Variant and roomdesc.Data.Variant <= mod.maxvariant1) or
+				 ((not mod.savedata.planetKilled2) and mod.minvariant2 <= roomdesc.Data.Variant and roomdesc.Data.Variant <= mod.maxvariant2) then
 					local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos()+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
 				end
 			end
@@ -901,14 +961,21 @@ if HPBars then
 	end
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {truFunc}
-	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Wagon].ID).."."..tostring(mod.EntityInf[mod.Entity.Wagon].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Terra2].ID).."."..tostring(mod.EntityInf[mod.Entity.Terra2].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Horsemen].ID).."."..tostring(mod.EntityInf[mod.Entity.Horsemen].VAR)] = {truFunc}
 
 	--Adding the bars
 	Jid = tostring(mod.EntityInf[mod.Entity.Jupiter].ID).."."..tostring(mod.EntityInf[mod.Entity.Jupiter].VAR)
 	Sid = tostring(mod.EntityInf[mod.Entity.Saturn].ID).."."..tostring(mod.EntityInf[mod.Entity.Saturn].VAR)
 	Uid = tostring(mod.EntityInf[mod.Entity.Uranus].ID).."."..tostring(mod.EntityInf[mod.Entity.Uranus].VAR)
 	Nid = tostring(mod.EntityInf[mod.Entity.Neptune].ID).."."..tostring(mod.EntityInf[mod.Entity.Neptune].VAR)
+
+	MRid = tostring(mod.EntityInf[mod.Entity.Mercury].ID).."."..tostring(mod.EntityInf[mod.Entity.Mercury].VAR)
+	Vid = tostring(mod.EntityInf[mod.Entity.Venus].ID).."."..tostring(mod.EntityInf[mod.Entity.Venus].VAR)
+	T1id = tostring(mod.EntityInf[mod.Entity.Terra1].ID).."."..tostring(mod.EntityInf[mod.Entity.Terra1].VAR)
+	T3id = tostring(mod.EntityInf[mod.Entity.Terra3].ID).."."..tostring(mod.EntityInf[mod.Entity.Terra3].VAR)
+	Mid = tostring(mod.EntityInf[mod.Entity.Mars].ID).."."..tostring(mod.EntityInf[mod.Entity.Mars].VAR)
+
     HPBars.BossDefinitions[Jid] = {
         sprite = "gfx/bosses/icon_jupiter.png",
 		barStyle = "PlanetariumHC"
@@ -927,6 +994,28 @@ if HPBars then
 			{"isAbsoluteStage","gfx/bosses/icon_neptune_shiny.png", {LevelStage.STAGE4_1}},
 			{"isAbsoluteStage","gfx/bosses/icon_neptune_shiny.png", {LevelStage.STAGE4_2}}
 		},
+		barStyle = "PlanetariumHC"
+    }
+
+	
+	HPBars.BossDefinitions[MRid] = {
+        sprite = "gfx/bosses/icon_mercury.png",
+		barStyle = "PlanetariumHC"
+    }
+	HPBars.BossDefinitions[Vid] = {
+        sprite = "gfx/bosses/icon_venus.png",
+		barStyle = "PlanetariumHC"
+    }
+	HPBars.BossDefinitions[T1id] = {
+        sprite = "gfx/bosses/icon_terra1.png",
+		barStyle = "PlanetariumHC"
+    }
+	HPBars.BossDefinitions[T3id] = {
+        sprite = "gfx/bosses/icon_terra3.png",
+		barStyle = "PlanetariumHC"
+    }
+	HPBars.BossDefinitions[Mid] = {
+        sprite = "gfx/bosses/icon_mars.png",
 		barStyle = "PlanetariumHC"
     }
 end
@@ -951,7 +1040,12 @@ local function SaveConfig()
 		if mod.ModConfigs.roomSpawnChance ~= nil then
 			mod.savedata.spawnChance = mod.ModConfigs.roomSpawnChance
 		else
-			mod.savedata.spawnChance = 20
+			mod.savedata.spawnChance = 7
+		end
+		if mod.ModConfigs.roomSpawnChance2 ~= nil then
+			mod.savedata.spawnChance2 = mod.ModConfigs.roomSpawnChance2
+		else
+			mod.savedata.spawnChance2 = 30
 		end
 
         mod:SaveData(json.encode(mod.savedata))
@@ -1001,24 +1095,45 @@ if ModConfigMenu then
 
 	ModConfigMenu.AddSetting("Heaven's Call", "Config", {
 		Type = ModConfigMenu.OptionType.NUMBER,
-		Default = 20,
+		Default = 7,
 		CurrentSetting = function()
 			return mod.ModConfigs.roomSpawnChance
 		end,
 		Minimum = 0,
 		Maximum = 100,
 		Display = function()
-			return "Room spawn chance: " .. tostring(mod.ModConfigs.roomSpawnChance) .. "%"
+			return "First room spawn chance: " .. tostring(mod.ModConfigs.roomSpawnChance) .. "%"
 		end,
 		OnChange = function(newvalue)
 			if newvalue ~= nil then 
 				mod.ModConfigs.roomSpawnChance = newvalue
 			else
-				mod.ModConfigs.roomSpawnChance = 20
+				mod.ModConfigs.roomSpawnChance = 7
 			end
 			SaveConfig()
 		end,
-		Info = "Default = 20"
+		Info = "Default = 7%"
+	})
+	ModConfigMenu.AddSetting("Heaven's Call", "Config", {
+		Type = ModConfigMenu.OptionType.NUMBER,
+		Default = 30,
+		CurrentSetting = function()
+			return mod.ModConfigs.roomSpawnChance2
+		end,
+		Minimum = 0,
+		Maximum = 100,
+		Display = function()
+			return "Second room spawn chance: " .. tostring(mod.ModConfigs.roomSpawnChance2) .. "%"
+		end,
+		OnChange = function(newvalue)
+			if newvalue ~= nil then 
+				mod.ModConfigs.roomSpawnChance2 = newvalue
+			else
+				mod.ModConfigs.roomSpawnChance2 = 30
+			end
+			SaveConfig()
+		end,
+		Info = "Default = 30%"
 	})
 end
 
@@ -1041,7 +1156,13 @@ function mod:onStarted(fromSave)
 		if mod.savedata.spawnChance ~= nil then
 			mod.ModConfigs.roomSpawnChance = mod.savedata.spawnChance
 		else
-			mod.ModConfigs.roomSpawnChance = 20
+			mod.ModConfigs.roomSpawnChance = 7
+		end
+		
+		if mod.savedata.spawnChance2 ~= nil then
+			mod.ModConfigs.roomSpawnChance2 = mod.savedata.spawnChance2
+		else
+			mod.ModConfigs.roomSpawnChance2 = 30
 		end
 
 	end

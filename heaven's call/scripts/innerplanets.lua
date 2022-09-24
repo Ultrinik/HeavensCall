@@ -105,6 +105,7 @@ mod.MRConst = {--Some constant variables of Mercury
     bismuthDivisionsSpeed = 1,
 
     trainsSpeed = 70,
+    hpTrain = 0.15,
 }
 
 function mod:MercuryUpdate(entity)
@@ -140,7 +141,7 @@ function mod:MercuryUpdate(entity)
         --Frame
         data.StateFrame = data.StateFrame + 1
         
-        if not data.TrainFlag and entity.HitPoints < entity.MaxHitPoints * 0.12 and data.State ~= mod.MRMSState.BIRDS then
+        if not data.TrainFlag and entity.HitPoints < entity.MaxHitPoints * mod.MRConst.hpTrain and data.State ~= mod.MRMSState.BIRDS then
             data.TrainFlag = true
             data.StateFrame = 0
         end
@@ -571,6 +572,9 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
     if data.IsExploded then
         mod:MercuryMove(entity, data, room, target)
     end
+    if data.Regen then
+        entity.Velocity = Vector.Zero
+    end
 
 end
 function mod:MercuryTrain(entity, data, sprite, target,room)
@@ -836,6 +840,7 @@ mod.VConst = {--Some constant variables of Venus
     sirenResummonRate = 7,
     sirenSummons = 8,
     coloJumpSpeed = 15,
+    colostomiaBombTime = 80,
 
     nRageFire = 10,
     rageFireSpeed = 5,
@@ -870,7 +875,6 @@ function mod:VenusUpdate(entity)
         
         if not data.RageFlag and entity.HitPoints < entity.MaxHitPoints * mod.VConst.rageHp then
             data.RageFlag = true
-            sprite:Play("RageStart", true)
             data.StateFrame = 0
         end
 
@@ -886,6 +890,8 @@ function mod:VenusUpdate(entity)
                     
                     local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
                     glow:FollowParent(entity)
+                    glow.SpriteScale = Vector.One*2
+                    glow:GetSprite().Color = mod.Colors.fire
 
                 elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
                     data.State = mod:MarkovTransition(data.State, mod.chainV)
@@ -928,10 +934,10 @@ function mod:VenusUpdate(entity)
             end
         end
 
-        
-	--if game:GetFrameCount()%3==0 then
-	--	game:SpawnParticles (entity.Position + Vector(0,-100), EffectVariant.EMBER_PARTICLE, 9, 5)
-	--end
+        sfx:Stop(SoundEffect.SOUND_INSECT_SWARM_LOOP)
+        --if game:GetFrameCount()%3==0 then
+        --	game:SpawnParticles (entity.Position + Vector(0,-100), EffectVariant.EMBER_PARTICLE, 9, 5)
+        --end
     end
 end
 function mod:VenusFlamethrower(entity, data, sprite, target,room)
@@ -948,7 +954,9 @@ function mod:VenusFlamethrower(entity, data, sprite, target,room)
         data.TargetPos = target.Position
 
         if target.Position.X > entity.Position.X then
-            sprite:SetFrame("FlameR", sprite:GetFrame())
+            local frame = sprite:GetFrame()
+            sprite:Play("FlameR",true)
+            sprite:SetFrame(frame)
         end
 
     elseif sprite:IsEventTriggered("FlameStart") then
@@ -1075,11 +1083,20 @@ function mod:VenusIpecac(entity, data, sprite, target,room)
         tear:AddProjectileFlags(ProjectileFlags.EXPLODE)
         tear:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
         
+        local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TARGET, 0, target.Position + variance, Vector.Zero, entity):ToEffect()
+        local targetSprite = target:GetSprite()
+        target.Timeout = 20
+
         if data.FireWaveType == 1 then
+			targetSprite:ReplaceSpritesheet (0, "gfx/effects/venus_target_+.png")
+			targetSprite:LoadGraphics()
             tear:AddProjectileFlags(ProjectileFlags.FIRE_WAVE)
         else
+			targetSprite:ReplaceSpritesheet (0, "gfx/effects/venus_target_X.png")
+			targetSprite:LoadGraphics()
             tear:AddProjectileFlags(ProjectileFlags.FIRE_WAVE_X)
         end
+        targetSprite.Color = Color.Default
 
     end
 end
@@ -1232,7 +1249,10 @@ function mod:VenusLit(entity, data, sprite, target,room)
 end
 function mod:VenusFire(entity, data, sprite, target, room)
 
-    if sprite:IsFinished("RageStart") then
+    if data.StateFrame == 1 then
+        sprite:Play("RageStart", true)
+
+    elseif sprite:IsFinished("RageStart") then
         sprite:Play("Rage", true)
 
     elseif sprite:IsEventTriggered("Blaze") then
@@ -1264,7 +1284,15 @@ function mod:VenusFire(entity, data, sprite, target, room)
         
 		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 		bloody:GetSprite().Color = mod.Colors.wax
+		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+		explosion:GetSprite().Color = mod.Colors.fire
 
+        for i=1, 5 do
+            local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
+            glow:FollowParent(entity)
+            glow.SpriteScale = Vector.One*3.5
+            glow:GetSprite().Color = Color(1,0.3,0,1)
+        end
 
 
         local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
@@ -1454,7 +1482,7 @@ mod.TConst = {
     speed1 = 1.5,
     
     maxLeafs = 4,
-    leafSpeed = 18,
+    leafSpeed = 14,
 
     nBubbles = 2,
     bubbleSpeed = 3,
@@ -1481,7 +1509,7 @@ mod.TConst = {
     laserCountdown = 45,
 
     meteorTimeout = 30,
-    meteorExplosionRadius = 60,
+    meteorExplosionRadius = 40,
     debbriesSpeed = 18,
 
     nTears = 8,
@@ -1874,6 +1902,8 @@ function mod:Terra3Update(entity)
                 
                 local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT, 0, entity.Position, Vector.Zero, entity):ToEffect()
                 glow:FollowParent(entity)
+                glow.SpriteScale = Vector.One*2
+                glow:GetSprite().Color = mod.Colors.fire
 
             elseif sprite:IsFinished("Appear") then
                 data.State = mod:MarkovTransition(data.State, mod.chainT3)
@@ -2155,11 +2185,10 @@ function mod:TerraDeath(entity)
             mod.savedata.planetNum = mod.Entity.Terra2
         end
 
+        game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
+        game:ShakeScreen(60)
 
-
-        mod:NormalDeath(entity)
-        mod.savedata.planetAlive = true
-        mod.savedata.planetKilled2 = false
 
     elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
 
@@ -2210,10 +2239,11 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Terra3Update, mod.EntityInf[mod.
 
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.TerraDeath, mod.EntityInf[mod.Entity.Terra1].ID)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
-	if entity.Type == mod.EntityInf[mod.Entity.Terra2].ID and entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
+	if entity:GetData().HeavensCall and entity.Type == mod.EntityInf[mod.Entity.Terra2].ID and entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
         if entity:GetData().State == mod.T2MSState.VANISH then
             local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
             poof.SpriteScale = Vector.One*2
+            game:SpawnParticles (entity.Position, EffectVariant.ROCK_PARTICLE, 50, 13)
             entity:Remove()
         else
             return false
@@ -2681,8 +2711,14 @@ function mod:MarsRocket(entity, data, sprite, target, room)
             rocket:GetSprite().Rotation = 180
         end
         if rocketType == mod.Entity.MarsGigaRocket then
-            rocket.RadiusMultiplier = 1.5
+            rocket.RadiusMultiplier = 1.75
             rocket:GetData().IsMartian = true
+
+            if rocket:GetData().IsDirected_HC then
+                local rocketSprite = rocket:GetSprite()
+                rocketSprite:ReplaceSpritesheet (0, "gfx/items/pick ups/mars_explosives_crit.png")
+                rocketSprite:LoadGraphics()
+            end
         end
     end
 end
@@ -2959,6 +2995,8 @@ function mod:MarsDeath(entity)
                 e:Die()
             end
         end
+        
+		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 
         if entity.Child and entity.Child.Type == EntityType.ENTITY_EFFECT then entity.Child:Remove() end
 
