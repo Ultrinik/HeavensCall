@@ -260,6 +260,8 @@ function mod:IceTurdFinishedAppear(entity)
 		refSprite:LoadGraphics()
 		refSprite:Play("Idle", true)
 		entity.Child = reflection
+		
+		mod:SpawnGlassFracture(entity)
 	end
 
 end
@@ -1206,6 +1208,12 @@ function mod:TarBombUpdate(entity)
 
 			entity:Remove()
 		end
+
+		if entity.FrameCount % 3 == 0 then
+			local tar = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_BLACK, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+			tar.Timeout = 60
+			--tar:GetSprite().Scale = Vector.One
+		end
 	end
 end
 
@@ -1388,6 +1396,11 @@ function mod:AirstrikeUpdate(entity)
 				end
 			end
 
+			local fractures = Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0)
+			if #fractures >= 8 then
+				fractures[1]:Remove()
+			end
+			local fracture = mod:SpawnGlassFracture(entity, 0.5)
 			entity:Remove()
 		end
 
@@ -1428,6 +1441,7 @@ function mod:MeteorUpdate(entity)
 			rock.FallingSpeed = 2
 		end
 
+		mod:SpawnGlassFracture(entity, 0.5)
 		entity:Remove()
 		
 	elseif sprite:IsFinished("Type3") then
@@ -1477,6 +1491,9 @@ function mod:RockblastUpdate(entity)
 			rockData.Direction = data.Direction:Rotated(mod.TConst.blastAngle * 2 * rng:RandomFloat() - mod.TConst.blastAngle)
 			rockData.IsActive_HC = true
 			rockData.HeavensCall = true
+
+			local fracture = mod:SpawnGlassFracture(entity, 0.5)
+			if fracture then fracture.Position = position end
 		end
 		--Damage
 		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 30)) do
@@ -1603,6 +1620,14 @@ function mod:LaserSwordDamage(entity,center)
 	end
 end
 
+--ICUP-------------------------------------------------------------------------------------------------------------------------------
+function mod:ICUPUpdate(entity)
+	local sprite = entity:GetSprite()
+
+	if sprite:IsFinished("FlowerStart") then
+		sprite:Play("FlowerIdle", true)
+	end
+end
 
 --Effects updates
 function mod:UpdateEffect(effect, data)
@@ -1645,6 +1670,8 @@ function mod:UpdateEffect(effect, data)
 		mod:LaserSwordUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.Horn].VAR then
 		mod:HornUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.ICUP].VAR then
+		mod:ICUPUpdate(effect)
 	end
 
 end

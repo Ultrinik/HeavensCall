@@ -464,6 +464,7 @@ function mod:MercuryDrill(entity, data, sprite, target,room)
         sprite:Play("DrillStart",true)
     elseif sprite:IsFinished("DrillStart") then
         sprite:Play("Drill",true)
+        mod:SpawnGlassFracture(entity)
 
         for i = 1, mod.MRConst.nDrillProjectiles do
             mod:scheduleForUpdate(function()
@@ -726,6 +727,33 @@ function mod:MercuryDying(entity)
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
         entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NOPITS
 	end
+end
+
+function mod:SpawnGlassFracture(entity, size)
+	local roomdesc = game:GetLevel():GetCurrentRoomDesc()
+	if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+        if size == nil then size = 1 end
+
+        local fractures = Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0)
+        if #fractures > 50 then
+            fractures[1]:Remove()
+        end
+    
+		local fracture = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0, entity.Position, Vector.Zero, nil)
+        fracture.SpriteScale = Vector.One * size
+		local sprite = fracture:GetSprite()
+		sprite:Load("gfx/effect_GlassFracture.anm2", true)
+		sprite:LoadGraphics()
+        if mod:RandomInt(0,1) == 0 then
+            sprite:Play("Idle1", true)
+        else
+            sprite:Play("Idle2", true)
+        end
+        sprite.Rotation = 360 * rng:RandomFloat()
+
+        return fracture
+	end
+    
 end
 
 --Callbacks
@@ -1279,9 +1307,15 @@ function mod:VenusFire(entity, data, sprite, target, room)
             player:GetData().BurnTime = 1000
         end
 
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_FIREPLACE, 10)) do
+            e:Die()
+        end
+
 
     elseif sprite:IsEventTriggered("Slam") then
         
+        data.ExplosionDone = true
+
 		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 		bloody:GetSprite().Color = mod.Colors.wax
 		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
@@ -1293,6 +1327,12 @@ function mod:VenusFire(entity, data, sprite, target, room)
             glow.SpriteScale = Vector.One*3.5
             glow:GetSprite().Color = Color(1,0.3,0,1)
         end
+
+        local flower = mod:SpawnEntity(mod.Entity.ICUP, entity.Position + Vector(0,-40), Vector.Zero, entity):ToEffect()
+        flower.SpriteScale = Vector.One * 1.3
+        flower.DepthOffset = -50
+        flower:FollowParent(entity)
+        flower:GetSprite():Play("FlowerStart", true)
 
 
         local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
@@ -1330,6 +1370,14 @@ function mod:VenusFire(entity, data, sprite, target, room)
             
             fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
         end
+    end
+
+    if data.ExplosionDone then
+        mod.ModFlags.venusPosition = entity.Position + Vector(0,-30)
+        mod.ModFlags.venusCounter = mod.ModFlags.venusCounter + 1
+        mod.ModFlags.venusHeat = true
+
+        if mod.ModFlags.venusCounter > 60 then mod.ModFlags.venusCounter = 60 end
     end
 
     mod:VenusMove(entity, data, room, target, 0.9)
@@ -1380,12 +1428,22 @@ function mod:VenusDeath(entity)
     for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT)) do
         e:Remove()
     end
+    for _, e in ipairs(mod:FindByTypeMod(mod.Entity.ICUP)) do
+        e:Remove()
+    end
 
     for i=0, game:GetNumPlayers ()-1 do
         local player = game:GetPlayer(i)
         player:GetData().BurnTime = 0
     end
-    --Fart:
+
+
+    mod.ModFlags.venusPosition = Vector.Zero
+    mod.ModFlags.venusCounter = 0
+    mod:scheduleForUpdate(function()
+        mod.ModFlags.venusHeat = false
+    end,10)
+
     mod:NormalDeath(entity, false, true)
 end
 --deding
@@ -1393,6 +1451,13 @@ function mod:VenusDying(entity)
     
     local sprite = entity:GetSprite()
     local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        mod.ModFlags.venusCounter = mod.ModFlags.venusCounter - 10
+	end
 
 end
 
@@ -1843,6 +1908,8 @@ function mod:Terra2Blast(entity, data, sprite, target,room)
         rockData.Direction = (target.Position - entity.Position):Normalized()
         rockData.IsActive_HC = true
         rockData.HeavensCall = true
+
+        mod:SpawnGlassFracture(entity)
     end
 end
 
@@ -2188,6 +2255,8 @@ function mod:TerraDeath(entity)
         game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
 		sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
         game:ShakeScreen(60)
+
+        mod:SpawnGlassFracture(entity, 1.2)
 
 
     elseif entity.Variant == mod.EntityInf[mod.Entity.Terra2].VAR then
@@ -2810,6 +2879,9 @@ function mod:MarsRage(entity, data, sprite, target, room)
         sword:FollowParent(entity)
         sword.DepthOffset = 10
         data.Sword = sword
+        
+		game:SpawnParticles (entity.Position, EffectVariant.WOOD_PARTICLE, 25, 12)
+		game:SpawnParticles (entity.Position, EffectVariant.WOOD_PARTICLE, 25, 12, Color(0.25,0.25,0.25,1,0.25,0,0))
 
     elseif sprite:IsFinished("RageStart") then
         sprite:Play("Rage",true)
@@ -3071,3 +3143,19 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.MarsDeath, mod.EntityInf[mod
 
 --Rocket
 mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, mod.RocketDirected, BombVariant.BOMB_ROCKET)
+mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, function(_, bomb)
+   if bomb.SubType == mod.EntityInf[mod.Entity.MarsGigaRocket].SUB then
+            
+        local hemo = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HAEMO_TRAIL, 0, bomb.Position + Vector(0,-20), Vector.Zero, bomb)
+        hemo:GetSprite().Scale = Vector.One * 0.8
+        hemo:GetSprite().PlaybackSpeed = 0.6
+        hemo:GetSprite().Color = Color(10,0,0,1)
+        hemo.DepthOffset = -50
+        
+        local shine = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.ULTRA_GREED_BLING, 0, bomb.Position + RandomVector() * ( 20 * rng:RandomFloat() + 25 ), Vector.Zero, bomb)
+        shine:GetSprite().Color = Color(1,0,0,1)
+        shine.SpriteScale = Vector.One * 2
+        shine.DepthOffset = 50
+   end
+    
+end, BombVariant.BOMB_ROCKET)

@@ -66,6 +66,7 @@ mod.Entity ={
     LaserSword = 67,
     MercuryTrace = 69,
     ICUP = 71,
+    GlassFracture = 72,
 
     ---------
     

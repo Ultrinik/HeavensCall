@@ -117,7 +117,6 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 
-
 	<!-- Venus -->
 	<entity name="Venus the Termagant" id="705" variant="370" subtype="0" anm2path="entity_Venus.anm2" baseHP="1500" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="6">
 		<bestiary transform="0,0,1" anim="Idle" />

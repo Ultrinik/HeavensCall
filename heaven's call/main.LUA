@@ -92,7 +92,11 @@ mod.ModFlags = {
 	glowingHourglass = 0,
 	currentMusic = nil,
 	noPool = false,
-	forceSpawn = false
+	forceSpawn = false,
+
+	venusCounter = 0,
+	venusPosition = Vector.Zero,
+	venusHeat = false,
 }
 mod.ModConfigs = {
 	noRain = false,
@@ -218,6 +222,8 @@ function mod:NormalDeath(entity, notExplosion, mamaMega)
 
 	--Explosion
 	if not notExplosion then
+		mod:SpawnGlassFracture(entity, 1.5)
+
 		if mamaMega then
 			game:GetRoom():MamaMegaExplosion(entity.Position)
 
@@ -936,11 +942,29 @@ end)
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 function mod:GetShaderParams(shaderName)
+	local room = game:GetRoom()
     if shaderName == 'Timestuck' then
         local enabled = 0.0
 		if mod.ModFlags.globalTimestuck then enabled = 1.0 end
         local params = {Time = enabled}
         return params;
+	end
+	
+	if shaderName == 'VenusHeat' and mod.ModFlags.venusHeat then
+		local position1 = mod.ModFlags.venusPosition
+		position1 = room:WorldToScreenPosition (position1)
+
+		local position2 = room:GetCenterPos()
+		position2 = room:WorldToScreenPosition (position2)
+
+		local params = { 
+			PlayerPos = { position1.X,  position1.Y},
+			CenterPos = { position2.X,  position2.Y},
+			Time = Isaac.GetFrameCount(),
+			VenusTime = mod.ModFlags.venusCounter
+		}
+		return params;
+		
     end
 end
 mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.GetShaderParams)
