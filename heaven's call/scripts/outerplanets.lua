@@ -65,9 +65,9 @@ mod.chainJ = {
 mod.JConst = {--Some constant variables of Jupiter
 
 	idleTimeInterval = Vector(20,30),
-	speed = 1.4,
+	speed = 1.2,
 	goCenterSpeed = 1.75,
-	chargeSpeed = 40,
+	chargeSpeed = 32,
 	shotSpeed = 12,
 	cloudSpeed = 9,
 	
@@ -1114,7 +1114,7 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 		else
 			sprite:Play("Saw",true)
 		end
-	elseif sprite:IsFinished("Saw") then
+	elseif sprite:IsFinished("Saw") or sprite:IsFinished("SawBlood") then
 		data.State = mod:MarkovTransition(data.State, mod.chainS)
 		data.StateFrame = 0
 	
@@ -1136,7 +1136,7 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 		--end
 
 		for i, entity_ in ipairs(Isaac.FindInRadius(center, mod.SConst.sawRadius)) do
-			if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Saturn].ID then
+			if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Saturn].ID and entity_.Type ~= EntityType.ENTITY_TEAR and entity_.Type ~= EntityType.ENTITY_PROJECTILE then
 				entity_:TakeDamage(mod.SConst.sawDamage, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
 
 				entity_.Velocity = (entity_.Position-entity.Position):Normalized()*10
@@ -1165,6 +1165,9 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 				local healHeart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HEART, 0, entity.Position + Vector(0,-100), Vector.Zero, entity)
 				healHeart.DepthOffset = 200
 				sfx:Play(SoundEffect.SOUND_VAMP_GULP,2)
+				local frame = sprite:GetFrame()
+				sprite:Play("SawBlood", true)
+				sprite:SetFrame(frame+1)
 
 				entity:AddHealth(50)
 			end
@@ -1181,6 +1184,9 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 			local healHeart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HEART, 0, entity.Position + Vector(0,-100), Vector.Zero, entity)
 			healHeart.DepthOffset = 200
 			sfx:Play(SoundEffect.SOUND_VAMP_GULP,2)
+			local frame = sprite:GetFrame()
+			sprite:Play("SawBlood", true)
+			sprite:SetFrame(frame+1)
 
 			entity:AddHealth(#horfs*data.HealPerHyper)
 			data.HealPerHyper = data.HealPerHyper - 1
