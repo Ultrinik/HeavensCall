@@ -2250,6 +2250,7 @@ function mod:TerraDeath(entity)
         --Save things
         if mod.savedata.planetAlive then
             mod.savedata.planetNum = mod.Entity.Terra2
+            mod.savedata.planetHP = 1150
         end
 
         game:BombExplosionEffects ( entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )

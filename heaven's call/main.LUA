@@ -44,6 +44,7 @@ mod.Colors = {
 	ghost = Color(1,1,1,0.6,1,1,1),
 	greenEden = Color(0.5,1,0.5,0.6,0.4,1,0.4),
 	wax = Color(1,1,1,1,1,0.85,0.8),
+	booger = Color(1,1,1,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -62,7 +63,7 @@ function mod:ColorizeColors()
 	mod.Colors.buttFire:SetColorize(2,1,0,1)
 	mod.Colors.mercury:SetColorize(7,5,7,1)
 	mod.Colors.tar:SetColorize(1, 1, 1, 1)
-	--mod.Colors.wax:SetColorize(1, 1, 1, 1)
+	mod.Colors.booger:SetColorize(0.3, 2, 0.2, 1)
 end
 mod:ColorizeColors()
 
@@ -94,6 +95,10 @@ mod.ModFlags = {
 	noPool = false,
 	forceSpawn = false,
 
+	ErrorRoom = false,
+	ErrorRoomSource = -2,
+	ErrorRoomSlot = -1,
+
 	venusCounter = 0,
 	venusPosition = Vector.Zero,
 	venusHeat = false,
@@ -103,6 +108,7 @@ mod.ModConfigs = {
 	noSnow = false,
 	roomSpawnChance = 7,
 	roomSpawnChance2 = 30,
+	altUranus = false,
 }
 mod.ModConstants = {
 	burningFrames = 350
@@ -396,7 +402,9 @@ function mod:AppearPlanet(entity)
 			local hud = game:GetHUD()
 	
 			local planetName = mod.PlanetName[mod.savedata.planetNum]
-			hud:ShowItemText(planetName.." has awakened","")
+			if planetName then
+				hud:ShowItemText(planetName.." has awakened","")
+			end
 		end, 95)
 	else
 		sprite:Play("Appear",true)
@@ -449,7 +457,7 @@ if MinimapAPI then
 end
 mod.minimaprooms = {} --Stores rooms that need to be updated on MinimapAPI
 
-function mod:IsRoomDescAstralChallenge(roomdesc)
+function mod:IsRoomDescAstralChallenge(roomdesc) --Oh yes, if true return true, if false, return false, nice
 	if roomdesc and roomdesc.Data and roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant1 and roomdesc.Data.Variant <= mod.maxvariant2 then
 		return true
 	else
@@ -598,6 +606,12 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 		local door = room:GetDoor(i)
 		if door then
 			local targetroomdesc = level:GetRoomByIdx(door.TargetRoomIndex)
+
+			--print(mod.ModFlags.ErrorRoom)
+			--print(level:GetRoomByIdx(roomdesc.GridIndex).GridIndex == mod.ModFlags.ErrorRoomSource)
+			--print(mod.ModFlags.ErrorRoomSlot == i)
+			--print()
+
 			if mod:IsRoomDescAstralChallenge(targetroomdesc) then
 				local doorSprite = door:GetSprite()
 				doorSprite:Load("gfx/grid/astralchallengeroor.anm2", true)
@@ -605,6 +619,15 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 				doorSprite:Play("Closed")
 				
 				door:SetLocked (false)
+			elseif mod.ModFlags.ErrorRoom and mod.ModFlags.ErrorRoomSource == level:GetRoomByIdx(roomdesc.GridIndex).GridIndex and 
+				mod.ModFlags.ErrorRoomSlot == i then
+					
+				local doorSprite = door:GetSprite()
+				doorSprite.Scale = Vector.Zero
+
+				door:SetVariant (DoorVariant.DOOR_LOCKED_BARRED)
+				door:Init(1)
+
 			end
 		end
 	end
@@ -769,7 +792,7 @@ mod:AddCallback(ModCallbacks.MC_USE_CARD, function(_,card)
 end)
 --Uranus shitting
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, function(_,item)
-	if item == CollectibleType.COLLECTIBLE_FLUSH then
+	if item == CollectibleType.COLLECTIBLE_FLUSH and not mod.ModConfigs.altUranus then
 		for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Uranus)) do
 			e:GetData().State = mod.UMSState.SPIN
 			e:GetData().StateFrame = 0
@@ -839,7 +862,8 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 	local level = game:GetLevel()
 	local roomdesc = level:GetCurrentRoomDesc()
 	
-	if mod:IsRoomDescAstralChallenge(roomdesc) then
+	local isAstralChallenge = mod:IsRoomDescAstralChallenge(roomdesc)
+	if isAstralChallenge then
 		
 		mod:scheduleForUpdate(function()
 			if (not mod.savedata.planetAlive) then
@@ -848,7 +872,14 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 					local statue = mod:SpawnEntity(mod.Entity.Statue, game:GetRoom():GetCenterPos()+Vector(0,-20),Vector.Zero, Isaac.GetPlayer(0))
 				end
 			end
-		end, 0, ModCallbacks.MC_POST_RENDER)
+		end, 0, ModCallbacks.MC_POST_RENDER) 
+	end
+
+	local isPlanetarium = roomdesc and roomdesc.Data and roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM
+	if isAstralChallenge or isPlanetarium then
+		for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0)) do
+			e:Remove()
+		end
 	end
 end)
 
@@ -1071,6 +1102,11 @@ local function SaveConfig()
 		else
 			mod.savedata.spawnChance2 = 30
 		end
+		if mod.ModConfigs.altUranus ~= nil then
+			mod.savedata.altUranus = mod.ModConfigs.altUranus
+		else
+			mod.savedata.altUranus = false
+		end
 
         mod:SaveData(json.encode(mod.savedata))
     end
@@ -1138,6 +1174,7 @@ if ModConfigMenu then
 		end,
 		Info = "Default = 7%"
 	})
+
 	ModConfigMenu.AddSetting("Heaven's Call", "Config", {
 		Type = ModConfigMenu.OptionType.NUMBER,
 		Default = 30,
@@ -1158,6 +1195,26 @@ if ModConfigMenu then
 			SaveConfig()
 		end,
 		Info = "Default = 30%"
+	})
+	
+	ModConfigMenu.AddSetting("Heaven's Call", "Config", {
+		Type = ModConfigMenu.OptionType.BOOLEAN,
+		Default = false,
+		CurrentSetting = function()
+			return mod.ModConfigs.altUranus
+		end,
+		Display = function()
+			return "Alternative Uranus sprite: " .. tostring(mod.ModConfigs.altUranus)
+		end,
+		OnChange = function(newvalue)
+			if newvalue ~= nil then 
+				mod.ModConfigs.altUranus = newvalue 
+			else
+				mod.ModConfigs.altUranus = false 
+			end
+			SaveConfig()
+		end,
+		Info = "Default = false"
 	})
 end
 
@@ -1187,6 +1244,12 @@ function mod:onStarted(fromSave)
 			mod.ModConfigs.roomSpawnChance2 = mod.savedata.spawnChance2
 		else
 			mod.ModConfigs.roomSpawnChance2 = 30
+		end
+
+		if mod.savedata.altUranus ~= nil then
+			mod.ModConfigs.altUranus = mod.savedata.altUranus
+		else
+			mod.ModConfigs.altUranus = false
 		end
 
 	end

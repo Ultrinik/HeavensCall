@@ -1105,7 +1105,7 @@ function mod:SaturnKnife(entity, data, sprite, target, room)
 		mod:SaturnStopTime()
 	end
 end
-function mod:SaturnSaw(entity, data, sprite, target, room)
+function mod:SaturnSaw(entity, data, sprite, target, room)	
 	if data.StateFrame == 1 then
 		if data.SawSkips > 0 then
 			data.SawSkips = data.SawSkips - 1
@@ -1701,6 +1701,14 @@ function mod:UranusUpdate(entity)
 				mod:AppearPlanet(entity)
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+				if mod.ModConfigs.altUranus then
+					local animation = sprite:GetAnimation()
+					sprite:Load("gfx/entity_UranusAlt.anm2", true)
+					sprite:LoadGraphics()
+					sprite:Play(animation, true)
+				end
+
 			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
 				data.State = mod:MarkovTransition(data.State, mod.chainU)
 				data.StateFrame = 0
@@ -1839,16 +1847,32 @@ function mod:UranusFarting(entity, data, sprite, target, room)
 				if mod:RandomInt(1,5)<=mod.UConst.cornChance then
 					local poop = Isaac.Spawn(EntityType.ENTITY_DIP, 3, 0, entity.Position, poopAim, entity)
 					poop:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+					
+					if mod.ModConfigs.altUranus then
+						local sprite = poop:GetSprite()
+						sprite:ReplaceSpritesheet (0, "gfx/monsters/snow_big_corn.png")
+						sprite:LoadGraphics()
+					end
 				else
 					local poop = Isaac.Spawn(EntityType.ENTITY_DIP, 0, 0, entity.Position, poopAim, entity)
 					poop:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+					if mod.ModConfigs.altUranus then
+						local sprite = poop:GetSprite()
+						sprite:ReplaceSpritesheet (0, "gfx/monsters/snow_dip.png")
+						sprite:LoadGraphics()
+					end
 				end
 			end
 		end
 		
 		local poopParams = ProjectileParams()
 		
+		
 		poopParams.Color = mod.Colors.poop
+		if mod.ModConfigs.altUranus then
+			poopParams.Color = mod.Colors.booger
+		end
 		
 		entity:FireBossProjectiles (mod.UConst.poopDensity, data.fartTarget, 8-data.fartCount, poopParams )
 		
@@ -1947,6 +1971,9 @@ function mod:UranusPee(entity, data, sprite, target, room)
 		local peeParams = ProjectileParams()
 		
 		peeParams.Color = mod.Colors.pee
+		if mod.ModConfigs.altUranus then
+			peeParams.Color = mod.Colors.booger
+		end
 		peeParams.Acceleration = 0.00001
 		
 		entity:FireBossProjectiles (mod.UConst.nPee, target.Position, -1, peeParams )
@@ -2127,7 +2154,13 @@ function mod:PeeProjectile(tear,collided)
 		end
 		
 		--Spawn pee
-		local pee = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_YELLOW, 0, tear.Position, Vector.Zero, tear):ToEffect()
+		local pee = nil
+
+		if tear:GetSprite().Color.GO == mod.Colors.booger.GO then
+			pee = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_GREEN, 0, tear.Position, Vector.Zero, tear):ToEffect()
+		else
+			pee = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_YELLOW, 0, tear.Position, Vector.Zero, tear):ToEffect()
+		end
 		pee.Timeout = mod.UConst.peeCreepTime
 		
 		--Melt the ice

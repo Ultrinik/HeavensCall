@@ -960,7 +960,9 @@ function mod:BirdUpdate(entity)
 		else
 			if not data.idleTime then 
 				data.idleTime = mod:RandomInt(mod.MRConst.idleBirdTimeInterval.X, mod.MRConst.idleBirdTimeInterval.Y)
-				data.targetvelocity = ((parent.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-30, 30))
+				if parent then
+					data.targetvelocity = ((parent.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-30, 30))
+				end
 			end
 		end
 		

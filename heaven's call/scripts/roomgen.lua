@@ -134,6 +134,18 @@ function mod:GenerateRoomFromDataset(dataset, onnewlevel)
 				mod:UpdateRoomDisplayFlags(newroomdesc)
 				level:UpdateVisibility()
 				table.insert(mod.minimaprooms, newroomdesc.GridIndex)
+				
+				--print(level:GetRoomByIdx(newroomdesc.GridIndex).GridIndex) --17SS JZB1
+
+				mod.ModFlags.ErrorRoom = false
+				mod.ModFlags.ErrorRoomSource = -2
+				mod.ModFlags.ErrorRoomSlot = -1
+				if level:GetRoomByIdx(newroomdesc.GridIndex).GridIndex == -1 then
+					mod.ModFlags.ErrorRoom = true
+					mod.ModFlags.ErrorRoomSource = level:GetRoomByIdx(roomdesc.GridIndex).GridIndex
+					mod.ModFlags.ErrorRoomSlot = deadendslot
+					return false
+				end
 				return newroomdesc
 			end
 		end
