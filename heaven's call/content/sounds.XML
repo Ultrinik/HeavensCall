@@ -56,8 +56,7 @@
 		<sample weight="1" path="pre_thunder3.wav" />
 	</sound>
 	<sound name="Chomp">
-		<sample weight="1" path="chomp1.wav" />
-		<sample weight="1" path="chomp2.wav" />
+		<sample weight="1" path="chomp.wav" />
 	</sound>
 	<sound name="KnifeThrow">
 		<sample weight="1" path="knifeThrow1.wav" />
@@ -145,5 +144,123 @@
 	</sound>
 	<sound name="Spring">
 		<sample weight="1" path="spring.wav" />
+	</sound>
+	<sound name="Slam">
+		<sample weight="1" path="slam.wav" />
+	</sound>
+	<sound name="BismuthBreak">
+		<sample weight="1" path="bismuth_break.wav" />
+	</sound>
+	<sound name="Horn">
+		<sample weight="1" path="horn1.wav" />
+		<sample weight="1" path="horn2.wav" />
+		<sample weight="1" path="horn3.wav" />
+	</sound>
+	<sound name="Snap">
+		<sample weight="1" path="snap.wav" />
+	</sound>
+	<sound name="Drill">
+		<sample weight="1" path="drill.wav" />
+	</sound>
+	<sound name="Birds">
+		<sample weight="1" path="birds.wav" />
+	</sound>
+	<sound name="TrainStart">
+		<sample weight="1" path="train_start.wav" />
+	</sound>
+	<sound name="Train">
+		<sample weight="1" path="train1.wav" />
+		<sample weight="1" path="train2.wav" />
+		<sample weight="1" path="train3.wav" />
+	</sound>
+	<sound name="TrainCrash">
+		<sample weight="1" path="train_crash.wav" />
+	</sound>
+	<sound name="Kiss">
+		<sample weight="1" path="kiss1.wav" />
+		<sample weight="1" path="kiss2.wav" />
+		<sample weight="1" path="kiss3.wav" />
+	</sound>
+	<sound name="MarsDamage">
+		<sample weight="1" path="mars_damage.wav" />
+	</sound>
+	<sound name="MarsMissile">
+		<sample weight="1" path="mars_missile.wav" />
+	</sound>
+	<sound name="Bubbles">
+		<sample weight="1" path="bubbles.wav" />
+	</sound>
+	<sound name="Leafs">
+		<sample weight="1" path="leaf1.wav" />
+		<sample weight="1" path="leaf2.wav" />
+		<sample weight="1" path="leaf3.wav" />
+		<sample weight="1" path="leaf4.wav" />
+	</sound>
+	<sound name="Ow">
+		<sample weight="1" path="ow1.wav" />
+		<sample weight="1" path="ow2.wav" />
+		<sample weight="1" path="ow3.wav" />
+	</sound>
+	<sound name="Frog">
+		<sample weight="1" path="frog1.wav" />
+		<sample weight="1" path="frog2.wav" />
+	</sound>
+	<sound name="Elastic">
+		<sample weight="1" path="elastic.wav" />
+	</sound>
+	<sound name="Slash">
+		<sample weight="1" path="slash1.wav" />
+		<sample weight="1" path="slash2.wav" />
+		<sample weight="1" path="slash3.wav" />
+	</sound>
+	<sound name="Chimes">
+		<sample weight="1" path="chimes.wav" />
+	</sound>
+	<sound name="CrystalBreak">
+		<sample weight="1" path="crystal_break_big1.wav" />
+		<sample weight="1" path="crystal_break_big2.wav" />
+	</sound>
+	<sound name="StoneSlide">
+		<sample weight="1" path="stone_slide1.wav" />
+		<sample weight="1" path="stone_slide2.wav" />
+		<sample weight="1" path="stone_slide3.wav" />
+	</sound>
+	<sound name="WeaponSwitch">
+		<sample weight="1" path="weapon_switch.wav" />
+	</sound>
+	<sound name="Signal">
+		<sample weight="1" path="signal.wav" />
+	</sound>
+	<sound name="Crit">
+		<sample weight="1" path="crit.wav" />
+	</sound>
+	<sound name="Sneeze">
+		<sample weight="1" path="sneeze.wav" />
+	</sound>
+	<sound name="NoseBlowing">
+		<sample weight="1" path="nose_blowing.wav" />
+	</sound>
+	<sound name="RocketOpen">
+		<sample weight="1" path="rocket_open.wav" />
+	</sound>
+	<sound name="SaberStart">
+		<sample weight="1" path="saber_start.wav" />
+	</sound>
+	<sound name="Saber">
+		<sample weight="1" path="saber1.wav" />
+		<sample weight="1" path="saber2.wav" />
+		<sample weight="1" path="saber3.wav" />
+		<sample weight="1" path="saber4.wav" />
+	</sound>
+	<sound name="SaberReflect">
+		<sample weight="1" path="saber_reflect.wav" />
+	</sound>
+	<sound name="Shivering">
+		<sample weight="1" path="shivering.wav" />
+	</sound>
+	<sound name="IceCrack">
+		<sample weight="1" path="ice_crack1.wav" />
+		<sample weight="1" path="ice_crack2.wav" />
+		<sample weight="1" path="ice_crack3.wav" />
 	</sound>
 </sounds>

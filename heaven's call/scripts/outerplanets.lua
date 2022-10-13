@@ -374,6 +374,8 @@ function mod:JupiterLaser(entity, data, sprite, target,room)
 	--Set the aim to where its going to charge
 	--TargetPosition_aim == some old position of the player
 	elseif sprite:IsEventTriggered("SetAim") then
+        sfx:Play(Isaac.GetSoundIdByName("Slam"), 1, 2, false, 1)
+
 		game:ShakeScreen(35);
 		entity.Position = room:GetCenterPos()
 		entity.Velocity = Vector.Zero
@@ -821,7 +823,7 @@ function mod:SaturnSpin(entity, data, sprite, target, room)
 			tearSprite:LoadGraphics()
 		end
 		
-		sfx:Play(SoundEffect.SOUND_COIN_INSERT,0.9,2,false,0.9)
+		sfx:Play(SoundEffect.SOUND_ULTRA_GREED_PULL_SLOT,0.9,2,false,0.9)
 	end
 end
 function mod:SaturnBomb(entity, data, sprite, target, room)
@@ -1180,6 +1182,11 @@ function mod:SaturnSaw(entity, data, sprite, target, room)
 		--(bug) It kills the horfs of other Saturns too, but I dont care, are you really gonna use Meat cleaver???
 		local horfs = mod:FindByTypeMod(mod.Entity.Hyperion)
 		
+		if #horfs > 0 then
+			--Sound
+			sfx:Play(Isaac.GetSoundIdByName("SawHit"), 0.4)
+		end
+
 		if #horfs > 0 and data.HealPerHyper > 0 then
 			local healHeart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HEART, 0, entity.Position + Vector(0,-100), Vector.Zero, entity)
 			healHeart.DepthOffset = 200
@@ -1772,7 +1779,11 @@ function mod:UranusShot(entity, data, sprite, target, room)
 		hail:GetData().hailSplash = true
 		hail.Parent = entity
 		
-		local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
+		if mod.ModConfigs.altUranus then
+			sfx:Play(SoundEffect.SOUND_EXPLOSION_WEAK, 1, 2, false, 2)
+		else
+			local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
+		end
 	end
 end
 function mod:UranusTurd(entity, data, sprite, target, room)
@@ -1821,6 +1832,9 @@ function mod:UranusFarting(entity, data, sprite, target, room)
 		if (entity.Position):Distance(target.Position) < mod.UConst.minDistanceToFart then
 			sprite:Play("Farting",true)
 			mod:FaceTarget(entity, target)
+			if mod.ModConfigs.altUranus then
+				sfx:Play(Isaac.GetSoundIdByName("NoseBlowing"), 2, 2, false, 1)
+			end
 		else
 			data.State = mod:MarkovTransition(data.State, mod.chainU)
 			data.StateFrame = 0
@@ -1872,11 +1886,12 @@ function mod:UranusFarting(entity, data, sprite, target, room)
 		poopParams.Color = mod.Colors.poop
 		if mod.ModConfigs.altUranus then
 			poopParams.Color = mod.Colors.booger
+		else
+			sfx:Play(SoundEffect.SOUND_FART,4)
 		end
 		
 		entity:FireBossProjectiles (mod.UConst.poopDensity, data.fartTarget, 8-data.fartCount, poopParams )
 		
-		sfx:Play(SoundEffect.SOUND_FART,4);
 	end
 end
 function mod:UranusHail(entity, data, sprite, target, room)
@@ -1890,6 +1905,11 @@ function mod:UranusHail(entity, data, sprite, target, room)
 	--Why do the animations dont work if there is a 360 rotation????????
 	if data.StateFrame == 1 then
 		sprite:Play("Twerk",true)
+
+		if mod.ModConfigs.altUranus and data.HailCount == 0 then
+			sfx:Play(Isaac.GetSoundIdByName("Shivering"), 1, 2, false, 1)
+		end
+
 	elseif sprite:IsFinished("Twerk") and data.HailCount < mod.UConst.nBlizzards then
 		
 		--Freeze dips cuz they are annoying
@@ -1954,7 +1974,8 @@ function mod:UranusHail(entity, data, sprite, target, room)
 		data.HailCount = 0
 		data.StateFrame = 0
 	end
-	if data.StateFrame%10 == 0 then
+
+	if data.StateFrame%10 == 0 and not mod.ModConfigs.altUranus then
 		sfx:Play(SoundEffect.SOUND_CLAP,1);
 	end
 end
@@ -1973,13 +1994,15 @@ function mod:UranusPee(entity, data, sprite, target, room)
 		peeParams.Color = mod.Colors.pee
 		if mod.ModConfigs.altUranus then
 			peeParams.Color = mod.Colors.booger
+			sfx:Play(Isaac.GetSoundIdByName("Sneeze"), 2, 2, false, 1)
+		else
+			--sfx:Play(Isaac.GetSoundIdByName("SOUND_V2/MEAT_IMPACTS"),5)
+			sfx:Play(70,5)
 		end
 		peeParams.Acceleration = 0.00001
 		
 		entity:FireBossProjectiles (mod.UConst.nPee, target.Position, -1, peeParams )
 		
-		--sfx:Play(Isaac.GetSoundIdByName("SOUND_V2/MEAT_IMPACTS"),5)
-		sfx:Play(70,5)
 	end
 end
 function mod:UranusThank(entity, data, sprite, target, room)
@@ -2064,7 +2087,8 @@ function mod:UranusDeath(entity)
 			poopParams.Scale = mod:RandomInt(1,100)/100
 			poopParams.FallingAccelModifier = 2
 			poopParams.ChangeTimeout = 3
-			poopParams.HeightModifier = -mod:RandomInt(150,6000)
+			--poopParams.HeightModifier = -mod:RandomInt(150,6000)
+			poopParams.FallingSpeedModifier = -mod:RandomInt(10,600)
 			poopParams.Color = mod.Colors.poop
 			
 			entity:FireProjectiles(position, Vector.Zero, 0, poopParams)
@@ -2156,7 +2180,7 @@ function mod:PeeProjectile(tear,collided)
 		--Spawn pee
 		local pee = nil
 
-		if tear:GetSprite().Color.GO == mod.Colors.booger.GO then
+		if mod.ModConfigs.altUranus then
 			pee = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_GREEN, 0, tear.Position, Vector.Zero, tear):ToEffect()
 		else
 			pee = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_YELLOW, 0, tear.Position, Vector.Zero, tear):ToEffect()
@@ -2343,7 +2367,7 @@ function mod:NeptuneUpdate(entity)
 			if data.StateFrame == 1 then
 				sprite:Play("Idle1",true)
 				data.CurrentTargetPosition = target.Position
-				sfx:Play(SoundEffect.SOUND_HEARTIN,1,0,false,mod:RandomInt(198,202)/1000);
+				entity:PlaySound(SoundEffect.SOUND_HEARTIN,1,0,false,mod:RandomInt(198,202)/1000);
 			elseif sprite:IsFinished("Idle1") then
 				sprite:Play("Idle2",true)
 				data.CurrentTargetPosition = target.Position

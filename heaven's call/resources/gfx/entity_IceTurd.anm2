@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="Unknown" CreatedOn="23-09-2022 23:40:47" Version="86" Fps="30"/>
+	<Info CreatedBy="Unknown" CreatedOn="13-10-2022 3:12:46" Version="87" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="monsters\ice_turd.png" Id="0"/>
@@ -12,6 +12,7 @@
 		</Nulls>
 		<Events>
 			<Event Name="Explosion" Id="0"/>
+			<Event Name="Crack" Id="1"/>
 		</Events>
 	</Content>
 	<Animations DefaultAnimation="Appear">
@@ -59,7 +60,9 @@
 			<NullAnimations>
 				<NullAnimation NullId="0" Visible="true"/>
 			</NullAnimations>
-			<Triggers/>
+			<Triggers>
+				<Trigger EventId="1" AtFrame="240"/>
+			</Triggers>
 		</Animation>
 		<Animation Name="Death" FrameNum="1" Loop="false">
 			<RootAnimation>

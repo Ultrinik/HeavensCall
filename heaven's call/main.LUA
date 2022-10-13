@@ -294,6 +294,10 @@ function mod:Dyings(entity)
 			mod:NeptuneDying(entity)
 		elseif entity.Type == mod.EntityInf[mod.Entity.Mercury].ID and entity.Variant == mod.EntityInf[mod.Entity.Mercury].VAR then
 			mod:MercuryDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Venus].ID and entity.Variant == mod.EntityInf[mod.Entity.Venus].VAR then
+			mod:VenusDying(entity)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Terra1].ID then
+			mod:TerraDying(entity)
 		elseif entity.Type == mod.EntityInf[mod.Entity.Mars].ID and entity.Variant == mod.EntityInf[mod.Entity.Mars].VAR then
 			mod:MarsDying(entity)
 		end
@@ -837,6 +841,8 @@ function mod:CheckSpawnNewRoom()
 		mod:scheduleForUpdate(function()
 			mod:SpawnPlanet(mod.savedata.planetNum)
 		end, 0, ModCallbacks.MC_POST_RENDER)
+	else
+		mod.ModFlags.venusHeat = false
 	end
 end
 --SpawnPlanet if room changed or continued

@@ -197,6 +197,7 @@ end
 function mod:MercuryCircle(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Rainbow",true)
+		sfx:Play(SoundEffect.SOUND_POWERUP1)
     elseif sprite:IsFinished("Rainbow") then
         entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NONE
         data.IsCircling = true
@@ -256,6 +257,7 @@ end
 function mod:MercuryLines(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Rainbow",true)
+		sfx:Play(SoundEffect.SOUND_POWERUP1)
     elseif sprite:IsFinished("Rainbow") then
         entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS_X
         data.IsLining = true
@@ -428,6 +430,9 @@ function mod:MercuryHorn(entity, data, sprite, target,room)
     elseif sprite:IsEventTriggered("Shot") then
         local horn = mod:SpawnEntity(mod.Entity.Horn, target.Position, Vector.Zero, entity)
         horn.Parent = entity
+
+    elseif sprite:IsEventTriggered("Sound") then
+		sfx:Play(SoundEffect.SOUND_BULLET_SHOT,3)
     end
 
 end
@@ -445,7 +450,7 @@ function mod:MercurySideJumps(entity, data, sprite, target,room)
     elseif sprite:IsEventTriggered("StartInvulnerable") then
         local direction = (target.Position - entity.Position):Normalized()
         entity.Velocity = direction * mod.MRConst.jumpSpeed
-        sfx:Play(Isaac.GetSoundIdByName("Spring"),0.2, 2,false, 1 + 0.5*rng:RandomFloat())
+        sfx:Play(Isaac.GetSoundIdByName("Spring"),0.5, 2,false, 1 + 0.5*rng:RandomFloat())
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
         
     elseif sprite:IsEventTriggered("EndInvulnerable") then
@@ -460,11 +465,14 @@ function mod:MercurySideJumps(entity, data, sprite, target,room)
 
 end
 function mod:MercuryDrill(entity, data, sprite, target,room)
+    entity.Velocity = Vector.Zero
     if data.StateFrame == 1 then
         sprite:Play("DrillStart",true)
     elseif sprite:IsFinished("DrillStart") then
         sprite:Play("Drill",true)
         mod:SpawnGlassFracture(entity)
+
+        sfx:Play(Isaac.GetSoundIdByName("Drill"), 3, 2, false, 1)
 
         for i = 1, mod.MRConst.nDrillProjectiles do
             mod:scheduleForUpdate(function()
@@ -529,6 +537,9 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Explosion") then
+        
+        sfx:Play(Isaac.GetSoundIdByName("Birds"), 6, 2, false, 1)
+
         data.IsExploded = true
         entity.Visible = false
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
@@ -591,11 +602,15 @@ function mod:MercuryTrain(entity, data, sprite, target,room)
 		sprite:LoadGraphics()
 		sprite:Play("Train", true)
 
+        
+        sfx:Play(Isaac.GetSoundIdByName("TrainStart"), 1, 2, false, 1)
+
     elseif sprite:IsEventTriggered("Jump") then
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
         entity.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NONE
         entity.Velocity = Vector(mod.MRConst.jumpSpeed*2, 0)
 
+        sfx:Play(Isaac.GetSoundIdByName("Spring"),1, 2,false, 1 + 0.5*rng:RandomFloat())
     elseif sprite:IsFinished("Train") then
         
 		sprite:Play("Train", true)
@@ -604,6 +619,9 @@ function mod:MercuryTrain(entity, data, sprite, target,room)
 
     if data.TrainDirection == 1 then
         if (room:GetRoomShape() >= RoomShape.ROOMSHAPE_2x1 and entity.Position.X > 1900) or (room:GetRoomShape() < RoomShape.ROOMSHAPE_2x1 and entity.Position.X > 1500) then
+            
+            sfx:Play(Isaac.GetSoundIdByName("Train"), 6, 2, false, 1.2)
+
             data.TrainDirection = - data.TrainDirection
             sprite.FlipX = true
             entity.Position = Vector(entity.Position.X, target.Position.Y)
@@ -612,6 +630,9 @@ function mod:MercuryTrain(entity, data, sprite, target,room)
         end
     else
         if entity.Position.X < -641 then
+
+            sfx:Play(Isaac.GetSoundIdByName("Train"), 6, 2, false, 1.2)
+
             data.TrainDirection = - data.TrainDirection
             sprite.FlipX = false
             entity.Position = Vector(entity.Position.X, target.Position.Y)
@@ -720,7 +741,9 @@ function mod:MercuryDying(entity)
 	if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
 		data.deathFrame = data.deathFrame + 1
 
-		if sprite:IsEventTriggered("Explosion") then
+		if sprite:GetFrame() == 1 then
+            sfx:Play(Isaac.GetSoundIdByName("TrainCrash"), 1, 2, false, 1)
+        elseif sprite:IsEventTriggered("Explosion") then
             local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 		end
         
@@ -750,6 +773,8 @@ function mod:SpawnGlassFracture(entity, size)
             sprite:Play("Idle2", true)
         end
         sprite.Rotation = 360 * rng:RandomFloat()
+
+        sfx:Play(Isaac.GetSoundIdByName("CrystalBreak"), 3, 2, false, 1)
 
         return fracture
 	end
@@ -809,7 +834,7 @@ mod.VMSState = {
 mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
     [mod.VMSState.APPEAR] = 	{0,   0,    0,    1,    0,    0,    0,    0,    0,   0,   0},
     [mod.VMSState.IDLE] = 	    {0,	  0.30, 0.01, 0.3,	0.005,0.01,	0.02, 0.145,0.005,0.005,0.2},
-    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    1,	0.08, 0.1,	0.04,0.05,0.1},
+    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	1,    1,	0.08, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
     --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
     [mod.VMSState.FLAME] =  	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
@@ -962,7 +987,7 @@ function mod:VenusUpdate(entity)
             end
         end
 
-        sfx:Stop(SoundEffect.SOUND_INSECT_SWARM_LOOP)
+        --sfx:Stop(SoundEffect.SOUND_INSECT_SWARM_LOOP)
         --if game:GetFrameCount()%3==0 then
         --	game:SpawnParticles (entity.Position + Vector(0,-100), EffectVariant.EMBER_PARTICLE, 9, 5)
         --end
@@ -1045,6 +1070,7 @@ function mod:VenusSummon(entity, data, sprite, target,room)
         data.StateFrame = 0
     
     elseif sprite:IsEventTriggered("Summon") and #mod:GetCandles() == 0 then
+        sfx:Play(Isaac.GetSoundIdByName("Snap"), 3, 2, false, 1)
         candle = mod:SpawnEntity(mod.Entity.Candle, game:GetRoom():GetRandomPosition(0), Vector.Zero, entity)
         candle.Parent = entity
     end
@@ -1085,7 +1111,7 @@ function mod:VenusBlaze(entity, data, sprite, target,room)
             fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
         end
         
-        sfx:Play(Isaac.GetSoundIdByName("Fireball"),1)
+        sfx:Play(Isaac.GetSoundIdByName("Fireball"),2)
     end
 end
 function mod:VenusIpecac(entity, data, sprite, target,room)
@@ -1126,6 +1152,8 @@ function mod:VenusIpecac(entity, data, sprite, target,room)
         end
         targetSprite.Color = Color.Default
 
+    elseif sprite:IsEventTriggered("Sound") then
+        sfx:Play(SoundEffect.SOUND_CHILD_HAPPY_ROAR_SHORT,1,2,false,0.8)
     end
 end
 function mod:VenusJumps(entity, data, sprite, target,room)
@@ -1157,6 +1185,7 @@ end
 function mod:VenusKiss(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         if mod:GetUnburnedPlayer() ~= nil then
+            sfx:Play(Isaac.GetSoundIdByName("Kiss"), 2, 2, false, 1)
             sprite:Play("Kiss",true)
         else
             data.State = mod:MarkovTransition(data.State, mod.chainV)
@@ -1211,6 +1240,8 @@ function mod:VenusSlam(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Slam") then
+        sfx:Play(Isaac.GetSoundIdByName("Slam"), 1, 2, false, 1)
+
         local flame = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_FIRE, 0, entity.Position, Vector.Zero, entity):ToProjectile()
         flame:AddProjectileFlags(ProjectileFlags.FIRE_WAVE)
         flame:Die()
@@ -1253,6 +1284,7 @@ function mod:VenusLit(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         local candleList = Isaac.FindByType(mod.EntityInf[mod.Entity.Candle].ID,mod.EntityInf[mod.Entity.Candle].VAR,mod.EntityInf[mod.Entity.Candle].SUB)
         if #(candleList) > 0 and not candleList[1]:GetSprite():IsPlaying("IdleLit") then
+            sfx:Play(Isaac.GetSoundIdByName("Kiss"), 2, 2, false, 1)
             sprite:Play("Kiss",true)
         else
             data.State = mod.VMSState.IDLE
@@ -1311,6 +1343,7 @@ function mod:VenusFire(entity, data, sprite, target, room)
             e:Die()
         end
 
+        sfx:Play(SoundEffect.SOUND_CHILD_HAPPY_ROAR_SHORT,1,2,false,0.95)
 
     elseif sprite:IsEventTriggered("Slam") then
         
@@ -1370,6 +1403,10 @@ function mod:VenusFire(entity, data, sprite, target, room)
             
             fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
         end
+        
+        sfx:Play(SoundEffect.SOUND_CHILD_HAPPY_ROAR_SHORT,1,2,false,0.8)
+    elseif sprite:IsEventTriggered("Sound") then
+		sfx:Play(Isaac.GetSoundIdByName("Chomp"),1,0,false,0.7);
     end
 
     if data.ExplosionDone then
@@ -1689,6 +1726,7 @@ function mod:Terra1Bubbles(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Shot") then
+        sfx:Play(Isaac.GetSoundIdByName("Bubbles"), 2, 2, false, 1)
         local direction = (target.Position - entity.Position):Normalized()
         for i=1, mod.TConst.nBubbles do
             local bubble = mod:SpawnEntity(mod.Entity.Bubble, entity.Position, direction:Rotated(mod:RandomInt(-30,30)) * mod.TConst.bubbleSpeed, entity)
@@ -1712,6 +1750,8 @@ function mod:Terra1Leafs(entity, data, sprite, target,room)
         end
 
     elseif sprite:IsEventTriggered("Shot") then
+        sfx:Play(Isaac.GetSoundIdByName("Leafs"), 2, 2, false, 1)
+
         local direction = (target.Position - entity.Position):Normalized()
         local leaf = mod:SpawnEntity(mod.Entity.Leaf, entity.Position + Vector(-30,0), direction * mod.TConst.leafSpeed, entity):ToProjectile()
         leaf.Height = -120
@@ -1851,6 +1891,8 @@ function mod:Terra2Whip(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Whip") then
+        sfx:Play(Isaac.GetSoundIdByName("Elastic"), 2, 2, false, 1)
+
         --Better vanilla monsters was of help here
         local worm = mod:SpawnEntity(mod.Entity.Tongue, entity.Position, data.TargetDirection * 30, entity)
         worm.Parent = entity
@@ -1875,6 +1917,9 @@ function mod:Terra2Bomb(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Shot") then
+        
+        sfx:Play(Isaac.GetSoundIdByName("Frog"), 1, 2, false, 1)
+
         local direction = (target.Position - entity.Position):Normalized()
 
         local bomb = mod:SpawnEntity(mod.Entity.TarBomb, entity.Position, direction * mod.TConst.tarBombSpeed, entity)
@@ -1885,6 +1930,7 @@ end
 function mod:Terra2Locust(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Summon",true)
+        sfx:Play(SoundEffect.SOUND_ANGRY_GURGLE, 1, 2, false, 1)
     elseif sprite:IsFinished("Summon") then
         data.State = mod:MarkovTransition(data.State, mod.chainT2)
         data.StateFrame = 0
@@ -2019,10 +2065,12 @@ function mod:Terra3Horsemen(entity, data, sprite, target,room)
 
     if data.StateFrame == 1 then
         sprite:Play("Horsemen",true)
+        sfx:Play(Isaac.GetSoundIdByName("Horn"), 2.3, 2, false, 1)
     elseif sprite:IsFinished("Horsemen") then
         mod:ChanceEdenTerraState(data, entity.Parent)
 
     elseif sprite:IsEventTriggered("Summon") then
+
         local margen = -900
         for i=0, 2 do
             local position = Vector(margen*i, room:GetCenterPos().Y + mod:RandomInt(-150,150))
@@ -2040,10 +2088,12 @@ end
 function mod:Terra3Meteors(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("Meteors",true)
+        sfx:Play(Isaac.GetSoundIdByName("Chimes"), 1, 2, false, 1)
     elseif sprite:IsFinished("Meteors") then
         mod:ChanceEdenTerraState(data, entity.Parent)
 
     elseif sprite:IsEventTriggered("Summon") then
+
         local meteor = mod:SpawnEntity(mod.Entity.TerraTarget, room:GetRandomPosition(0), Vector.Zero, entity):ToEffect()
         meteor.Parent = entity
         meteor:GetSprite().Color = Color.Default
@@ -2080,6 +2130,8 @@ function mod:Terra3Bullets(entity, data, sprite, target,room)
             local angle = i*360/mod.TConst.nTears
             entity:FireProjectiles(entity.Position, Vector.FromAngle(angle)*mod.TConst.tearSpeed, 0, params)
         end
+
+        sfx:Play(SoundEffect.SOUND_THUMBS_DOWN, 1, 2, false, 1.2)
     elseif data.TearFlag == 2 and game:GetFrameCount() % 5 == 0 then
 
         local params = ProjectileParams()
@@ -2097,6 +2149,10 @@ function mod:Terra3Bullets(entity, data, sprite, target,room)
             local angle = i*360/mod.TConst.nTears
             entity:FireProjectiles(entity.Position, Vector.FromAngle(angle+entity.ProjectileCooldown*3)*mod.TConst.tearSpeed*9/7, 0, params)
         end
+
+        sfx:Play(SoundEffect.SOUND_THUMBS_DOWN, 1, 2, false, 1.2)
+    elseif data.TearFlag == 3 and game:GetFrameCount() % 5 == 0 then
+        sfx:Play(SoundEffect.SOUND_THUMBS_DOWN, 1, 2, false, 1.2)
     end
 
 end
@@ -2109,6 +2165,7 @@ function mod:Terra3Laser(entity, data, sprite, target,room)
 
         if posTransformed:Length() < 150 then
             sprite:Play("Laser",true)
+            sfx:Play(SoundEffect.SOUND_LIGHTBOLT_CHARGE, 1, 2, false, 1.2)
         else
             mod:ChanceEdenTerraState(data, entity.Parent)
         end
@@ -2184,6 +2241,7 @@ function mod:Terra2Move(entity, data, sprite, target,room)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Move") then
+
         local direction = (target.Position - entity.Position):Normalized()
         entity.Velocity = direction * mod.TConst.speed2
     end
@@ -2299,6 +2357,13 @@ function mod:TerraDying(entity)
     local sprite = entity:GetSprite()
     local data = entity:GetData()
 
+    if data.deathFrame == nil then data.deathFrame = 1 end
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        if sprite:GetFrame() == 1 and entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR then
+            sfx:Play(Isaac.GetSoundIdByName("Ow"), 1, 2, false, 1)
+        end
+	end
 end
 
 --Callbacks
@@ -2558,6 +2623,8 @@ function mod:MarsCharge(entity, data, sprite, target, room)
         boost.DepthOffset = -50
         boost:GetSprite().Rotation = angle-180
         data.Boost = boost
+
+        sfx:Play(Isaac.GetSoundIdByName("RocketOpen"), 1, 2, false, 1)
         
     elseif sprite:IsFinished("Charge") then
         entity.Velocity = Vector.Zero
@@ -2709,6 +2776,7 @@ function mod:MarsAirstrike(entity, data, sprite, target, room)
         data.SecondState = mod.chainM2[mod:RandomInt(1,#mod.chainM2)]
 
     elseif sprite:IsEventTriggered("Missile") then
+        sfx:Play(Isaac.GetSoundIdByName("Signal"), 1, 2, false, 1)
         --[[
         for i=1, mod.MConst.nTargets do
             --local position = room:GetRandomTileIndex(mod:RandomInt(1,1000))
@@ -2763,6 +2831,7 @@ function mod:MarsRocket(entity, data, sprite, target, room)
             data.Flag = false
             sprite:Play("RocketR",true)
         end
+        sfx:Play(Isaac.GetSoundIdByName("WeaponSwitch"), 1, 2, false, 1)
     elseif sprite:IsFinished("RocketR") or sprite:IsFinished("RocketL") then
         data.State = mod:MarkovTransition(data.State, mod.chainM)
         data.StateFrame = 0
@@ -2844,6 +2913,7 @@ end
 function mod:MarsHoming(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Homing",true)
+        sfx:Play(Isaac.GetSoundIdByName("MarsMissile"), 1, 2, false, 1)
     elseif sprite:IsFinished("Homing") then
         data.Move = false 
         data.State = mod:MarkovTransition(data.State, mod.chainM)
@@ -2864,6 +2934,7 @@ function mod:MarsHoming(entity, data, sprite, target, room)
 
             missile:GetData().IsMissile_HC = true
         end
+        sfx:Play(SoundEffect.SOUND_EXPLOSION_WEAK, 1, 2, false, 2)
     end
 
     if data.Move then
@@ -2880,9 +2951,12 @@ function mod:MarsRage(entity, data, sprite, target, room)
         sword:FollowParent(entity)
         sword.DepthOffset = 10
         data.Sword = sword
-        
+        sfx:Play(Isaac.GetSoundIdByName("SaberStart"), 1, 2, false, 1)
+
 		game:SpawnParticles (entity.Position, EffectVariant.WOOD_PARTICLE, 25, 12)
 		game:SpawnParticles (entity.Position, EffectVariant.WOOD_PARTICLE, 25, 12, Color(0.25,0.25,0.25,1,0.25,0,0))
+
+        sfx:Play(Isaac.GetSoundIdByName("MarsDamage"), 2, 2, false, 1)
 
     elseif sprite:IsFinished("RageStart") then
         sprite:Play("Rage",true)
@@ -2891,6 +2965,8 @@ function mod:MarsRage(entity, data, sprite, target, room)
         data.TargetPos = target.Position
 
     elseif sprite:IsEventTriggered("Attack") then
+        sfx:Play(SoundEffect.SOUND_WAR_GRAB_PLAYER, 0.8, 2, false, 1.3)
+        sfx:Play(Isaac.GetSoundIdByName("Saber"), 2, 2, false, 1)
         local angle = (data.TargetPos - entity.Position):GetAngleDegrees()
 
         --local sword = data.Sword
@@ -3146,7 +3222,11 @@ mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.MarsDeath, mod.EntityInf[mod
 mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, mod.RocketDirected, BombVariant.BOMB_ROCKET)
 mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, function(_, bomb)
    if bomb.SubType == mod.EntityInf[mod.Entity.MarsGigaRocket].SUB then
-            
+    
+        if bomb.FrameCount == 1 then
+            sfx:Play(Isaac.GetSoundIdByName("Crit"), 1, 2, false, 1)
+        end
+
         local hemo = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HAEMO_TRAIL, 0, bomb.Position + Vector(0,-20), Vector.Zero, bomb)
         hemo:GetSprite().Scale = Vector.One * 0.8
         hemo:GetSprite().PlaybackSpeed = 0.6

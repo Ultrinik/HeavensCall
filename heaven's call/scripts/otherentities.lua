@@ -213,6 +213,8 @@ function mod:IceTurdUpdate(entity)
 			sfx:Play(Isaac.GetSoundIdByName("IceCrash"),1);
 			mod:SpawnIceCreep(entity.Position, mod.UConst.turdIceSize, entity)
 			mod:IceTurdFinishedAppear(entity)
+		elseif entity:GetSprite():IsEventTriggered("Crack") then
+			sfx:Play(Isaac.GetSoundIdByName("IceCrack"), 1, 2, false, 1)
 		end
 	end
 end
@@ -431,6 +433,9 @@ function mod:CandleUpdate(entity)
 			end
 
 			sprite:Play("Appear", true) 
+			mod:scheduleForUpdate(function()
+			sfx:Play(SoundEffect.SOUND_ANIMAL_SQUISH,1.2,2,false,0.5)
+			end, 20)
 		end
 
 		entity.Velocity = Vector.Zero
@@ -588,6 +593,13 @@ function mod:CandleUpdate(entity)
 		elseif data.State == mod.GurdyMSTATE.TAUNT then
 			if data.StateFrame == 1 then
 				sprite:Play("Idle"..tostring(mod:RandomInt(1,3)),true)
+
+				if tostring(mod:RandomInt(2,3)) == 2 then
+					sfx:Play(SoundEffect.SOUND_MONSTER_GRUNT_2,0.8,2,false,2)
+				else
+					sfx:Play(SoundEffect.SOUND_MONSTER_GRUNT_4,0.8,2,false,2)
+				end
+				
 			elseif sprite:IsFinished("Idle1") or sprite:IsFinished("Idle2") or sprite:IsFinished("Idle3") then
 				data.State = mod:MarkovTransition(data.State, mod.chainGurdy)
 				data.StateFrame = 0
@@ -648,6 +660,8 @@ function mod:CandleUpdate(entity)
 				local velocity = direction:Normalized()*mod.VConst.coloJumpSpeed
 				entity.Velocity = velocity
 				
+				sfx:Play(SoundEffect.SOUND_ANIMAL_SQUISH,1,2,false,0.5)
+				
 			end
 			
 		elseif data.State == mod.ColostomiaMSTATE.BOMB then
@@ -679,6 +693,8 @@ function mod:CandleUpdate(entity)
 				bomb:GetSprite().Color = mod.Colors.buttFire
 				bomb:SetExplosionCountdown(mod.VConst.colostomiaBombTime)
 				bomb:AddTearFlags(TearFlags.TEAR_BURN)
+				
+				sfx:Play(SoundEffect.SOUND_FART,1)
 			end
 
 		end
@@ -752,8 +768,11 @@ function mod:CandleUpdate(entity)
 				flame:GetData().IsFlamethrower_HC = true
 				flame:GetData().NoGrow = true
 				flame:GetData().EmberPos = -20
+				
+				sfx:Play(SoundEffect.SOUND_BEAST_FIRE_RING,1,2,false,1)
 
 			elseif sprite:IsEventTriggered("SetAim") then
+
 				data.TargetPos = target.Position
 				
 				if data.TargetPos.X - entity.Position.X > 0 then
@@ -898,6 +917,9 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
 	if entity.Type == mod.EntityInf[mod.Entity.Mars].ID then
 		game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 20, 13)
+		if entity.Variant ~= mod.EntityInf[mod.Entity.Mars].VAR then
+			sfx:Play(SoundEffect.SOUND_MEATY_DEATHS, 1, 2, false, 1)
+		end
 	end
 end)
 
@@ -1029,6 +1051,8 @@ function mod:HorsemenUpdate(entity)
 				for i=-1, 1 do
 					local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction:Rotated(i*mod.TConst.famineShotAngle)*mod.TConst.famineShotSpeed, entity):ToProjectile()
 				end
+
+				sfx:Play(SoundEffect.SOUND_MONSTER_GRUNT_0)
 			end
 			
 			if sprite:IsFinished("Famine") then
@@ -1057,6 +1081,8 @@ function mod:HorsemenUpdate(entity)
 		
 		
 				if sprite:IsEventTriggered("Attack") then
+					sfx:Play(SoundEffect.SOUND_MONSTER_GRUNT_5)
+
 					data.Speed = mod.TConst.horsemenSpeed*2
 					data.Farting = true
 				end
@@ -1092,6 +1118,9 @@ function mod:HorsemenUpdate(entity)
 	
 	
 			if sprite:IsEventTriggered("Attack") then
+				
+				sfx:Play(SoundEffect.SOUND_MONSTER_GRUNT_4)
+
 				local direction = (target.Position - entity.Position):Normalized()
 
 				local rocket = mod:SpawnEntity(mod.Entity.MarsRocket, entity.Position + direction*100, direction, entity):ToBomb()
@@ -1128,6 +1157,9 @@ function mod:HorsemenUpdate(entity)
 	
 	
 			if sprite:IsEventTriggered("Attack") then
+				
+				sfx:Play(Isaac.GetSoundIdByName("Slash"), 1, 2, false, 1)
+
 				local sing = 1
 				if entity.Position.Y > target.Position.Y then sing = -1 end
 
@@ -1496,6 +1528,8 @@ function mod:RockblastUpdate(entity)
 
 			local fracture = mod:SpawnGlassFracture(entity, 0.5)
 			if fracture then fracture.Position = position end
+			
+            sfx:Play(SoundEffect.SOUND_ROCK_CRUMBLE, 1, 2, false, 1)
 		end
 		--Damage
 		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 30)) do
@@ -1515,6 +1549,9 @@ function mod:HornUpdate(entity)
 	local sprite = entity:GetSprite()
 
 	if sprite:IsFinished("Idle") then
+		
+        sfx:Play(Isaac.GetSoundIdByName("BismuthBreak"), 4, 2, false, 1)
+
 		for i=1, mod.MRConst.nHornDivisions do
 			local angle = 360 * rng:RandomFloat()
 			local speed = Vector.FromAngle(angle) *  ( mod.MRConst.bismuthSpeed * rng:RandomFloat() + 2 )
@@ -1605,6 +1642,8 @@ function mod:LaserSwordDamage(entity,center)
 				if e.FallingSpeed then projectile.FallingSpeed = e.FallingSpeed end
 				
 				e:Remove()
+
+				sfx:Play(Isaac.GetSoundIdByName("SaberReflect"), 1, 2, false, 1)
 
 			elseif e.Type == EntityType.ENTITY_BOMB then
 				local direction = Vector.FromAngle((center - entity.Position):GetAngleDegrees())
