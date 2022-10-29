@@ -2665,7 +2665,7 @@ function mod:NeptuneAmbush(entity, data, sprite, target, room)
 			i:Remove()
 		end
 	elseif sprite:IsEventTriggered("Chomp") then
-		sfx:Play(Isaac.GetSoundIdByName("Chomp"),1,0,false,0.7);
+		sfx:Play(Isaac.GetSoundIdByName("Chomp"),2,0,false,0.7);
 		
 	end
 end

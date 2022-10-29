@@ -432,8 +432,16 @@ function mod:AppearPlanet(entity)
 
 		--Music
 		if mod.savedata.planetAlive then
-			mod.ModFlags.currentMusic = music:GetCurrentMusicID ()
-			music:Crossfade (Music.MUSIC_DARKROOM_BOSS, 2)
+			if data.SlowSpawn then
+				mod.ModFlags.currentMusic = music:GetCurrentMusicID ()
+	
+				local customMusic = Isaac.GetMusicIdByName("Supernova")
+				music:Crossfade (customMusic, 2)
+				music:Queue(Isaac.GetMusicIdByName("Supernova_loop"))
+			else
+				local customMusic = Isaac.GetMusicIdByName("Supernova_loop")
+				music:Crossfade (customMusic, 2)
+			end
 		end
 
 	end,5)
@@ -887,6 +895,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_)
 			e:Remove()
 		end
 	end
+
+	--Other things
+	mod.ModFlags.venusHeat = false
 end)
 
 --Update health of boss, may be delayed by one damage
@@ -987,7 +998,16 @@ function mod:GetShaderParams(shaderName)
         return params;
 	end
 	
-	if shaderName == 'VenusHeat' and mod.ModFlags.venusHeat then
+	if shaderName == 'VenusHeat' then
+		if not mod.ModFlags.venusHeat then
+			local params = { 
+				PlayerPos = { 2000, 2000 },
+				CenterPos = { 2000, 2000 },
+				Time = 0,
+				VenusTime = 0
+			}
+			return params;
+		end
 		local position1 = mod.ModFlags.venusPosition
 		position1 = room:WorldToScreenPosition (position1)
 

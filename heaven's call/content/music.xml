@@ -1,0 +1,4 @@
+<music root="music/">
+	<track name="Supernova" path="supernova.ogg" loop="false" />
+	<track name="Supernova_loop" path="supernova_loop.ogg" loop="true" />
+</music>

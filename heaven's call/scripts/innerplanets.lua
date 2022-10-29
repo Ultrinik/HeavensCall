@@ -833,17 +833,13 @@ mod.VMSState = {
 }
 mod.chainV = {--                 A    I     F     S     Ip    J     B     K     Sw   Sl   Lit 
     [mod.VMSState.APPEAR] = 	{0,   0,    0,    1,    0,    0,    0,    0,    0,   0,   0},
-    [mod.VMSState.IDLE] = 	    {0,	  0.30, 0.01, 0.3,	0.005,0.01,	0.02, 0.145,0.005,0.005,0.2},
-    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	1,    1,	0.08, 0.1,	0.04,0.05,0.1},
-    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	1, 0.1,	0.04,0.05,0.1},
-    --[mod.VMSState.IDLE] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
+    [mod.VMSState.IDLE] = 	    {0,	  0.45, 0.01, 0.15,	0.005,0.01,	0.02, 0.145,0.005,0.005,0.2},
     [mod.VMSState.FLAME] =  	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
     [mod.VMSState.SUMMON] = 	{0,   0.1,  0,    0,    0,    0,    0,    0,    0,   0,   0.9},
     [mod.VMSState.IPECAC] = 	{0,   0.8,  0,    0,    0,    0,    0.2,  0,    0,   0,   0},
     [mod.VMSState.JUMPS] =  	{0,   0.4,  0,    0,    0.1,  0,    0.1,  0.2,  0,   0.2, 0},
     [mod.VMSState.BLAZE] =  	{0,   0.75, 0,    0,    0,    0,    0,    0.25, 0,   0,   0},
-    [mod.VMSState.KISS] = 	    {0,   0.1,  0.3,  0,    0,    0.3,  0,    0,    0,   0.3,0},
-    --[mod.VMSState.KISS] = 	    {0,	  0,	0,    0,	0,    0,	0,    1,	0.04,0.05,0.1},
+    [mod.VMSState.KISS] = 	    {0,   0.15, 0.3,  0,    0,    0,    0.4,  0,    0,   0.15,0},
     [mod.VMSState.SWARM] =  	{0,   0.8,  0,    0,    0.15, 0,    0,    0,    0.05,0,   0},
     [mod.VMSState.SLAM] =   	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0},
     [mod.VMSState.LIT] =    	{0,   1,    0,    0,    0,    0,    0,    0,    0,   0,   0}
@@ -956,6 +952,9 @@ function mod:VenusUpdate(entity)
             elseif data.State == mod.VMSState.IDLE then
                 if data.StateFrame == 1 then
                     sprite:Play("Idle",true)
+                    for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_FIREPLACE, 10)) do
+                        e:Die()
+                    end
                 elseif sprite:IsFinished("Idle") then
                     data.State = mod:MarkovTransition(data.State, mod.chainV)
                     data.StateFrame = 0
