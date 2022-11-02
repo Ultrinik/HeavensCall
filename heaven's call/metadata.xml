@@ -1,45 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadata>
-    <name>Heaven's Call (Astral Challenge Room)</name>
+    <name>Heaven's Call [Terrestrial Planets Update]</name>
     <directory>heaven's call</directory>
     <id>2839972756</id>
-    <description>
-[h1] What is this mod [/h1]
-This mod add a new type of room called the [i] Astral Challenge Room [/i], it can spawn between Caves 1 and Depths 2 (and the equivalents alt floors), each floor it has a 20% chance of spawning, it spawns once per run (The chance drops to 0% when you [b] enter [/b] the room).
-If the room spawns, there will be wisp in the starting room (note: Curse of Darkness can generate wisp on any room).
-
-The room contains a random  [b] planetarium or zodiac [/b] collectible, you can pick it up or blow up the nothing suspicious glass statue in the room to transform it into some pickups.
-
-Once the collectible was picked up or turned into pickups, a boss will spawn and you will have to defeat it to leave the room.
+    <description>[h1] What is this mod [img]https://i.imgur.com/PIvROiP.png[/img] [/h1]
+This mod adds a new type of room called the [i] Astral Challenge Room[/i], which has two variants, an easy one, where the gas giants spawn, and a difficult one, where the terrestrial planets spawn.
+ 
+The first and easiest can spawn between Chapter 2-1 and Chapter 3-2 with a 7% chance.
+The second and hardest can spawn only in Chapter 5 with a 30% chance.
+If the room spawns, there will be wisps in the starting room (reminder that Curse of Darkness can create wisps on any room).
+ 
+The room contains a random  [b] planetarium or zodiac [/b] collectible, you can pick it up or blow up glass statue in the room to transform it into some pickups.
+After that, a boss will spawn and you will have to defeat it to leave the room.
+Defeating a terrestrial planet will grant a random pool item, a victory chest and a 50% chance for The Void portal to open.
 
 [h1] What bosses [/h1]
-At the moment, the mod it’s on its first release and only has the four gas giants (Jupiter, Saturn, Uranus and Neptune), each has the same chances of being chosen. Future bosses will be a little bit different. ;)
-
-[h3] Jupiter [/h3]
-The biggest and tankiest, with a set of attacks based around toxic gas and lightings. [spoiler]Keep an eye near him and stand still when he does the ring of lightings attack.[/spoiler]
-
-[h3] Saturn [/h3]
-What could be behind that mask? only she knows!, her attacks are based around pick ups, but she has an ace up her sleeve[spoiler], what could it be?[/spoiler]
-
-[h3] Uranus [/h3]
-Seems like Ultra Greed and Colostomia have a new challenger for having the best butt title, this constipated snowball has ice and poop based attacks, careful with the ice! It’s slippery [spoiler], will you help him with his constipation?[/spoiler]
-
-[h3] Neptune [/h3]
-This abyssal creature has a set of attacks around water and darkness, don’t lose track of it, or it will bite your ass. [spoiler] Fight the current.[/spoiler]
+In its second release, the mod has the eight main planets. There will still be more in the future.
+ 
+[h3] Jupiter the Gargantuan [img]https://i.imgur.com/3UhfrXg.png[/img] [/h3]
+The biggest and tankiest of the outer planets, born from an amalgamation of rotten flesh. They are always surrounded by toxic gas and are charged with a high voltage.
+ 
+[h3] Saturn the Intransigent [img]https://i.imgur.com/mzy1aj9.png[/img] [/h3]
+A masked warden of her never-ending treasure. Nobody knows how much is inside her bag, but she spares no expense. Stubborn enough to freeze time.
+ 
+[h3] Uranus the Unpleasant [img]https://i.imgur.com/ogD0OvM.png[/img] [/h3]
+Seems like Ultra Greed and Colostomia have a new challenger for having the best butt title. This constipated snowball is finally having its release upon your arrival. You’re so kind for helping him.
+ 
+[h3] Neptune the Unfathomable [img]https://i.imgur.com/u8BcIbF.png[/img] [/h3]
+A creature from the bottom of the abyss, made from water and pure fear. Leyeds says that if you say its name 3 times in the mirror at 3 am, it will appear on your back and bite your ass.
+ 
+[h3] Mercury the Unwary [img]https://i.imgur.com/NjkrJjx.png[/img] [/h3]
+An iridescent ball made of speed (and metal, mostly metal). This unicorn doesn’t know fear. He will charge at you, mutilate his body, and explode into pieces just to kill you.
+ 
+[h3] Venus the Tarmagant [img]https://i.imgur.com/fLcJOYa.png[/img] [/h3]
+A giant willo of blazing beauty, her carcass is made from the bodies of her lovers, who will die for her again and again. Don’t accept her kisses, unless you want to be scorched.
+ 
+[h3] Terra the Fatalist [img]https://i.imgur.com/V074whF.png[/img] [/h3]
+A pretty green planet, fresh water flows through her body. Nothing bad will happen to this little baby. She's perfect as she is. You wouldn't hurt her, right?
+ 
+[h3] Mars the Vainglorious [img]https://i.imgur.com/KvvAAHc.png[/img] [/h3]
+An overhauled creature, enhanced with mechanical pieces, seeking glory at all cost, no matter the cost of it.
 
 [h1] Compatibility [/h1]
-[h2] Mods that are compatible [/h2]
+[h2] Mods with special interactions [/h2]
 [list]
-    [*] [b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1978904635] MiniMAPI [/url]: Highly recommended, without it the room will still spawn and function properly, but it won’t show correctly on the map. [/b]
+    [*] [b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1978904635] MiniMAPI [/url]: Highly recommended. Without it, the room will still spawn and function properly, but it won’t show up correctly on the map. [/b]
     [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2635267643] Enhanced Boss Bars [/url]: Bosses have custom icons and health bars.
-    [*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2487535818] Mod Config Menu [/url]: Has the options to deactivate Neptune’s and Uranus weathers (they might cause fps drops) and change the spawn chances of the room.
+    [*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2487535818] Mod Config Menu [/url]: It allows you to disable Neptune's or Uranus' weather (which may cause fps drops), change the spawn chances of the rooms, and change Uranus to an alternative version [strike]of questionable quality[/strike] of himself (for those who don't like butts).
 [/list]
 
 [h2] Make an item compatible with this mod [/h2]
-
+ 
 The room has a 65% chance of grabbing an item from the Planetarium item pool, so any items that are added to it (let’s say the ones from [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2722017893]Andromeda[/url]) are going to spawn here as well!
-
-If the game doesn’t takes an item from the Planetarium pool, it will take it from a custom pool, to add items to it write the following code somewhere in the .lua of your mod:
+ 
+If the game doesn’t take an item from the Planetarium pool, it will take it from a custom pool. To add items to it, write the following code somewhere in the .lua of your mod:
 
 [code]
 if HeavensCall then
@@ -49,27 +63,25 @@ end
 
 Where *** is your item [b]id[/b]
 
+[h1] Incompatibilities [/h1]
+[list]
+[*] Any mod that overwrites [i]entities2.xml[/i] with an older version of itself (removes entity 7.14 (Double Brimstone + technology synergy))
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2806016766] Apocrypha: On The Rocks[/url] (overwrites Neptune's AI)
+[/list]
+ 
+[h1] Extra credits [/h1]
+[list]
+[*] [url=https://www.youtube.com/channel/UCOkq76alQLrfSFkQVLPlgeA] Nihil[/url]: Creator of the battle music track.
+[*] IzzyIsakoi_: Creator of the new door sprite.
+[*] [url=https://twitter.com/Aladar_C137] Aladar[/url]: Creator of the original concept for Venus.
+[/list]
+ 
 [h1] Considerations [/h1]
-
-To access the rooms via debug console, write: [i]goto s.dice.8500[/i], [i]goto s.dice.8501[/i], [i]goto s.dice.8502[/i] or [i]goto s.dice.8503[/i].
-[b] WARNING: If you  [u]exit and continue[/u] the run after visiting one of the rooms via [u] debug console [/u] (Even if you are already outside!!!), there are high chances that the game may crash and you will lose that run, you were warned!!! [/b]
-
-Some music mods appear to make the boss music not play, however, you are not losing much, it's only the The Lamb Theme, I won’t do a custom theme for them, I don't even know what a music note is.
-
-The mod currently has no new items, and probably won’t have many, I’m not really interested in creating items, and also my creativity for them is zero.
-
-If the room doesn't spawn, even when the chance is set to 100% or the item pool from the room is broken (is giving you regular items) try restarting your game, I have no idea why this sometimes happens or why this is the solution...
-
-You want the option to deactivate boss tracking again? convince me.
-
-[h1] About me? [/h1]
-This is my first “decent” mod, I had done some other mods, basically all around 2017 (of which only two survive and were updated for being acceptable enough), so this is my first mod in 5~ years, go easy on me c:
-
-Since I started playing this game around 2013 I always especially liked the little creepy-cute creatures of this game, and always wanted to do some myself. I might not be the most skilled spriter or coder, but I’m happy with how the four fellas ended up :D
-
-
-</description>
-    <version>1.2.8</version>
+To access the rooms through the debug console, type: [i] goto s.dice.8500[/i] to [i]8508[/i].
+[b] WARNING: If you [u]exit and continue[/u] the run after visiting one of the rooms via [u] debug console [/u] (even if you are already outside!!!), the game may crash and you will lose that run. This is not a bug, it’s just how the [i]goto[/i] command works. You were warned!!! [/b]
+ 
+[h1][b] If you are going to report a bug or post a suggestion, please do so in the appropriate discussion. [/b][/h1]</description>
+    <version>1.3.4</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Rooms"/>

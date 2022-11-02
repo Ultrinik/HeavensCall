@@ -111,7 +111,7 @@ mod.ModConfigs = {
 	altUranus = false,
 }
 mod.ModConstants = {
-	burningFrames = 350
+	burningFrames = 300
 }
 
 include("scripts.findentities")

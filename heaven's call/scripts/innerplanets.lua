@@ -142,6 +142,7 @@ function mod:MercuryUpdate(entity)
         data.StateFrame = data.StateFrame + 1
         
         if not data.TrainFlag and entity.HitPoints < entity.MaxHitPoints * mod.MRConst.hpTrain and data.State ~= mod.MRMSState.BIRDS then
+            music:ResetPitch()
             data.TrainFlag = true
             data.StateFrame = 0
         end
@@ -579,6 +580,10 @@ function mod:MercuryBirds(entity, data, sprite, target,room)
         data.IsExploded = false
         data.Regen = true
 
+        for _, t in ipairs(Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL)) do
+            t:Die()
+        end
+
     end
 
     if data.IsExploded then
@@ -742,7 +747,7 @@ function mod:MercuryDying(entity)
 		data.deathFrame = data.deathFrame + 1
 
 		if sprite:GetFrame() == 1 then
-            sfx:Play(Isaac.GetSoundIdByName("TrainCrash"), 1, 2, false, 1)
+            sfx:Play(Isaac.GetSoundIdByName("TrainCrash"), 2, 2, false, 1)
         elseif sprite:IsEventTriggered("Explosion") then
             local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
 		end
@@ -874,7 +879,7 @@ mod.VConst = {--Some constant variables of Venus
     blazeAngleSlow = 25,
     blazeSpeedSlow = 6.5,
 
-    flameAngle = 20,
+    flameAngle = 27,
     flameAngleStart = 80,
     flameSpeed = 6,
 
@@ -887,7 +892,7 @@ mod.VConst = {--Some constant variables of Venus
     nSlamFireball = 8,
 
     sirenResummonRate = 7,
-    sirenSummons = 8,
+    sirenSummons = 3,
     coloJumpSpeed = 15,
     colostomiaBombTime = 80,
 
@@ -1344,6 +1349,8 @@ function mod:VenusFire(entity, data, sprite, target, room)
 
         sfx:Play(SoundEffect.SOUND_CHILD_HAPPY_ROAR_SHORT,1,2,false,0.95)
 
+        entity.HitPoints = entity.HitPoints - 10
+
     elseif sprite:IsEventTriggered("Slam") then
         
         data.ExplosionDone = true
@@ -1389,7 +1396,8 @@ function mod:VenusFire(entity, data, sprite, target, room)
             flame:GetData().NoGrow = true
             flame:GetData().EmberPos = -20
         end
-            
+        
+        --[[
         for i=1, mod.VConst.nSlamFireball do
             local angle = i*360/mod.VConst.nSlamFireball
             local velocity = Vector(1,0):Rotated(angle)*mod.VConst.blazeSpeedSlow
@@ -1401,9 +1409,14 @@ function mod:VenusFire(entity, data, sprite, target, room)
             fireball.FallingAccel = 1.5
             
             fireball:AddProjectileFlags(ProjectileFlags.FIRE_SPAWN)
-        end
+        end]]--
         
         sfx:Play(SoundEffect.SOUND_CHILD_HAPPY_ROAR_SHORT,1,2,false,0.8)
+        
+        for _, e in ipairs(mod:GetCandles()) do
+            e:Die()
+        end
+
     elseif sprite:IsEventTriggered("Sound") then
 		sfx:Play(Isaac.GetSoundIdByName("Chomp"),1,0,false,0.7);
     end
@@ -1583,7 +1596,7 @@ mod.TConst = {
     speed1 = 1.5,
     
     maxLeafs = 4,
-    leafSpeed = 14,
+    leafSpeed = 11,
 
     nBubbles = 2,
     bubbleSpeed = 3,
@@ -1600,18 +1613,18 @@ mod.TConst = {
     nTarBubbles = 8,
     tarBombSpeed = 30,
 
-    blastAngle = 20,
+    blastAngle = 0,
 
     --Eden
     idleTimeInterval3 = Vector(5,10),
-    speed3 = 1.4,
+    speed3 = 1.25,
 
     laserSpinSpeed = 2,
     laserCountdown = 45,
 
-    meteorTimeout = 30,
+    meteorTimeout = 50,
     meteorExplosionRadius = 40,
-    debbriesSpeed = 18,
+    debbriesSpeed = 10,
 
     nTears = 8,
     tearSpeed = 12,
@@ -1690,7 +1703,12 @@ function mod:Terra1Update(entity)
 end
 function mod:Terra1Ember(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
-        sprite:Play("Ember",true)
+        if #Isaac.FindByType(EntityType.ENTITY_FIREPLACE) < 4 then
+            sprite:Play("Ember",true)
+        else
+            data.State = mod:MarkovTransition(data.State, mod.chainT1)
+            data.StateFrame = 0
+        end
     elseif sprite:IsFinished("Ember") then
         data.State = mod:MarkovTransition(data.State, mod.chainT1)
         data.StateFrame = 0
@@ -1854,7 +1872,7 @@ function mod:Terra2Update(entity)
             entity.Velocity = Vector.Zero
         end
 
-        if data.State == mod.T2MSState.IDLE and rng:RandomFloat() < 0.075 then
+        if data.State == mod.T2MSState.IDLE and rng:RandomFloat() < 0.09 then
             local diffY = entity.Position.Y - target.Position.Y
             local diffX = entity.Position.X - target.Position.X
             if math.abs(diffY) < 20 and math.abs(diffX) < 300 then
@@ -1868,7 +1886,7 @@ function mod:Terra2Update(entity)
             local tar = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CREEP_BLACK, 0, entity.Position, Vector.Zero, entity):ToEffect()
             tar.Timeout = 60
             tar.SpriteScale = Vector.One*3
-end
+    end
         
         if entity.FrameCount % 2 == 0 and not data.IsDead then
             local bubble = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TAR_BUBBLE, 0, entity.Position + RandomVector() * ( 40 * rng:RandomFloat() + 25 ), Vector.Zero, entity):ToEffect()
@@ -1970,17 +1988,17 @@ mod.chainT3 = {--               App    Id     Hors   Mete    Bull    Lase
     [mod.T3MSState.APPEAR] =    {0,    1,     0,     0,      0,      0},
     [mod.T3MSState.IDLE] =      {0,    0.38,  0.08,  0.16,   0.16,   0.22},
     --[mod.T3MSState.IDLE] =      {0,    0,     1,     0,      0,      1},
-    [mod.T3MSState.HORSEMEN] =  {0,    0.60,  0,     0,      0.20,   0.20},
-    [mod.T3MSState.METEORS] =   {0,    0.75,  0.25,  0,      0,      0},
+    [mod.T3MSState.HORSEMEN] =  {0,    0.90,  0,     0,      0.10,   0},
+    [mod.T3MSState.METEORS] =   {0,    0.90,  0,     0,      0.10,   0},
     [mod.T3MSState.BULLETS] =   {0,    0.7,   0.15,  0.15,   0,      0},
-    [mod.T3MSState.LASER] =     {0,    0.75,  0,     0.25,   0,      0}
+    [mod.T3MSState.LASER] =     {0,    0.90,  0,     0.10,   0,      0}
 }
 mod.chainT32 = {--               Idle  Bomb   Blast  Locst NULL
     [mod.T3MSState.IDLE] =      {0.94, 0.02,  0.02,  0.02, 0},
-    [mod.T3MSState.HORSEMEN] =  {0.15, 0.45,  0.00,  0.40, 0},
-    [mod.T3MSState.METEORS] =   {0.10, 0.30,  0.30,  0.30, 0},
-    [mod.T3MSState.BULLETS] =   {0.16, 0.42,  0.42,  0.00, 0},
-    [mod.T3MSState.LASER] =     {0.16, 0.00,  0.42,  0.42, 0}
+    [mod.T3MSState.HORSEMEN] =  {0.50, 0.50,  0.00,  0.00, 0},
+    [mod.T3MSState.METEORS] =   {0.16, 0.28,  0.28,  0.28, 0},
+    [mod.T3MSState.BULLETS] =   {0.20, 0.40,  0.40,  0.00, 0},
+    [mod.T3MSState.LASER] =     {0.20, 0.00,  0.40,  0.40, 0}
 }
 mod.chainTTrans = {
     [mod.T3MSState.IDLE - 1] =      mod.T2MSState.IDLE,
@@ -2085,6 +2103,8 @@ function mod:Terra3Horsemen(entity, data, sprite, target,room)
     end
 end
 function mod:Terra3Meteors(entity, data, sprite, target,room)
+    entity.Velocity = Vector.Zero
+
     if data.StateFrame == 1 then
         sprite:Play("Meteors",true)
         sfx:Play(Isaac.GetSoundIdByName("Chimes"), 1, 2, false, 1)
@@ -2488,7 +2508,7 @@ mod.MConst = {
     airstrikeExplosionRadius = 70,
 
     nMoonMurderTears = 10,
-    rageSpeed = 25,
+    rageSpeed = 22,
     berserkerHp =  0.12,
     laserSwordRadius = 30,
 }
@@ -2531,7 +2551,7 @@ function mod:MarsUpdate(entity)
         data.StateFrame = data.StateFrame + 1
         
 
-        if not data.SwordFlag and entity.HitPoints < entity.MaxHitPoints * mod.MConst.berserkerHp and data.State ~= mod.MMSState.LASER then
+        if not data.SwordFlag and entity.HitPoints < entity.MaxHitPoints * mod.MConst.berserkerHp and data.State ~= mod.MMSState.LASER and data.State ~= mod.MMSState.AIRSTRIKE then
             data.SwordFlag = true
             data.StateFrame = 0
         end
@@ -3196,10 +3216,14 @@ function mod:RocketDirected(bomb)
     end
 end
 
-function mod:SpawnMarsShot(position, velocity, origin)
+function mod:SpawnMarsShot(position, velocity, origin, fall)
     local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, position, velocity, origin):ToProjectile()
-    shot.FallingSpeed = 0
-    shot.FallingAccel = -0.1
+    if fall == nil then
+        shot.FallingSpeed = 0
+        shot.FallingAccel = -0.1
+    else
+        shot.Velocity = velocity*1.2
+    end
 
     local energy = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TECH_DOT, 0, shot.Position, Vector.Zero, origin):ToEffect()
     energy.LifeSpan = 1000

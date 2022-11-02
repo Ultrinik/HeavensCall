@@ -368,7 +368,7 @@ mod.GurdyMSTATE = {
 }
 mod.chainGurdy = {          
 	[mod.GurdyMSTATE.APPEAR] = 	{0,  1,   0},
-	[mod.GurdyMSTATE.TAUNT] = 	{0,  0.35,0.65},
+	[mod.GurdyMSTATE.TAUNT] = 	{0,  0.60,0.40},
 	[mod.GurdyMSTATE.SUMMON] = 	{0,  1,   0}
 }
 
@@ -379,8 +379,8 @@ mod.ColostomiaMSTATE = {
 	BOMB = 3
 }
 mod.chainColostomia = {          
-	[mod.ColostomiaMSTATE.APPEAR] = 	{0,  1,    0,    0},
-	[mod.ColostomiaMSTATE.IDLE] = 	{0,  0.7,  0.15, 0.15},
+	[mod.ColostomiaMSTATE.APPEAR] = {0,  1,    0,    0},
+	[mod.ColostomiaMSTATE.IDLE] = 	{0,  0.6,  0.20, 0.20},
 	[mod.ColostomiaMSTATE.JUMP] = 	{0,  1,    0,    0},
 	[mod.ColostomiaMSTATE.BOMB] = 	{0,  1,    0,    0}
 }
@@ -392,7 +392,7 @@ mod.MaidMSTATE = {
 }
 mod.chainMaid = {          
 	[mod.MaidMSTATE.APPEAR] = 	{0,  1,    0},
-	[mod.MaidMSTATE.IDLE] = 	{0,  0.65, 0.35},
+	[mod.MaidMSTATE.IDLE] = 	{0,  0.80, 0.20},
 	[mod.MaidMSTATE.ATTACK] = 	{0,  1,    0}
 }
 
@@ -480,7 +480,7 @@ function mod:CandleUpdate(entity)
 		elseif data.State == mod.SirenMSTATE.SING then
 			if data.StateFrame == 1 then
 				sprite:Play("SingStart",true)
-				for i=1, mod.VConst.sirenSummons*3 do
+				for i=1, mod.VConst.sirenSummons do
 					local sirenRag = mod:SpawnEntity(mod.Entity.SirenRag, entity.Position, Vector.Zero, entity)
 					sirenRag.Parent = entity
 					mod:SirenRagSprite(sirenRag)
@@ -494,7 +494,7 @@ function mod:CandleUpdate(entity)
 				if #(sirenRags)>0 then
 					sprite:Play("SingLoop",true)
 					
-					if data.SirenResummonCount >= mod.VConst.sirenResummonRate then
+					--[[if data.SirenResummonCount >= mod.VConst.sirenResummonRate then
 
 						if #sirenRags >= 50 then
 							for _, e in ipairs(sirenRags) do
@@ -509,7 +509,7 @@ function mod:CandleUpdate(entity)
 						end
 
 						data.SirenResummonCount = 0
-					end
+					end]]
 
 					data.SirenResummonCount = data.SirenResummonCount + 1
 				else
@@ -614,7 +614,7 @@ function mod:CandleUpdate(entity)
 				data.StateFrame = 0
 
 			elseif sprite:IsEventTriggered("Summon") then
-				if #mod:FindByTypeMod(mod.Entity.Ulcers) < 7 then
+				if #mod:FindByTypeMod(mod.Entity.Ulcers) < 4 then
 					local butter = mod:SpawnEntity(mod.Entity.Ulcers, entity.Position, Vector.Zero, entity)
 					sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
 				end
@@ -825,6 +825,51 @@ function mod:SirenRagUpdate(entity)
 		local sprite = entity:GetSprite()
 		local data = entity:GetData()
 
+		local animName = sprite:GetAnimation()
+		
+		if data.Init == nil then
+			sprite:Play("Attack2BStart", true)
+			entity.State = 10
+			data.Init = true
+			
+			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+			mod:SirenRagSprite(entity)
+			sprite:Play("Attack2BStart")
+
+			
+			for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT)) do
+				if e.Parent == entity then
+					e:Remove()
+				end
+			end
+		end
+
+		
+		if entity.Parent then
+			entity.Position = entity.Parent.Position
+			entity.Velocity = Vector.Zero
+		end
+
+		entity.State = 10
+	end
+
+	--Start sing = 10
+	--Sing = 3
+
+	--[[
+	local sprite = entity:GetSprite()
+	local animName = sprite:GetAnimation()
+	if animName == "Attack2BStart" then
+		print(entity.State)
+	else
+		print(animName)
+	end
+
+	if mod.EntityInf[mod.Entity.SirenRag].VAR == entity.Variant and mod.EntityInf[mod.Entity.SirenRag].SUB == entity.SubType  then
+		local sprite = entity:GetSprite()
+		local data = entity:GetData()
+
 		--Init
 		if data.Skip == nil then 
 			data.Skip = true 
@@ -867,8 +912,10 @@ function mod:SirenRagUpdate(entity)
 			entity.Velocity = Vector.Zero
 		end
 
-	end
+	end]]
 end
+--mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SirenRagUpdate, EntityType.ENTITY_SIREN)
+
 function mod:SirenRagSprite(entity)
 	local sprite = entity:GetSprite()
 	sprite.Scale = Vector.Zero
@@ -887,7 +934,7 @@ function mod:MartiansUpdate(entity)
 	local target = entity:GetPlayerTarget()
 
     if entity.Variant == mod.EntityInf[mod.Entity.Deimos].VAR and entity.SubType == mod.EntityInf[mod.Entity.Deimos].SUB then
-		if sprite:IsEventTriggered("SetAim") and entity.Parent:GetData().State ~= mod.MMSState.AIRSTRIKE then
+		if sprite:IsEventTriggered("SetAim") and entity.Parent:GetData().State ~= mod.MMSState.AIRSTRIKE and entity.Parent:GetData().State ~= mod.MMSState.LASER and entity.Parent:GetData().State ~= mod.MMSState.CHARGE then
 			data.targetAim = target.Position
 
 			local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TARGET, 0, target.Position, Vector.Zero, entity):ToEffect()
@@ -898,18 +945,21 @@ function mod:MartiansUpdate(entity)
 			targetSprite:LoadGraphics()
 
 		elseif sprite:IsEventTriggered("Shot") and data.targetAim then
-			local direction = data.targetAim - entity.Position
-			local laser = EntityLaser.ShootAngle(2, entity.Position + Vector(0,-10), direction:GetAngleDegrees(), 1, Vector.Zero, entity)
-			data.targetAim = nil
+			local distance = data.targetAim:Distance(entity.Position)
+			if distance >= 75 then
+				local direction = data.targetAim - entity.Position
+				local laser = EntityLaser.ShootAngle(2, entity.Position + Vector(0,-10), direction:GetAngleDegrees(), 1, Vector.Zero, entity)
+				data.targetAim = nil
+			end
 		end
 
 	elseif entity.Variant == mod.EntityInf[mod.Entity.Phobos].VAR and entity.SubType == mod.EntityInf[mod.Entity.Phobos].SUB then
-		if sprite:IsEventTriggered("Shot") then
+		if sprite:IsEventTriggered("Shot") and entity.Parent:GetData().State ~= mod.MMSState.CHARGE then
             sfx:Play(Isaac.GetSoundIdByName("EnergyShot"),1)
 
 			local targetAim = target.Position - entity.Position
 			local velocity = targetAim:Normalized()*mod.MConst.shotSpeed
-			local shot =  mod:SpawnMarsShot(entity.Position, velocity, entity)
+			local shot =  mod:SpawnMarsShot(entity.Position, velocity, entity, true)
 
 		end
 	end

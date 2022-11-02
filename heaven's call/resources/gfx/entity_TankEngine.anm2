@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="robot" CreatedOn="22-09-2022 0:56:11" Version="125" Fps="30"/>
+	<Info CreatedBy="robot" CreatedOn="31-10-2022 3:21:54" Version="126" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="effects\tank_engine.png" Id="0"/>
@@ -85,7 +85,7 @@
 			</LayerAnimations>
 			<NullAnimations/>
 			<Triggers>
-				<Trigger EventId="0" AtFrame="0"/>
+				<Trigger EventId="0" AtFrame="1"/>
 			</Triggers>
 		</Animation>
 	</Animations>
