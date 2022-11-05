@@ -7,7 +7,7 @@
 This mod adds a new type of room called the [i] Astral Challenge Room[/i], which has two variants, an easy one, where the gas giants spawn, and a difficult one, where the terrestrial planets spawn.
  
 The first and easiest can spawn between Chapter 2-1 and Chapter 3-2 with a 7% chance.
-The second and hardest can spawn only in Chapter 5 with a 30% chance.
+The second and hardest can spawn only in Corpse or Chapter 5 with a 30% chance.
 If the room spawns, there will be wisps in the starting room (reminder that Curse of Darkness can create wisps on any room).
  
 The room contains a random  [b] planetarium or zodiac [/b] collectible, you can pick it up or blow up glass statue in the room to transform it into some pickups.
@@ -81,7 +81,7 @@ To access the rooms through the debug console, type: [i] goto s.dice.8500[/i] to
 [b] WARNING: If you [u]exit and continue[/u] the run after visiting one of the rooms via [u] debug console [/u] (even if you are already outside!!!), the game may crash and you will lose that run. This is not a bug, it’s just how the [i]goto[/i] command works. You were warned!!! [/b]
  
 [h1][b] If you are going to report a bug or post a suggestion, please do so in the appropriate discussion. [/b][/h1]</description>
-    <version>1.3.4</version>
+    <version>1.3.5</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Rooms"/>

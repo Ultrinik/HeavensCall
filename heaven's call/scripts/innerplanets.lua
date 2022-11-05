@@ -1835,9 +1835,10 @@ function mod:Terra2Update(entity)
                 data.State = mod:MarkovTransition(data.State, mod.chainT2)
                 data.StateFrame = 0
 
-                local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, Vector.Zero, entity)
+                local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, Vector.Zero, nil)
+
                 eden.Parent = entity
-                entity.Parent = eden
+                entity.Child = eden
 
                 if mod.savedata.planetAlive then
                     eden.HitPoints = mod.savedata.planetHP
@@ -2114,10 +2115,10 @@ function mod:Terra3Meteors(entity, data, sprite, target,room)
     elseif sprite:IsEventTriggered("Summon") then
 
         local meteor = mod:SpawnEntity(mod.Entity.TerraTarget, room:GetRandomPosition(0), Vector.Zero, entity):ToEffect()
-        meteor.Parent = entity
         meteor:GetSprite().Color = Color.Default
-
         meteor:SetTimeout(mod.TConst.meteorTimeout)
+        
+        meteor.Parent = entity
 
     end
 end
@@ -2211,7 +2212,7 @@ function mod:ChanceEdenTerraState(data, rockTerra)
 
     if rockTerra then
         rockData = rockTerra:GetData()
-        if rockData.State and rockData.State == mod.T2MSState.IDLE then
+        if rockData and rockData.State and rockData.State == mod.T2MSState.IDLE then
             local newState = mod:MarkovTransition(data.State, mod.chainT32)
             newState = mod.chainTTrans[newState]
             rockData.State = newState
@@ -2306,7 +2307,8 @@ function mod:TerraDeath(entity)
 
 
     if entity.Variant == mod.EntityInf[mod.Entity.Terra1].VAR then
-        local rock = mod:SpawnEntity(mod.Entity.Terra2, entity.Position, Vector.Zero, entity)
+
+        local rock = mod:SpawnEntity(mod.Entity.Terra2, entity.Position, Vector.Zero, nil)
         rock:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
         rock:AddEntityFlags(EntityFlag.FLAG_NO_STATUS_EFFECTS)
         rock:AddEntityFlags(EntityFlag.FLAG_NO_TARGET)
@@ -2320,9 +2322,10 @@ function mod:TerraDeath(entity)
         rock:GetData().StateFrame = 0
         rock.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
         
-        local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, RandomVector()*7, rock)
+        local eden = mod:SpawnEntity(mod.Entity.Terra3, entity.Position, RandomVector()*7, nil)
+        
         eden.Parent = rock
-        rock.Parent = eden
+        rock.Child = eden
 
         --Save things
         if mod.savedata.planetAlive then

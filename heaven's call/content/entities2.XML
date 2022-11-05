@@ -149,19 +149,19 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
     </entity>
 
-	<entity name="Candle Gurdy" id="722" variant="371" subtype="0" anm2path="entity_CandleGurdy.anm2" baseHP="75" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="15" bestiary="true" gridCollision="ground">
+	<entity name="Candle Gurdy" id="722" variant="371" subtype="0" anm2path="entity_CandleGurdy.anm2" baseHP="150" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="30" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="15" bestiary="true" gridCollision="ground">
 		<bestiary transform="0,0,1" anim="Idle1" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Candle Siren" id="722" variant="372" subtype="0" anm2path="entity_CandleSiren.anm2" baseHP="75" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="14" bestiary="true" gridCollision="walls">
+	<entity name="Candle Siren" id="722" variant="372" subtype="0" anm2path="entity_CandleSiren.anm2" baseHP="125" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="14" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Candle Colostomia" id="722" variant="373" subtype="0" anm2path="entity_CandleColostomia.anm2" baseHP="75" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="150" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="16" bestiary="true" gridCollision="ground">
+	<entity name="Candle Colostomia" id="722" variant="373" subtype="0" anm2path="entity_CandleColostomia.anm2" baseHP="125" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="150" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="16" bestiary="true" gridCollision="ground">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Candle Maid in the Mist" id="722" variant="374" subtype="0" anm2path="entity_CandleMaidInTheMist.anm2" baseHP="75" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="17" bestiary="true" gridCollision="walls">
+	<entity name="Candle Maid in the Mist" id="722" variant="374" subtype="0" anm2path="entity_CandleMaidInTheMist.anm2" baseHP="125" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="27" portrait="17" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>

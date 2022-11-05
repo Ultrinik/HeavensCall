@@ -525,19 +525,34 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
 	end
 
 	if iscontinued and not BasementRenovator and not mod.roomdata then
-		mod:scheduleForUpdate(function()
-			mod.roomdata = {}
-			mod:InitializeRoomData("dice", mod.minvariant1, mod.maxvariant2, mod.roomdata)
-		end, 0, ModCallbacks.MC_POST_RENDER)
+		if REVEL then
+			mod:scheduleForUpdate(function()
+				mod.roomdata = {}
+				mod:InitializeRoomData("dice", mod.minvariant1, mod.maxvariant2, mod.roomdata)
+			end, 3, ModCallbacks.MC_POSTR)
+		else
+			mod:scheduleForUpdate(function()
+				mod.roomdata = {}
+				mod:InitializeRoomData("dice", mod.minvariant1, mod.maxvariant2, mod.roomdata)
+			end, 0, ModCallbacks.MC_POST_RENDER)
+		end
 	end
 end)
 
 --Will the room spawn??? 👀
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
-	local level = game:GetLevel()
-	
+	if REVEL then
+		mod:scheduleForUpdate(function()
+			mod:AstralRoomGenerator()
+		end, 3, ModCallbacks.MC_POST_UPDATE)
+	else
+		mod:AstralRoomGenerator()
+	end
+end)
+function mod:AstralRoomGenerator()
 	--Handles Astral Challenge spawning
-	
+	local level = game:GetLevel()
+
 	--Initialize mod.roomdata
 	if not mod.roomdata and level:GetStage() ~= LevelStage.STAGE1_1 and not BasementRenovator then
 		mod.roomdata = {}
@@ -554,7 +569,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 
 	local totalchance = 0
 
-	if level:GetStage() < LevelStage.STAGE5 and not mod.savedata.planetAlive and not mod.savedata.planetKilled1 then
+	local corpseFlag = ( (level:GetStage() == LevelStage.STAGE4_1 or level:GetStage() == LevelStage.STAGE4_2) and ( level:GetStageType() == StageType.STAGETYPE_REPENTANCE or level:GetStageType() == StageType.STAGETYPE_REPENTANCE_B ))
+
+	if (level:GetStage() < LevelStage.STAGE5 and not corpseFlag) and not mod.savedata.planetAlive and not mod.savedata.planetKilled1 then
 
 		--If the room can spawn, the chance is 0.2
 		if level:GetStage() >= stageMin and level:GetStage() <= stageLimit and not game:IsGreedMode() and not level:IsAscent() then
@@ -571,11 +588,10 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 		if mod.savedata.spawnchancemultiplier == nil then mod.savedata.spawnchancemultiplier = 1 end
 		totalchance = mod.savedata.spawnchancemultiplier*spawnChance
 
-	elseif level:GetStage() == LevelStage.STAGE5 and not mod.savedata.planetAlive and not mod.savedata.planetKilled2 then
+	elseif (level:GetStage() == LevelStage.STAGE5 or corpseFlag) and not mod.savedata.planetAlive and not mod.savedata.planetKilled2 then
 		if mod.ModConfigs.roomSpawnChance2 == nil then mod.ModConfigs.roomSpawnChance2 = 30 end
 		totalchance = mod.ModConfigs.roomSpawnChance2/100
 	end
-
 
 	if totalchance > 0 then
 		local randomchance = rng:RandomFloat()
@@ -594,7 +610,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 			end
 		end
 	end
-end)
+end
 
 --Door and room things
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure room was used as the reference for managing new room types Andromeda was used as the reference for managing new room types
@@ -627,7 +643,18 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 			if mod:IsRoomDescAstralChallenge(targetroomdesc) then
 				local doorSprite = door:GetSprite()
 				doorSprite:Load("gfx/grid/astralchallengeroor.anm2", true)
-				doorSprite:ReplaceSpritesheet(0, "gfx/grid/astralchallengedoor.png")
+
+				if REVEL then
+					mod:scheduleForUpdate(function()
+						if REVEL.STAGE.Glacier:IsStage() then
+							doorSprite:ReplaceSpritesheet(0, "gfx/grid/glacier_astralchallengedoor.png")
+						elseif REVEL.STAGE.Tomb:IsStage() then
+							doorSprite:ReplaceSpritesheet(0, "gfx/grid/tomb_astralchallengedoor.png")
+						end
+						doorSprite:LoadGraphics()
+					end, 1, ModCallbacks.MC_POST_UPDATE)
+				end
+
 				doorSprite:Play("Closed")
 				
 				door:SetLocked (false)
@@ -992,10 +1019,13 @@ end)
 function mod:GetShaderParams(shaderName)
 	local room = game:GetRoom()
     if shaderName == 'Timestuck' then
-        local enabled = 0.0
-		if mod.ModFlags.globalTimestuck then enabled = 1.0 end
-        local params = {Time = enabled}
-        return params;
+		if not mod.ModFlags.globalTimestuck then
+			local params = {Time = 0}
+			return params;
+		end
+
+		local params = {Time = 1}
+		return params;
 	end
 	
 	if shaderName == 'VenusHeat' then
@@ -1008,6 +1038,7 @@ function mod:GetShaderParams(shaderName)
 			}
 			return params;
 		end
+		
 		local position1 = mod.ModFlags.venusPosition
 		position1 = room:WorldToScreenPosition (position1)
 

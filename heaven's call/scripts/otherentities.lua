@@ -1508,7 +1508,7 @@ function mod:MeteorUpdate(entity)
 
 	if sprite:IsFinished("Type1") or sprite:IsFinished("Type2") then
 		--Explosion:
-		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, nil):ToEffect()
 		explosion:GetSprite().Scale = Vector.One*1.5
 		--Explosion damage
 		for i, entity_ in ipairs(Isaac.FindInRadius(entity.Position, mod.TConst.meteorExplosionRadius)) do
@@ -1531,7 +1531,7 @@ function mod:MeteorUpdate(entity)
 	elseif sprite:IsFinished("Type3") then
 		
 		--Explosion:
-		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, entity.Parent):ToEffect()
+		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, nil):ToEffect()
 		explosion:GetSprite().Scale = Vector.One*1.5
 		explosion:GetSprite().Color = Color(2,0,0,1)
 		--Impact damage
