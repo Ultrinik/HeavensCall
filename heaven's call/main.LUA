@@ -644,16 +644,34 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 				local doorSprite = door:GetSprite()
 				doorSprite:Load("gfx/grid/astralchallengeroor.anm2", true)
 
-				if REVEL then
-					mod:scheduleForUpdate(function()
-						if REVEL.STAGE.Glacier:IsStage() then
-							doorSprite:ReplaceSpritesheet(0, "gfx/grid/glacier_astralchallengedoor.png")
-						elseif REVEL.STAGE.Tomb:IsStage() then
-							doorSprite:ReplaceSpritesheet(0, "gfx/grid/tomb_astralchallengedoor.png")
+				if REVEL and (REVEL.STAGE.Glacier:IsStage() or REVEL.STAGE.Tomb:IsStage()) then
+					local doorEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DOOR_OUTLINE, 0, door.Position, Vector.Zero, nil):ToEffect()
+					doorEffect.DepthOffset = -100
+
+					local doorEffectSprite = doorEffect:GetSprite()
+
+					doorEffectSprite.Rotation = doorSprite.Rotation
+
+					doorEffectSprite:Load("gfx/effect_RevelationDoor.anm2", true)
+
+					mod.RevelationDoor = door;
+
+					if REVEL.STAGE.Glacier:IsStage() then
+
+						for i=0,4 do
+							doorEffectSprite:ReplaceSpritesheet(i, "gfx/grid/glacier_astralchallengedoor.png")
 						end
-						doorSprite:LoadGraphics()
-					end, 1, ModCallbacks.MC_POST_UPDATE)
+					elseif REVEL.STAGE.Tomb:IsStage() then
+
+						for i=0,4 do
+							doorEffectSprite:ReplaceSpritesheet(i, "gfx/grid/tomb_astralchallengedoor.png")
+						end
+					end
+
+					--doorEffectSprite:Play(doorSprite:GetAnimation(), true)
+					doorEffectSprite:LoadGraphics()
 				end
+				doorSprite:LoadGraphics()
 
 				doorSprite:Play("Closed")
 				
@@ -795,6 +813,41 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 
 end)
 
+	--[[
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
+	--things
+	local level = game:GetLevel()
+	local room = game:GetRoom()
+
+	for i = 0, DoorSlot.NUM_DOOR_SLOTS do
+		local door = room:GetDoor(i)
+		if door then
+			local targetroomdesc = level:GetRoomByIdx(door.TargetRoomIndex)
+			if mod:IsRoomDescAstralChallenge(targetroomdesc) then
+
+				--mod:scheduleForUpdate(function()
+
+				local doorSprite = door:GetSprite()
+				doorSprite:Load("gfx/grid/astralchallengeroor.anm2", true)
+				doorSprite:ReplaceSpritesheet(0, "gfx/grid/astralchallengedoor.png")
+
+				if REVEL and false then
+					if REVEL.STAGE.Glacier:IsStage() then
+						doorSprite:ReplaceSpritesheet(0, "gfx/grid/glacier_astralchallengedoor.png")
+					elseif REVEL.STAGE.Tomb:IsStage() then
+						doorSprite:ReplaceSpritesheet(0, "gfx/grid/tomb_astralchallengedoor.png")
+					end
+				end
+				doorSprite:LoadGraphics()
+				doorSprite:Play("Closed")
+				door:SetLocked (false)
+				
+				--end,1,ModCallbacks.MC_POST_UPDATE)
+			end
+		end
+	end
+
+end)]]
 
 --FUNNY INTERACTIONS----------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1315,3 +1368,8 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, mod.onStarted)
 
 
+--REVELATIONS------------------------------------------------------------------
+if REVEL then
+	mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.RevelationsDoorsUpdate, EffectVariant.DOOR_OUTLINE)
+	mod.RevelationDoor = nil
+end

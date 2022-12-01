@@ -1471,29 +1471,31 @@ end
 
 --ded
 function mod:VenusDeath(entity)
-    for _, e in ipairs(mod:GetCandles()) do
-        e:Die()
-    end
-    for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT)) do
-        e:Remove()
-    end
-    for _, e in ipairs(mod:FindByTypeMod(mod.Entity.ICUP)) do
-        e:Remove()
-    end
+    if entity.Variant == mod.EntityInf[mod.Entity.Venus].VAR then
+        for _, e in ipairs(mod:GetCandles()) do
+            e:Die()
+        end
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.LIGHT)) do
+            e:Remove()
+        end
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.ICUP)) do
+            e:Remove()
+        end
 
-    for i=0, game:GetNumPlayers ()-1 do
-        local player = game:GetPlayer(i)
-        player:GetData().BurnTime = 0
+        for i=0, game:GetNumPlayers ()-1 do
+            local player = game:GetPlayer(i)
+            player:GetData().BurnTime = 0
+        end
+
+
+        mod.ModFlags.venusPosition = Vector.Zero
+        mod.ModFlags.venusCounter = 0
+        mod:scheduleForUpdate(function()
+            mod.ModFlags.venusHeat = false
+        end,10)
+
+        mod:NormalDeath(entity, false, true)
     end
-
-
-    mod.ModFlags.venusPosition = Vector.Zero
-    mod.ModFlags.venusCounter = 0
-    mod:scheduleForUpdate(function()
-        mod.ModFlags.venusHeat = false
-    end,10)
-
-    mod:NormalDeath(entity, false, true)
 end
 --deding
 function mod:VenusDying(entity)

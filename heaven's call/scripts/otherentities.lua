@@ -1720,6 +1720,20 @@ function mod:ICUPUpdate(entity)
 	end
 end
 
+--Revelations doors--------------------------------------------------------------------------------------------------------------------
+function mod:RevelationsDoorsUpdate(entity)
+	local parent = mod.RevelationDoor
+	if parent then
+		local sprite = entity:GetSprite()
+		local parentSprite = parent:GetSprite()
+
+		local animation = parentSprite:GetAnimation()
+		sprite:Play(animation, true);
+		sprite:SetFrame(parentSprite:GetFrame())
+
+	end
+end
+
 --Effects updates
 function mod:UpdateEffect(effect, data)
 	local variant = effect.Variant
