@@ -1720,6 +1720,266 @@ function mod:ICUPUpdate(entity)
 	end
 end
 
+--Luna Doors-------------------------------------------------------------------------------------------------------------------------------
+mod.DoorType = {
+	NORMAL = 0,
+	TREASURE = 1,
+	SHOP = 2,
+	DEVIL = 3,
+	ANGEL = 4,
+	TAINTED = 5,
+	GLACIAR = 6,
+	TOMB = 7,
+	LIBRARY = 8,
+	SECRET = 9,
+	BOSS = 10,
+	CURSE = 11,
+	ARCADE = 12,
+	BEDROOM = 13,
+	DICE = 14,
+	PLANETARIUM = 15,
+	VAULT = 16,
+	SACRIFICE = 17,
+
+}
+
+function mod:LunaDoorUpdate(entity)
+	local timeDespawn = 50
+
+	local sprite = entity:GetSprite()
+	local data = entity:GetData()
+
+	if not data.Frame then data.Frame = 0 end
+	data.Frame = data.Frame + 1
+
+	if sprite:IsFinished("Close") then
+		entity:Remove()
+	elseif sprite:IsFinished("Open") then
+		sprite:Play("Opened", true)
+	elseif sprite:IsPlaying("Close") and sprite:GetFrame()==1 then
+		sfx:Play(SoundEffect.SOUND_DOOR_HEAVY_CLOSE)
+	end
+
+	local doorType = data.DoorType
+
+	if doorType == mod.DoorType.NORMAL then
+		if entity.Position:Distance(entity.Parent.Position) < 35 or data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+			
+			if entity.Position:Distance(entity.Parent.Position) < 35 then
+				local luna = entity.Parent
+
+				luna:GetData().DashFlag = false
+				luna.Velocity = Vector.Zero
+
+				--Luna teleport
+				luna.Visible = false
+				luna.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+				mod:scheduleForUpdate(function()
+					luna:GetSprite():Play("TrapdoorOut",true)
+					luna.Visible = true
+					luna.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+				end, 25, ModCallbacks.MC_POST_UPDATE)
+
+				local position = Isaac.GetRandomPosition(0)
+				while entity.Parent and position:Distance(entity.Parent:ToNPC():GetPlayerTarget().Position) < mod.LConst.minDistanceToReappear and entity.Position:Distance(entity.Parent.Position) > 35 do
+					position = Isaac.GetRandomPosition(0)
+				end
+				luna.Position = position
+
+				mod:scheduleForUpdate(function()
+					local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, position, Vector.Zero, luna)
+					trapdoor:GetSprite():Play("BigIdle", true)
+				end, 15, ModCallbacks.MC_POST_UPDATE)
+			end
+		end
+
+	elseif doorType == mod.DoorType.TREASURE or doorType == mod.DoorType.DEVIL or doorType == mod.DoorType.ANGEL or doorType == mod.DoorType.TAINTED or
+	doorType == mod.DoorType.LIBRARY or doorType == mod.DoorType.SECRET then
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.SHOP then
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.GLACIAR then
+		if data.Frame == 30 then
+
+		elseif data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.TOMB then
+		dir = "gfx/grid/revel2/tomb.png"
+
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.BOSS then
+		if data.Frame == 20 then
+			local random = mod:RandomInt(1,4)
+
+			sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+			if random == 1 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_MONSTRO, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+			elseif random == 2 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_DUKE, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+			elseif random == 3 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_GEMINI, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+			elseif random == 4 then
+				local boss1 = Isaac.Spawn(EntityType.ENTITY_LARRYJR, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+				for i=1,6 do
+					local boss2 = Isaac.Spawn(EntityType.ENTITY_LARRYJR, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+					boss2.Parent = boss1
+					boss1.Child = boss2
+
+					boss1 = boss2
+				end
+			end
+
+		elseif data.Frame == 45 then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.CURSE then
+
+		for i=0, game:GetNumPlayers ()-1 do
+			local player = game:GetPlayer(i)
+			if player.Position:Distance(entity.Position) < 10 then 
+				player:TakeDamage(2, DamageFlag.DAMAGE_CURSED_DOOR, EntityRef(entity.Parent), 0)
+			end
+		end
+
+		if data.Frame == timeDespawn or (entity.Velocity:Length() <= 0.1 and data.Launched) then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.ARCADE then
+
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.BEDROOM then
+
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.DICE then
+		
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.PLANETARIUM then
+
+		if data.Frame == 30 then
+			local random = mod:RandomInt(1,4)
+
+			sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+			if random == 1 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_MONSTRO, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+			elseif random == 2 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_DUKE, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+			elseif random == 3 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_GEMINI, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+			elseif random == 4 then
+				local boss = Isaac.Spawn(EntityType.ENTITY_LARRYJR, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+			end
+
+		elseif data.Frame == 45 then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.VAULT then
+		
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	elseif doorType == mod.DoorType.SACRIFICE then
+		
+		if data.Frame == timeDespawn then
+			sprite:Play("Close", true)
+		end
+
+	end
+
+end
+
+function mod:SpawnLunaDoor(entity, doorType, position)
+	local dir = "gfx/grid/door_00_reddoor.png"
+
+	if doorType == mod.DoorType.NORMAL then
+		dir = "gfx/grid/door_00_reddoor.png"
+	elseif doorType == mod.DoorType.TREASURE then
+		dir = "gfx/grid/door_02_treasureroomdoor.png"
+	elseif doorType == mod.DoorType.SHOP then
+		dir = "gfx/grid/door_00_shopdoor.png"
+	elseif doorType == mod.DoorType.DEVIL then
+		dir = "gfx/grid/door_07_devilroomdoor.png"
+	elseif doorType == mod.DoorType.ANGEL then
+		dir = "gfx/grid/door_07_holyroomdoor.png"
+	elseif doorType == mod.DoorType.TAINTED then
+		dir = "gfx/grid/taintedtreasureroomdoor.png"
+	elseif doorType == mod.DoorType.GLACIAR then
+		dir = "gfx/grid/revel1/glacier.png"
+	elseif doorType == mod.DoorType.TOMB then
+		dir = "gfx/grid/revel2/tomb.png"
+	elseif doorType == mod.DoorType.LIBRARY then
+		dir = "gfx/grid/door_13_librarydoor.png"
+	elseif doorType == mod.DoorType.SECRET then
+		dir = "gfx/grid/secreroomdoor.png"
+	elseif doorType == mod.DoorType.BOSS then
+		dir = "gfx/grid/bossroomdoor.png"
+	elseif doorType == mod.DoorType.CURSE then
+		dir = "gfx/grid/door_04_selfsacrificeroomdoor.png"
+	elseif doorType == mod.DoorType.ARCADE then
+		dir = "gfx/grid/door_05_arcaderoomdoor.png"
+	elseif doorType == mod.DoorType.BEDROOM then
+		dir = "gfx/grid/door_01_normaldoor.png"
+	elseif doorType == mod.DoorType.DICE then
+		dir = "gfx/grid/door_00_diceroomdoor.png"
+	elseif doorType == mod.DoorType.PLANETARIUM then
+		dir = "gfx/grid/door_00x_planetariumdoor.png"
+	elseif doorType == mod.DoorType.VAULT then
+		dir = "gfx/grid/door_02b_chestroomdoor.png"
+	elseif doorType == mod.DoorType.SACRIFICE then
+		dir = "gfx/grid/door_00_sacrificeroomdoor.png"
+	end
+
+	if not position then
+		position = entity.Position + Vector(50, 0):Rotated(rng:RandomFloat()*360)
+		for i=0, 100 do
+			if (not mod:IsOutsideRoom(position, game:GetRoom())) then break end
+			position = entity.Position + Vector(50, 0):Rotated(rng:RandomFloat()*360)
+		end
+	end
+
+	local door = mod:SpawnEntity(mod.Entity.LunaDoor, position, Vector.Zero, entity):ToEffect()
+
+	local sprite = door:GetSprite()
+	for i=0,3 do
+		sprite:ReplaceSpritesheet (i, dir)
+	end
+	sprite:LoadGraphics()
+
+	door:GetData().DoorType = doorType
+	door.Parent = entity
+	entity.Child = door
+
+	sfx:Play(SoundEffect.SOUND_UNLOCK00,1)
+
+	return door
+
+end
+
 --Revelations doors--------------------------------------------------------------------------------------------------------------------
 function mod:RevelationsDoorsUpdate(entity)
 	local parent = mod.RevelationDoor
@@ -1766,6 +2026,8 @@ function mod:UpdateEffect(effect, data)
 	elseif variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and subType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB then
 		if sprite:IsEventTriggered("Sound") then
 			sfx:Play(Isaac.GetSoundIdByName("TrapdoorOC"),1)
+		elseif sprite:IsFinished("Idle") or sprite:IsFinished("BigIdle") then
+			effect:Remove()
 		end
 	elseif variant == EffectVariant.TECH_DOT then
 		if effect.Parent == nil and data.MarsShot_HC then
@@ -1777,6 +2039,8 @@ function mod:UpdateEffect(effect, data)
 		mod:HornUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.ICUP].VAR then
 		mod:ICUPUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.LunaDoor].VAR then
+		mod:LunaDoorUpdate(effect)
 	end
 
 end
@@ -1791,12 +2055,11 @@ function mod:DisappearEffect(effect, data)
 	variant == mod.EntityInf[mod.Entity.Aurora].VAR and subType == mod.EntityInf[mod.Entity.Aurora].SUB or
 	variant == mod.EntityInf[mod.Entity.TimeFreezeSource].VAR and subType == mod.EntityInf[mod.Entity.TimeFreezeSource].SUB or
 	variant == mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR and subType == mod.EntityInf[mod.Entity.TimeFreezeObjective].SUB or
-	variant == mod.EntityInf[mod.Entity.RedTrapdoor].VAR and subType == mod.EntityInf[mod.Entity.RedTrapdoor].SUB or
 	variant == mod.EntityInf[mod.Entity.SonicBoom].VAR and subType == mod.EntityInf[mod.Entity.SonicBoom].SUB or
 	variant == mod.EntityInf[mod.Entity.MarsBoost].VAR and subType == mod.EntityInf[mod.Entity.MarsBoost].SUB or
 	variant == mod.EntityInf[mod.Entity.MercuryTrace].VAR and subType == mod.EntityInf[mod.Entity.MercuryTrace].SUB
 	if valid then
-		if effect:GetSprite():IsFinished("Idle") then
+		if effect:GetSprite():IsFinished("Idle") or effect:GetSprite():IsFinished("BigIdle") then
 			effect:Remove()
 			return
 		end

@@ -67,6 +67,7 @@ mod.Entity ={
     MercuryTrace = 69,
     ICUP = 71,
     GlassFracture = 72,
+    LunaDoor = 73,
 
     ---------
     
@@ -110,6 +111,8 @@ mod.EntityInf[mod.Entity.Terra1] =  {ID = Isaac.GetEntityTypeByName("Terra the F
 mod.EntityInf[mod.Entity.Terra2] =  {ID = Isaac.GetEntityTypeByName("Terra the Fatalist (rock)"), VAR = Isaac.GetEntityVariantByName("Terra the Fatalist (rock)"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Terra3] =  {ID = Isaac.GetEntityTypeByName("Terra the Fatalist (eden)"), VAR = Isaac.GetEntityVariantByName("Terra the Fatalist (eden)"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars the Vainglorious"), VAR = Isaac.GetEntityVariantByName("Mars the Vainglorious"), SUB = mod.DefaultEntitySub}
+
+mod.EntityInf[mod.Entity.Luna] =  {ID = Isaac.GetEntityTypeByName("Luna the Tainted"), VAR = Isaac.GetEntityVariantByName("Luna the Tainted"), SUB = mod.DefaultEntitySub}
 
 --ENEMIES-----------------------------------------------------------------------------------------------
 
@@ -166,6 +169,7 @@ mod.EntityInf[mod.Entity.LaserSword] = {ID = EntityType.ENTITY_EFFECT, VAR = Isa
 
 mod.EntityInf[mod.Entity.RedTrapdoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Red Trapdoor (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.ICUP] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("ICUP (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.LunaDoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Luna Door (HC)"),  SUB = mod.DefaultSub}
 
 --PROJECTILES-----------------------------------------------------------------------------------------------
 
@@ -207,5 +211,7 @@ mod.PlanetName = {
     [mod.Entity.Venus] = "Venus the Termagant",
     [mod.Entity.Terra1] = "Terra the Fatalist",
     [mod.Entity.Mars] = "Mars the Vainglorious",
+    
+    [mod.Entity.Luna] = "Luna the Tainted",
 
 }

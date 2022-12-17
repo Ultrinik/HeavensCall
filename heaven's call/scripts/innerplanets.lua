@@ -2490,7 +2490,7 @@ mod.chainM = {--                 App   Mov    UP     DOWN   LEFT   RIGHT  Atk   
     [mod.MMSState.HOMING] =     {0,    1,     0,     0,     0,     0,     0,     0,     0,      0,      0,      0,      0,      0,     0}
 }
 mod.MConst = {
-    speed = 2.1,
+    speed = 1.8,
 
     chargeSpeed = 65,
     chargeExplosionRadius = 50,

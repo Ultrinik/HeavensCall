@@ -358,6 +358,13 @@ function mod:scheduleForUpdate(foo, delay, callback)
     table.insert(mod.delayedFuncs[callback], { Func = foo, Delay = delay })
 end
 
+--Random Element from table
+function mod:random_elem(tb)
+    local keys = {}
+    for k in pairs(tb) do table.insert(keys, k) end
+    return tb[keys[math.random(#keys)]]
+end
+
 --Save
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, function(_, shouldSave)
 	if shouldSave then
@@ -413,6 +420,11 @@ function mod:AppearPlanet(entity)
 	else
 		sprite:Play("Appear",true)
 		local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position, Vector.Zero, entity)
+
+		if entity.Type == mod.EntityInf[mod.Entity.Luna].ID then
+			trapdoor:GetSprite():Play("BigIdle", true)
+		end
+
 		if mod.ModFlags.glowingHourglass > 0 then
 			local timestuck = mod:SpawnEntity(mod.Entity.TimeFreezeObjective, entity.Position, Vector.Zero, entity)
 			timestuck:GetSprite().Scale = Vector(1,1)*0.5
@@ -642,9 +654,14 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 
 			if mod:IsRoomDescAstralChallenge(targetroomdesc) then
 				local doorSprite = door:GetSprite()
-				doorSprite:Load("gfx/grid/astralchallengeroor.anm2", true)
 
-				if REVEL and (REVEL.STAGE.Glacier:IsStage() or REVEL.STAGE.Tomb:IsStage()) then
+				if not isOnRevelStage then
+					doorSprite:Load("gfx/grid/astralchallengeroor.anm2", true)
+				end
+
+				isOnRevelStage = REVEL and (REVEL.STAGE.Glacier:IsStage() or REVEL.STAGE.Tomb:IsStage())
+
+				if isOnRevelStage then
 					local doorEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DOOR_OUTLINE, 0, door.Position, Vector.Zero, nil):ToEffect()
 					doorEffect.DepthOffset = -100
 

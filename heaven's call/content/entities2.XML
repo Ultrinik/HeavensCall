@@ -248,7 +248,7 @@
     </entity>
 
 	<!-- Luna -->
-	<entity name="Luna the Tainted" id="708" variant="370" subtype="0" anm2path="entity_Luna.anm2" baseHP="2500" stageHP="0" shieldStrength="20" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="50" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
+	<entity name="Luna the Tainted" id="708" variant="370" subtype="0" anm2path="entity_Luna.anm2" baseHP="2500" stageHP="0" shieldStrength="35" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -257,6 +257,9 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	<entity name="ICUP (HC)" id="1000" variant="382" subtype="160" anm2path="effect_ICUP.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
+	<entity name="Luna Door (HC)" id="1000" variant="383" subtype="160" anm2path="effect_LunaDoor.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 
