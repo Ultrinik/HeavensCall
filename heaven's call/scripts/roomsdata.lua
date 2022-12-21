@@ -125,3 +125,19 @@ mod.oppslots = {
 	[DoorSlot.DOWN1] = DoorSlot.UP0
 }
 -- END OF ROOM GEN 
+
+
+mod.RoomWalls = {
+	RIGHT = 1,
+	UP = 2,
+	LEFT = 3,
+	DOWN = 4,
+}
+
+--mod.BorderRoom[mod.RoomWalls.Right][RoomShape.ROOMSHAPE_1x1]
+mod.BorderRoom = {
+	[mod.RoomWalls.RIGHT] = {577, 577, 420, 577, 420, 1096, 1096, 1096,  1096, 1096, 1096, 1096},
+	[mod.RoomWalls.UP] = {142, 223, 142, 145, 140, 142, 223, 142, 142, 142, 142, 142},
+	[mod.RoomWalls.LEFT] = {63, 63, 224, 63, 224, 63, 62, 63, 63, 63, 63, 63},
+	[mod.RoomWalls.DOWN] = {417, 337, 417, 696, 696, 417, 337, 696, 696, 696, 696, 696}
+}

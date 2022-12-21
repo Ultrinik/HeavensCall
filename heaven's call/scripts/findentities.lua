@@ -22,6 +22,7 @@ mod.Entity ={
     Eris = 12,
     Makemake = 13,
     Haumea = 14,
+    Quantum = 75,
 
     Sol = 15,
 
@@ -68,6 +69,9 @@ mod.Entity ={
     ICUP = 71,
     GlassFracture = 72,
     LunaDoor = 73,
+    LunaMegaSatanDoor = 74,
+    Card = 76,
+    Spike = 77,
 
     ---------
     
@@ -170,6 +174,9 @@ mod.EntityInf[mod.Entity.LaserSword] = {ID = EntityType.ENTITY_EFFECT, VAR = Isa
 mod.EntityInf[mod.Entity.RedTrapdoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Red Trapdoor (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.ICUP] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("ICUP (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.LunaDoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Luna Door (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.LunaMegaSatanDoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mega Satan Luna Door (HC)"),  SUB = mod.DefaultSub+1}
+mod.EntityInf[mod.Entity.Card] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Card (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Spike] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Luna Spike (HC)"),  SUB = mod.DefaultSub}
 
 --PROJECTILES-----------------------------------------------------------------------------------------------
 

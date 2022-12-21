@@ -96,7 +96,7 @@ mod.LMainPassive = {
     TECH_X = 21,
     HEMOLACRYA = 22,
     BRIMSTONE = 23,
-    EPIC_FETUS = 24,
+    --EPIC_FETUS = 24,
     REVELATIONS = 25,
 }
 mod.LSecondaryPassives = {
@@ -138,7 +138,7 @@ mod.LItemDoor = {
     [mod.LMainPassive.TECH_X] = mod.DoorType.TREASURE,
     [mod.LMainPassive.HEMOLACRYA] = mod.DoorType.TREASURE,
     [mod.LMainPassive.BRIMSTONE] = mod.DoorType.DEVIL,
-    [mod.LMainPassive.EPIC_FETUS] = mod.DoorType.SECRET,
+    --[mod.LMainPassive.EPIC_FETUS] = mod.DoorType.SECRET,
     [mod.LMainPassive.REVELATIONS] = mod.DoorType.ANGEL,
     
     [mod.LSecondaryPassives.IPECAC] = mod.DoorType.TREASURE,
@@ -178,7 +178,7 @@ mod.LItemPath = {
     [mod.LMainPassive.TECH_X] = "gfx/items/collectibles/collectibles_395_techx.png",
     [mod.LMainPassive.HEMOLACRYA] = "gfx/items/collectibles/collectibles_531_haemolacria.png",
     [mod.LMainPassive.BRIMSTONE] = "gfx/items/collectibles/collectibles_118_brimstone.png",
-    [mod.LMainPassive.EPIC_FETUS] = "gfx/items/collectibles/collectibles_168_epicfetus.png",
+    --[mod.LMainPassive.EPIC_FETUS] = "gfx/items/collectibles/collectibles_168_epicfetus.png",
     [mod.LMainPassive.REVELATIONS] = "gfx/items/collectibles/collectibles_643_revelation.png",
     
     [mod.LSecondaryPassives.IPECAC] = "gfx/items/collectibles/collectibles_149_ipecac.png",
@@ -229,8 +229,8 @@ end
 
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Plan   Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
-    [mod.LMSState.IDLE] =           {0.000, 0.200, 0.210, 0.020, 0.050, 0.250, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
+    --[mod.LMSState.IDLE] =           {0.000, 0.200, 0.210, 0.020, 0.050, 0.250, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
+    [mod.LMSState.IDLE] =           {0.000, 0.000, 0.500, 0.000, 0.000, 0.500, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.350, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.100, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -260,7 +260,16 @@ mod.LConst = {--Some constant variables of Luna
     curseSpeed = 20,
 
     sleepShield = 80,
-    healPerSleep = 10,
+    healPerSleep = 1000,--10
+
+    nCoins = 3,
+
+    xTechSpeed = 6,
+    xTechSize = 30,
+
+    _20_20_distance = 20,
+
+    spiderFreakAngle = 13,
 
 }
 
@@ -277,6 +286,10 @@ function mod:LunaUpdate(entity)
             data.StateFrame = 0
             data.SSFlag = false
 
+            data.MainP = 0
+            data.SecondaryP = 0
+            data.AssistP = 0
+
             data.SleepShield = 0
         end
         
@@ -288,10 +301,6 @@ function mod:LunaUpdate(entity)
         if not data.SSFlag and entity.HitPoints < entity.MaxHitPoints * mod.LConst.hpSS and data.State == mod.LMSState.IDLE then
             data.SSFlag = true
             data.StateFrame = 0
-
-            data.MainP = 0
-            data.SecondaryP = 0
-            data.AssistP = 0
         end
 
         if data.SSFlag then
@@ -357,38 +366,819 @@ end
 function mod:LunaAttack(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         sprite:Play("NormalAttack",true)
+        data.TargetAim = target.Position
     elseif sprite:IsFinished("NormalAttack") then
         data.State = mod:MarkovTransition(data.State, mod.chainL)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("Attack") then
+        --data.MainP = mod.LMainPassive.SPIDER_FREAK
+        --data.SecondaryP = mod.LSecondaryPassives.CLASSIC_WORM
+
+
+        if data.MainP == 0 then
+
+            local velocity = (target.Position - entity.Position):Normalized()*10
+            local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+
+                local variance = (Vector(mod:RandomInt(-15, 15),mod:RandomInt(-15, 15))*0.03)
+                local vector = (target.Position-entity.Position)*0.028 + variance
+
+                tear.Velocity = vector
+                
+                tear.Scale = 2
+                tear.FallingSpeed = -45;
+                tear.FallingAccel = 1.5;
+
+                tear:GetSprite().Color = mod.Colors.boom
+
+                tear:AddProjectileFlags(ProjectileFlags.EXPLODE)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                tear.Position = tear.Position + tear.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance
+                
+                local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, tear.Velocity, entity):ToProjectile()
+                tear2.Position = tear2.Position + tear2.Velocity:Normalized():Rotated(-90)*mod.LConst._20_20_distance
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                tear.Scale = 1.5
+                --tear:AddProjectileFlags(ProjectileFlags.GODHEAD)
+                tear.Velocity = tear.Velocity/3
+                mod:TearFallAfter(tear, 300)
+
+                tear:GetSprite().Color = mod.Colors.whiteish
+
+
+                local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, tear.Position, tear.Velocity, tear):ToEffect()
+                aura.Parent = tear
+                tear.Child = aura
+                aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                aura:GetSprite():LoadGraphics()
+                aura:GetSprite():Play("Idle", true)
+                aura.SpriteScale = aura.SpriteScale*1.3
+                aura:FollowParent(tear)
+                tear:Update()
+
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+
+                tear.Scale = 1.75
+                tear:AddProjectileFlags(ProjectileFlags.SMART)
+                tear.HomingStrength = tear.HomingStrength*0.9
+                mod:TearFallAfter(tear, 300)
+                
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaSacred = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaParasite = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+
+                tear:AddProjectileFlags(ProjectileFlags.CONTINUUM)
+                mod:TearFallAfter(tear, 30*7)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then
+
+                tear.Velocity = tear.Velocity * 0.5
+
+                tear:AddProjectileFlags(ProjectileFlags.MEGA_WIGGLE)
+                tear:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
+                tear.WiggleFrameOffset = 2000
+                mod:TearFallAfter(tear, 30*5)
+
+            end
+
+        elseif data.MainP == mod.LMainPassive.C_SECTION then
+
+            local velocity = (target.Position - entity.Position):Normalized()*10
+            local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+            
+            tear:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
+            tear.Velocity = tear.Velocity/3*2
+            mod:TearFallAfter(tear, 100)
+
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+                
+                tear.Scale = 1.5
+
+                tear:GetSprite().Color = mod.Colors.boom
+
+                tear:AddProjectileFlags(ProjectileFlags.EXPLODE)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                tear.Position = tear.Position + tear.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance
+                
+                local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, tear.Velocity, entity):ToProjectile()
+                tear2.Position = tear2.Position + tear2.Velocity:Normalized():Rotated(-90)*mod.LConst._20_20_distance
+                
+                tear2:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
+                tear2.Velocity = tear2.Velocity/3*2
+                mod:TearFallAfter(tear2, 100)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                tear.Scale = 1.5
+                --tear:AddProjectileFlags(ProjectileFlags.GODHEAD)
+                tear.Velocity = tear.Velocity/3
+                mod:TearFallAfter(tear, 300)
+
+                tear:GetSprite().Color = mod.Colors.whiteish
+
+
+                local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, tear.Position, tear.Velocity, tear):ToEffect()
+                aura.Parent = tear
+                tear.Child = aura
+                aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                aura:GetSprite():LoadGraphics()
+                aura:GetSprite():Play("Idle", true)
+                aura.SpriteScale = aura.SpriteScale*1.3
+                aura:FollowParent(tear)
+                tear:Update()
+
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+
+                tear.Scale = 1.75
+                tear:AddProjectileFlags(ProjectileFlags.SMART)
+                tear.HomingStrength = tear.HomingStrength
+                mod:TearFallAfter(tear, 30*3)
+                
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaSacred = true
+
+                tear.Velocity = tear.Velocity * 1.25
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaParasite = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+
+                tear:AddProjectileFlags(ProjectileFlags.CONTINUUM)
+                mod:TearFallAfter(tear, 30*7)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then
+
+                tear.Velocity = tear.Velocity * 0.5
+
+                tear:AddProjectileFlags(ProjectileFlags.MEGA_WIGGLE)
+                tear:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
+                tear.WiggleFrameOffset = 2000
+                mod:TearFallAfter(tear, 30*5)
+
+            end
+
+        elseif data.MainP == mod.LMainPassive.DR_FETUS then
+
+            local velocity = (target.Position - entity.Position):Normalized()*10
+            local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_NORMAL, 0, entity.Position+5*velocity, velocity, entity):ToBomb()
+            local bombSprite = bomb:GetSprite()
+
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+
+                mod:scheduleForUpdate(function()
+                    bombSprite:ReplaceSpritesheet(0, "gfx/items/pick ups/bombs/costumes/poison.png")
+                    bombSprite:LoadGraphics()
+                end,2)
+                
+                bomb:AddTearFlags(TearFlags.TEAR_EXPLOSIVE)
+
+                bomb:GetData().lunaBomb = true
+                bomb:GetData().LunaIpecac = true
+                
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                bomb.Position = bomb.Position + bomb.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance
+                
+                local bomb2 = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_NORMAL, 0, entity.Position+5*velocity, bomb.Velocity, entity):ToBomb()
+                bomb2.Position = bomb2.Position + bomb2.Velocity:Normalized():Rotated(-90)*mod.LConst._20_20_distance
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                bomb:GetSprite().Color = mod.Colors.whiteish
+
+                local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, bomb.Position, bomb.Velocity, bomb):ToEffect()
+                aura.Parent = bomb
+                bomb.Child = aura
+                aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                aura:GetSprite():LoadGraphics()
+                aura:GetSprite():Play("Idle", true)
+                aura.SpriteScale = aura.SpriteScale*1.3
+                aura:FollowParent(bomb)
+                bomb:Update()
+
+                bomb:GetData().lunaBomb = true
+                bomb:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+
+                bomb:AddTearFlags(TearFlags.TEAR_HOMING)
+
+                bombSprite.Color = mod.Colors.white
+                
+                bomb.Parent = entity
+
+                bomb:GetData().lunaBomb = true
+                bomb:GetData().lunaSacred = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+
+                bomb:GetData().lunaBomb = true
+                bomb:GetData().lunaParasite = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+                --Nothing :(
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then
+
+                bomb:AddTearFlags(TearFlags.TEAR_SPECTRAL)
+                bomb.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYERONLY
+
+                bomb:GetData().lunaBomb = true
+                bomb:GetData().lunaWorm = true
+                bomb:GetData().velocity = bomb.Velocity
+            end
+
+        elseif data.MainP == mod.LMainPassive.TECH_X then
+            
+            local velocity = (target.Position - entity.Position):Normalized()*mod.LConst.xTechSpeed
+            local ring = Isaac.Spawn(EntityType.ENTITY_LASER, LaserVariant.THIN_RED, 2, entity.Position+Vector(0,-40), velocity, entity):ToLaser()
+            ring.Parent = entity
+            entity.Child = ring
+            ring.Radius = mod.LConst.xTechSize
+            ring.DepthOffset = 500
+
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+
+                ring:AddTearFlags(TearFlags.TEAR_EXPLOSIVE)
+                ring:GetSprite().Color = mod.Colors.boom
+
+                ring:GetData().lunaRing = true
+                ring:GetData().lunaIpecac = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                ring.Position = ring.Position + ring.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance*1.5
+                
+                local ring2 = Isaac.Spawn(EntityType.ENTITY_LASER, LaserVariant.THIN_RED, 2, entity.Position+Vector(0,-40), ring.Velocity, entity):ToLaser()
+                ring2.Parent = entity
+                entity.Child = ring2
+                ring2.Radius = mod.LConst.xTechSize
+                ring2.DepthOffset = 500
+                ring2.Position = ring2.Position - ring2.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance*1.5
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                ring:GetSprite().Color = mod.Colors.whiteish
+                ring.Velocity = ring.Velocity/2
+
+
+                local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, ring.Position, ring.Velocity, ring):ToEffect()
+                aura.Parent = ring
+                aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                aura:GetSprite():LoadGraphics()
+                aura:GetSprite():Play("Idle", true)
+                aura.SpriteScale = aura.SpriteScale*1.3
+                aura:FollowParent(ring)
+
+                ring:GetData().lunaRing = true
+                ring:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+
+                ring.Parent = entity
+                ring:GetData().lunaRing = true
+                ring:GetData().lunaSacred = true
+                ring:GetSprite().Color = mod.Colors.white
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+
+                ring.Parent = entity
+                ring:GetData().lunaRing = true
+                ring:GetData().lunaParasite = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+                ring.Velocity = ring.Velocity*1.3
+                ring:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then
+
+                ring:AddTearFlags(TearFlags.TEAR_WIGGLE)
+                ring.Radius = mod.LConst.xTechSize*1.2
+
+            end
+
+        elseif data.MainP == mod.LMainPassive.HEMOLACRYA then
+
+            --Ipecac-like projectile technique from Alt Horsemen
+            local variance = (Vector(mod:RandomInt(-15, 15),mod:RandomInt(-15, 15))*0.03)
+            local vector = (target.Position-entity.Position)*0.028 + variance
+            
+            local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, vector, entity):ToProjectile();
+            tear.Scale = 2
+            tear.FallingSpeed = -45;
+            tear.FallingAccel = 1.5;
+
+            tear:GetData().lunaProjectile = true
+            tear:GetData().lunaBrust = true
+            
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+                
+                tear:GetSprite().Color = mod.Colors.boom
+                tear:AddProjectileFlags(ProjectileFlags.EXPLODE)
+                tear:GetData().LunaIpecac = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                tear.Position = tear.Position + tear.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance
+                
+                local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, tear.Velocity, entity):ToProjectile();
+                tear2.Scale = 2
+                tear2.FallingSpeed = -45;
+                tear2.FallingAccel = 1.5;
+
+                tear2:GetData().lunaProjectile = true
+                tear2:GetData().lunaBrust = true
+                
+                tear2.Position = tear.Position - tear.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                tear:GetSprite().Color = mod.Colors.whiteish
+
+                local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, tear.Position, tear.Velocity, tear):ToEffect()
+                aura.Parent = tear
+                tear.Child = aura
+                aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                aura:GetSprite():LoadGraphics()
+                aura:GetSprite():Play("Idle", true)
+                aura.SpriteScale = aura.SpriteScale*1.3
+                aura:FollowParent(tear)
+                tear:Update()
+
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+
+                tear:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
+                tear.HomingStrength = tear.HomingStrength*0.5
+                
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaSacred = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+
+                tear:GetData().lunaProjectile = true
+                tear:GetData().lunaParasite = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+                tear.Velocity = tear.Velocity*3
+                tear:AddProjectileFlags(ProjectileFlags.CONTINUUM)
+                tear:GetData().lunaContinnum = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then
+
+                tear:AddProjectileFlags(ProjectileFlags.MEGA_WIGGLE)
+                tear:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
+                tear.WiggleFrameOffset = 2000
+
+            end
+
+        elseif data.MainP == mod.LMainPassive.BRIMSTONE then
+        
+            local direction = (data.TargetAim - entity.Position):Normalized()
+            local laser = EntityLaser.ShootAngle(LaserVariant.THICK_RED, entity.Position, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+
+                laser:AddTearFlags(TearFlags.TEAR_EXPLOSIVE)
+                laser:GetSprite().Color = mod.Colors.boom
+
+                mod:scheduleForUpdate(function()
+                    --Need to get end of laser
+                    local position = laser:GetEndPoint()
+                    game:BombExplosionEffects (position, 100, TearFlags.TEAR_NORMAL, mod.Colors.boom, nil, 1, true, false, DamageFlag.DAMAGE_EXPLOSION )
+                end, 3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                laser:Remove()
+                
+                local pos2 = entity.Position - direction:Rotated(90)*mod.LConst._20_20_distance
+                local laser2 = EntityLaser.ShootAngle(LaserVariant.THICK_RED, pos2, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+                
+                local pos3 = entity.Position + direction:Rotated(90)*mod.LConst._20_20_distance
+                local laser3 = EntityLaser.ShootAngle(LaserVariant.THICK_RED, pos3, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                laser:GetSprite().Color = mod.Colors.whiteish
+                laser.Timeout = 45
+                
+                local laser2 = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, entity.Position + direction*80 , direction:GetAngleDegrees(), 45, Vector.Zero, entity)
+                laser2.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                laser2:GetSprite().Color = Color(1,1,1,0.5)
+                mod:scheduleForUpdate(function()
+                    laser2.SpriteScale = 7*Vector.One
+                end,5)
+
+                laser2:GetData().lunaLaser = true
+                laser2:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then --TODO
+
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+                laser:Remove()
+
+                local adversary = Isaac.Spawn(EntityType.ENTITY_ADVERSARY, 0, 0, entity.Position, Vector.Zero, entity):ToNPC()
+                adversary:GetData().HeavensCall = true
+                adversary.Visible = false
+                adversary.State = 8
+                adversary.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+                adversary:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+                adversary:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+                local adversarySprite = adversary:GetSprite()
+                adversarySprite:Play("Attack2Up", true)
+                adversarySprite.PlaybackSpeed = 100
+
+                local angulo = direction:GetAngleDegrees()
+                angulo = mod:Takeclosest({0,90,180,-180,-90}, angulo)
+                if angulo == 0 then
+                    adversary.I1 = 2
+                elseif angulo == 90 then
+                    adversary.I1 = 3
+                elseif angulo == 180 or angulo == -180 then
+                    adversary.I1 = 0
+                elseif angulo == -90 then
+                    adversary.I1 = 1
+                end
+
+                mod:scheduleForUpdate(function()
+                    local laser2
+                    for _,l in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER, LaserVariant.THICK_RED, 0)) do
+                        if l.Parent.Type == EntityType.ENTITY_ADVERSARY then
+                            laser2 = l
+                            laser2.Parent = entity
+                            laser2.SpawnerEntity = entity
+                            laser2 = laser2:ToLaser()
+                            break
+                        end
+                    end
+
+                    if laser2 then
+                        --laser2.Angle = direction:GetAngleDegrees()
+                        --laser2.AngleDegrees = direction:GetAngleDegrees()
+                        laser2.Position = entity.Position
+                        laser2.ParentOffset = Vector.Zero
+                        laser2:GetSprite().Color = mod.Colors.white
+                        
+                        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+                    end
+
+                    adversary:Remove()
+                    laser = laser2
+                end,3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+                
+                mod:scheduleForUpdate(function()
+                    --Need to get end of laser
+                    local position = laser:GetEndPoint()
+                    for i = 0, 1 do
+                        local laser = EntityLaser.ShootAngle(LaserVariant.THICK_RED, position , direction:GetAngleDegrees() + 90*(2*i-1), 15, Vector.Zero, entity)
+                    end
+                end, 3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+                laser:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+
+                mod:scheduleForUpdate(function()
+                    --Need to get end of laser
+                    local endPos = laser:GetEndPoint()
+                    local vector = endPos - room:GetCenterPos()
+                    local position = room:GetCenterPos() - vector
+
+                    local laser2 = EntityLaser.ShootAngle(LaserVariant.THICK_RED, position, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+                    laser2:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+
+                end, 3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then --TODO
+                
+                --:(
+
+            end
+
+        --elseif data.MainP == mod.LMainPassive.EPIC_FETUS then
+            --a
+        elseif data.MainP == mod.LMainPassive.REVELATIONS then
+            
+            local direction = (data.TargetAim - entity.Position):Normalized()
+            local laser = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, entity.Position, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+
+            if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+
+                laser:AddTearFlags(TearFlags.TEAR_EXPLOSIVE)
+                laser:GetSprite().Color = mod.Colors.boom
+
+                mod:scheduleForUpdate(function()
+                    --Need to get end of laser
+                    local position = laser:GetEndPoint()
+                    game:BombExplosionEffects (position, 100, TearFlags.TEAR_NORMAL, mod.Colors.boom, nil, 1, true, false, DamageFlag.DAMAGE_EXPLOSION )
+                end, 3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+
+                laser:Remove()
+                
+                local pos2 = entity.Position - direction:Rotated(90)*mod.LConst._20_20_distance
+                local laser2 = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, pos2, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+                
+                local pos3 = entity.Position + direction:Rotated(90)*mod.LConst._20_20_distance
+                local laser3 = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, pos3, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+
+                laser:GetSprite().Color = mod.Colors.whiteish
+                laser.Timeout = 45
+                
+                local laser2 = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, entity.Position + direction*80 , direction:GetAngleDegrees(), 45, Vector.Zero, entity)
+                laser2.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                laser2:GetSprite().Color = Color(1,1,1,0.5)
+                mod:scheduleForUpdate(function()
+                    laser2.SpriteScale = 7*Vector.One
+                end,5)
+
+                laser2:GetData().lunaLaser = true
+                laser2:GetData().lunaGodHead = true
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+                laser:Remove()
+
+                local adversary = Isaac.Spawn(EntityType.ENTITY_ADVERSARY, 0, 0, entity.Position, Vector.Zero, entity):ToNPC()
+                adversary:GetData().HeavensCall = true
+                adversary.Visible = false
+                adversary.State = 8
+                adversary.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+                adversary:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+                adversary:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+                local adversarySprite = adversary:GetSprite()
+                adversarySprite:Play("Attack2Up", true)
+                adversarySprite.PlaybackSpeed = 100
+
+                local angulo = direction:GetAngleDegrees()
+                angulo = mod:Takeclosest({0,90,180,-180,-90}, angulo)
+                if angulo == 0 then
+                    adversary.I1 = 2
+                elseif angulo == 90 then
+                    adversary.I1 = 3
+                elseif angulo == 180 or angulo == -180 then
+                    adversary.I1 = 0
+                elseif angulo == -90 then
+                    adversary.I1 = 1
+                end
+
+                mod:scheduleForUpdate(function()
+                    local laser2
+                    for _,l in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER, LaserVariant.THICK_RED, 0)) do
+                        if l.Parent.Type == EntityType.ENTITY_ADVERSARY then
+                            laser2 = l
+                            laser2.Parent = entity
+                            laser2.SpawnerEntity = entity
+                            laser2 = laser2:ToLaser()
+
+                            --local laser2Sprite = laser2:GetSprite()
+                            --laser2Sprite:Load("gfx/007.005_lightbeam.anm2", true)
+                            --laser2Sprite:LoadGraphics()
+
+                            sfx:Stop(SoundEffect.SOUND_BLOOD_LASER)
+                            sfx:Play(SoundEffect.SOUND_ANGEL_BEAM)
+
+                            break
+                        end
+                    end
+
+                    if laser2 then
+                        --laser2.Angle = direction:GetAngleDegrees()
+                        --laser2.AngleDegrees = direction:GetAngleDegrees()
+                        laser2.Position = entity.Position
+                        laser2.ParentOffset = Vector.Zero
+                        laser2:GetSprite().Color = mod.Colors.wax
+                        
+                        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+                    end
+
+                    adversary:Remove()
+                    laser = laser2
+                end,3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+                
+                mod:scheduleForUpdate(function()
+                    --Need to get end of laser
+                    local position = laser:GetEndPoint()
+                    for i = 0, 1 do
+                        local laser = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, position , direction:GetAngleDegrees() + 90*(2*i-1), 15, Vector.Zero, entity)
+                    end
+                end, 3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+                laser:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+
+                local laser2 = EntityLaser.ShootAngle(LaserVariant.THIN_RED, entity.Position, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+                laser2.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                laser2.Visible = false
+                mod:scheduleForUpdate(function()
+                    --Need to get end of laser
+                    local endPos = laser2:GetEndPoint()
+                    local vector = endPos - room:GetCenterPos()
+                    local position = room:GetCenterPos() - vector*1.4
+
+                    local laser2 = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, position, direction:GetAngleDegrees(), 15, Vector.Zero, entity)
+                    laser2:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+
+                end, 3)
+
+            elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then --TODO
+                --:(
+            end
+        elseif data.MainP == mod.LMainPassive.SPIDER_FREAK then
+
+                local tears = {}
+
+                for i=1,6 do
+                    local velocity = (target.Position - entity.Position):Normalized():Rotated((i-3)*mod.LConst.spiderFreakAngle - 5)*7
+
+                    local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+                    tear.Height = tear.Height - 25
+                    tears[i] = tear
+                end
+
+    
+                if data.SecondaryP == mod.LSecondaryPassives.IPECAC then
+    
+                    for i=1,6 do
+                        local tear = tears[i]
+
+                        local vector = (tear.Velocity*25)*0.028
+        
+                        tear.Velocity = vector
+                        
+                        tear.Scale = 2
+                        tear.FallingSpeed = -45;
+                        tear.FallingAccel = 1.5;
+        
+                        tear:GetSprite().Color = mod.Colors.boom
+        
+                        tear:AddProjectileFlags(ProjectileFlags.EXPLODE)
+                    end
+
+    
+                elseif data.SecondaryP == mod.LSecondaryPassives._20_20 then
+    
+                    for i=0,7,7 do
+                        local velocity = (target.Position - entity.Position):Normalized():Rotated((i-3)*mod.LConst.spiderFreakAngle - 5)*7
+    
+                        local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+                        tear.Height = tear.Height - 25
+                        tears[i] = tear
+                    end
+    
+                elseif data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+    
+                    for i=1,6 do
+                        local tear = tears[i]
+
+                        tear.Scale = 1.5
+                        tear.Velocity = tear.Velocity*0.8
+                        mod:TearFallAfter(tear, 300)
+        
+                        tear:GetSprite().Color = mod.Colors.whiteish
+        
+        
+                        local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, tear.Position, tear.Velocity, tear):ToEffect()
+                        aura.Parent = tear
+                        tear.Child = aura
+                        aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                        aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                        aura:GetSprite():LoadGraphics()
+                        aura:GetSprite():Play("Idle", true)
+                        aura.SpriteScale = aura.SpriteScale*1.3
+                        aura:FollowParent(tear)
+                        tear:Update()
+        
+                        tear:GetData().lunaProjectile = true
+                        tear:GetData().lunaGodHead = true
+                    end
+    
+                elseif data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART then
+    
+                    for i=1,6 do
+                        local tear = tears[i]
+
+                        tear.Scale = 1.75
+                        tear:AddProjectileFlags(ProjectileFlags.SMART)
+                        tear.HomingStrength = tear.HomingStrength*0.9
+                        mod:TearFallAfter(tear, 300)
+                        
+                        tear:GetData().lunaProjectile = true
+                        tear:GetData().lunaSacred = true
+
+                    end
+    
+                elseif data.SecondaryP == mod.LSecondaryPassives.PARASITE then
+    
+                    for i=1,6 do
+                        local tear = tears[i]
+
+                        tear:GetData().lunaProjectile = true
+                        tear:GetData().lunaParasite = true
+
+                    end
+    
+                elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+    
+                    for i=1,6 do
+                        local tear = tears[i]
+
+                        tear:AddProjectileFlags(ProjectileFlags.CONTINUUM)
+                        mod:TearFallAfter(tear, 30*2.5)
+
+                    end
+    
+                elseif data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM then
+    
+                    for i=1,6 do
+                        local tear = tears[i]
+
+                        tear.Velocity = tear.Velocity * 0.5
+        
+                        tear:AddProjectileFlags(ProjectileFlags.MEGA_WIGGLE)
+                        tear:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
+                        tear.WiggleFrameOffset = 2000
+                        mod:TearFallAfter(tear, 30*5)
+                    end
+    
+                end
+        end
 
     end
 
 end
 function mod:LunaCharge(entity, data, sprite, target,room)
+    if data.Height then
+        entity.Position = Vector(entity.Position.X, data.Height)
+    end
+
     if data.StateFrame == 1 then
+        data.Height = entity.Position.Y
+        local direction = mod.RoomWalls.RIGHT
+        local rotation = 90
 
         if (entity.Position.X - target.Position.X) < 0 then
             sprite:Play("DashR",true)
             data.Direcion = 1
         else
             sprite:Play("DashL",true)
+            rotation = -90
+            direction = mod.RoomWalls.LEFT
             data.Direcion = -1
         end
 
-        local position = Vector(data.Direcion*500, entity.Position.Y)
-        for i=data.Direcion*500, 0, -70*data.Direcion do
-            position = Vector(i, entity.Position.Y)
-            if (not mod:IsOutsideRoom(position, room)) then 
-                position = Vector(i - 70*data.Direcion, entity.Position.Y)
-                break 
-            end
-        end
+        local position = mod.BorderRoom[direction][room:GetRoomShape()] - data.Direcion*70
 
-        local door = mod:SpawnLunaDoor(entity, mod.DoorType.NORMAL, position)
+        local door = mod:SpawnLunaDoor(entity, mod.DoorType.NORMAL, Vector(position, entity.Position.Y))
+        door:GetSprite().Rotation = rotation
 
     elseif sprite:IsFinished("DashR") or sprite:IsFinished("DashL") or sprite:IsFinished("TrapdoorOut") then
+        data.Height = nil
         data.DashFlag = false
         data.State = mod:MarkovTransition(data.State, mod.chainL)
         data.StateFrame = 0
@@ -517,6 +1307,20 @@ function mod:LunaMegaSatan(entity, data, sprite, target,room)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
 
+        local direction = mod.RoomWalls.UP
+        local rotation = 0
+        if rng:RandomFloat() < 0.5 then
+            rotation = 180
+            direction = mod.RoomWalls.DOWN
+        end
+
+        local shape = room:GetRoomShape()
+        local position = mod.BorderRoom[direction][shape]
+
+        local door = mod:SpawnEntity(mod.Entity.LunaMegaSatanDoor, Vector(mod:RandomInt(70+mod.BorderRoom[mod.RoomWalls.LEFT][shape],-70+mod.BorderRoom[mod.RoomWalls.RIGHT][shape]),position), Vector.Zero, entity)
+        door:GetSprite().Rotation = rotation
+        door.Parent = entity
+        entity.Child = door
     end
 
 end
@@ -528,16 +1332,18 @@ function mod:LunaCurse(entity, data, sprite, target,room)
     elseif sprite:IsFinished("Snap") then
         data.State = mod:MarkovTransition(data.State, mod.chainL)
         data.StateFrame = 0
+        data.CuseFlag = false
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Snap",true)
 
+    elseif sprite:IsEventTriggered("SummonDoor") then
         local door = mod:SpawnLunaDoor(entity, mod.DoorType.CURSE, entity.Position + Vector(0,20))
-        
+        data.CuseFlag = true
     elseif sprite:IsEventTriggered("Snap") then
         entity.Child.Velocity = (target.Position - entity.Position):Normalized() * mod.LConst.curseSpeed
     end
 
-    if entity.Child and entity.Child.Velocity:Length()<mod.LConst.curseSpeed then
+    if entity.Child and entity.Child.Velocity:Length()<mod.LConst.curseSpeed and data.CuseFlag then
         entity.Child:GetSprite().Rotation = (target.Position - entity.Position):GetAngleDegrees() - 90
     end
 
@@ -674,6 +1480,16 @@ function mod:LunaSacrifice(entity, data, sprite, target,room)
     elseif sprite:IsEventTriggered("Land") then
         entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
         --SPIKES
+        local nSpikes = 9
+        if (room:GetRoomShape()>=RoomShape.ROOMSHAPE_2x2) then
+            nSpikes = 27
+        end
+
+        for i=1,nSpikes do
+            local position = room:GetGridPosition(room:GetClampedGridIndex (room:GetRandomPosition(0)))
+            local spike = mod:SpawnEntity(mod.Entity.Spike, position, Vector.Zero, entity)
+            spike.Parent = entity
+        end
         
     elseif sprite:IsEventTriggered("Preland") and entity.Child then
         entity.Child:GetSprite():Play("Close",true)
@@ -743,13 +1559,225 @@ function mod:GiveItemLuna(entity, itemNum)
     if data.LastItemType == mod.LItemType.ACTIVE then
 
     elseif data.LastItemType == mod.LItemType.MAIN then
-
+        data.MainP = itemNum
     elseif data.LastItemType == mod.LItemType.SECONDARY then
-
+        data.SecondaryP = itemNum
     elseif data.LastItemType == mod.LItemType.ASSIST then
-
+        data.AssistP = itemNum
     else
         --SPECIAL
+    end
+end
+
+--Make tear fall after
+function mod:TearFallAfter(projectile, frames)
+
+    projectile:AddProjectileFlags(ProjectileFlags.CHANGE_FLAGS_AFTER_TIMEOUT)
+    projectile.ChangeFlags = ProjectileFlags.TRACTOR_BEAM
+    projectile.ChangeTimeout = frames
+    
+    projectile.FallingSpeed = 0
+    projectile.FallingAccel = -0.1
+
+end
+
+--Projectile collision effects
+function mod:LunaProjectile(tear,collided)
+	local data = tear:GetData()
+    local sprite = tear:GetSprite()
+	
+    if data.lunaGodHead then
+        mod:LunaGodHead(tear.Position, 80 * tear.SpriteScale.X/1.3)
+    elseif data.lunaSacred then
+        tear:GetSprite().Color = mod.Colors.white
+    end
+
+	--If tear collided then
+	if tear:IsDead() or collided then
+		
+        if data.lunaParasitoid then
+            for i=1,3 do
+                if rng:RandomFloat() < 0.5 then
+                    local spider = Isaac.Spawn(EntityType.ENTITY_SPIDER, 0, 0, tear.Position. Vector.Zero, nil)
+                else
+                    local fly = Isaac.Spawn(EntityType.ENTITY_ATTACKFLY, 0, 0, tear.Position. Vector.Zero, nil)
+                end
+            end
+        end
+
+        if data.lunaParasite and not data.lunaBrust then
+            for i=0,1 do
+                local velocity = tear.Velocity:Rotated(90*(2*i-1))
+                local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, velocity, nil):ToProjectile()
+            end
+
+        elseif data.lunaParasite and data.lunaBrust then
+            for i=0,1 do
+                local velocity = tear.Velocity:Rotated(90*(2*i-1))
+                local variance = (Vector(mod:RandomInt(-15, 15),mod:RandomInt(-15, 15))*0.03)
+                local vector = (velocity*20)*0.028 + variance
+                
+                local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, vector, nil):ToProjectile();
+                tear2.Scale = 2
+                tear2.FallingSpeed = -45;
+                tear2.FallingAccel = 1.5;
+            end
+        end
+        
+        if data.lunaBrust then
+            --Splash of projectiles:
+            for i=0, mod.JConst.nCloudRingProjectiles do
+                --Ring projectiles:
+                local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(10,0):Rotated(i*360/mod.JConst.nCloudRingProjectiles)/2, tear):ToProjectile()
+                tear2.FallingSpeed = -0.1
+                tear2.FallingAccel = 0.35 + rng:RandomFloat()*0.15
+                tear2:GetSprite().Color = tear:GetSprite().Color
+
+                if data.lunaGodHead then
+                    local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, tear2.Position, tear2.Velocity, tear2):ToEffect()
+                    aura.Parent = tear2
+                    tear2.Child = aura
+                    aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                    aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                    aura:GetSprite():LoadGraphics()
+                    aura:GetSprite():Play("Idle", true)
+                    aura.SpriteScale = aura.SpriteScale*0.5
+                    aura:FollowParent(tear2)
+                    tear2:Update()
+    
+                    tear2:GetData().lunaProjectile = true
+                    tear2:GetData().lunaGodHead = true
+                elseif data.LunaIpecac then
+                    tear2:AddProjectileFlags(ProjectileFlags.EXPLODE)
+                elseif data.lunaContinnum then
+                    tear2:AddProjectileFlags(ProjectileFlags.CONTINUUM)
+                end
+            end
+            for i=0, mod.JConst.nCloudRndProjectiles do
+                --Random projectiles:
+                local angle = mod:RandomInt(0, 360)
+                local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, tear.Position, Vector(7,0):Rotated(angle)/2, tear.Parent):ToProjectile()
+                local randomFall = - rng:RandomFloat()*0.5
+                tear2.FallingSpeed = randomFall
+                tear2.FallingAccel = 0.3 + rng:RandomFloat()*0.1
+                tear2:GetSprite().Color = tear:GetSprite().Color
+
+                if data.lunaGodHead then
+                    local aura = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HALO, 0, tear2.Position, tear2.Velocity, tear2):ToEffect()
+                    aura.Parent = tear2
+                    tear2.Child = aura
+                    aura:GetSprite():Load("gfx/1000.123_Halo (Static Prerendered).anm2", true)
+                    aura:GetSprite():ReplaceSpritesheet(0, "gfx/effects/luna_god.png")
+                    aura:GetSprite():LoadGraphics()
+                    aura:GetSprite():Play("Idle", true)
+                    aura.SpriteScale = aura.SpriteScale*0.5
+                    aura:FollowParent(tear2)
+                    tear2:Update()
+    
+                    tear2:GetData().lunaProjectile = true
+                    tear2:GetData().lunaGodHead = true
+                elseif data.LunaIpecac then
+                    tear2:AddProjectileFlags(ProjectileFlags.EXPLODE)
+                elseif data.lunaContinnum then
+                    tear2:AddProjectileFlags(ProjectileFlags.CONTINUUM)
+                end
+            end
+        end
+
+
+		tear:Die()
+	end
+end
+
+function mod:LunaBombs(bomb)
+    local data = bomb:GetData()
+
+    if data.lunaGodHead then
+        mod:LunaGodHead(bomb.Position)
+    elseif data.lunaSacred and bomb.Parent then
+        bomb.Velocity = (bomb.Parent:ToNPC():GetPlayerTarget().Position - bomb.Position):Normalized()*4
+    elseif data.lunaWorm then
+        bomb.Velocity = bomb.Velocity/20 + bomb.Velocity:Rotated(math.sin(bomb.FrameCount)*20)*1.001
+    end
+
+    if bomb:GetSprite():IsPlaying("Explode") then
+        if data.LunaIpecac then
+            local gas = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SMOKE_CLOUD, 0, bomb.Position, Vector.Zero, nil):ToEffect()
+            gas.Timeout = mod.JConst.chargeGasTime
+        elseif data.lunaParasite then
+            for i=0,1 do
+                local vector = bomb.Velocity:Normalized():Rotated(90*(2*i-1))*10
+                local bomb2 = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_NORMAL, 0, bomb.Position+5*vector, Vector.Zero, entity):ToBomb()
+                bomb2:SetExplosionCountdown(10)
+            end
+        end
+    end
+end
+
+function mod:LunaRings(ring)
+
+    local data = ring:GetData()
+    local sprite = ring:GetSprite()
+
+    if data.lunaGodHead then
+        mod:LunaGodHead(ring.Position)
+    elseif data.lunaSacred then
+        if ring.FrameCount < 30*3 then
+            ring.Velocity = (ring.Parent:ToNPC():GetPlayerTarget().Position - ring.Position):Normalized()*4
+        end
+    elseif data.lunaIpecac then
+        if sprite:IsPlaying("Laser0Fade") and sprite:GetFrame()==1 then
+            game:BombExplosionEffects (ring.Position, 100, TearFlags.TEAR_NORMAL, mod.Colors.boom, nil, 1, true, false, DamageFlag.DAMAGE_EXPLOSION )
+        end
+    elseif data.lunaParasite then
+        if sprite:IsPlaying("Laser0Fade") and sprite:GetFrame()==1 then
+            for i=0,1 do
+                local velocity = ring.Velocity:Rotated(90*(2*i-1))
+                local ring2 = Isaac.Spawn(EntityType.ENTITY_LASER, LaserVariant.THIN_RED, 2, ring.Position, velocity, nil):ToLaser()
+                ring2.Parent = ring.Parent
+                ring2.Radius = mod.LConst.xTechSize*0.75
+                ring2.DepthOffset = 500
+            end
+        end
+    end
+end
+
+function mod:LunaLasers(laser)
+    local data = laser:GetData()
+
+    if data.lunaGodHead then
+        local position = laser:GetEndPoint()
+        for i=0,20 do
+            local point = (position-laser.Position):Normalized()*laser.LaserLength/20*i
+            mod:LunaGodHead(point+laser.Position, 80, 2)
+        end
+    end
+    
+end
+
+function mod:LunaGodHead(point, dist, suma)
+    if not dist then dist = 80 end
+    if not suma then suma = 3 end
+
+    for i=0, game:GetNumPlayers ()-1 do
+        local player = game:GetPlayer(i)
+        local playerData = player:GetData()
+
+        if player.Position:Distance(point) < dist then
+            if playerData.GodheadTime then
+                playerData.GodheadTime = playerData.GodheadTime + suma
+
+                player:GetSprite().Color = Color.Lerp(player:GetSprite().Color, mod.Colors.white, 0.075)
+            else
+                playerData.GodheadTime = 1
+            end
+
+            if playerData.GodheadTime > 25 then
+                playerData.GodheadTime = 0
+
+                local light = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CRACK_THE_SKY, 0, player.Position, Vector.Zero, nil)
+            end
+        end
     end
 end
 
@@ -769,3 +1797,31 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
 		end
 	end
 end)
+
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear:GetData().lunaProjectile and collider.Type == EntityType.ENTITY_PLAYER then
+		mod:LunaProjectile(tear,true)
+	end
+end)
+mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, tear)
+	if tear:GetData().lunaProjectile then
+		mod:LunaProjectile(tear,false)
+	end
+end)
+
+mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, function(_, bomb)
+    if bomb:GetData().lunaBomb then
+        mod:LunaBombs(bomb)
+    end
+     
+end, BombVariant.BOMB_NORMAL)
+
+
+mod:AddCallback(ModCallbacks.MC_POST_LASER_UPDATE, function(_, laser)
+    if laser:GetData().lunaRing then
+        mod:LunaRings(laser)
+    elseif laser:GetData().lunaLaser then
+        mod:LunaLasers(laser)
+    end
+end)
+

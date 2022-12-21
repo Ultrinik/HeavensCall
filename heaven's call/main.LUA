@@ -45,6 +45,8 @@ mod.Colors = {
 	greenEden = Color(0.5,1,0.5,0.6,0.4,1,0.4),
 	wax = Color(1,1,1,1,1,0.85,0.8),
 	booger = Color(1,1,1,1),
+	white = Color(1,1,1,1),
+	whiteish = Color(1,1,1,1,0.1,0.1,0.1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -64,6 +66,8 @@ function mod:ColorizeColors()
 	mod.Colors.mercury:SetColorize(7,5,7,1)
 	mod.Colors.tar:SetColorize(1, 1, 1, 1)
 	mod.Colors.booger:SetColorize(0.3, 2, 0.2, 1)
+	mod.Colors.white:SetColorize(10, 10, 10, 1)
+	mod.Colors.whiteish:SetColorize(5, 5, 5, 1)
 end
 mod:ColorizeColors()
 
@@ -102,6 +106,8 @@ mod.ModFlags = {
 	venusCounter = 0,
 	venusPosition = Vector.Zero,
 	venusHeat = false,
+
+	SpikeHits = 0,
 }
 mod.ModConfigs = {
 	noRain = false,
@@ -219,6 +225,8 @@ end
 
 --ded
 function mod:NormalDeath(entity, notExplosion, mamaMega)
+	mod.ModFlags.SpikeHits = 0
+
 	local data = entity:GetData()
 
 	if mod.ModFlags.currentMusic then
@@ -494,6 +502,7 @@ end
 
 --Load (or reset) things when the run is started or continued
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
+	mod.ModFlags.SpikeHits = 0
 
 	if not iscontinued then
 		rng:SetSeed(Game():GetSeeds():GetStartSeed(), 35)
@@ -553,6 +562,8 @@ end)
 
 --Will the room spawn??? 👀
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
+	mod.ModFlags.SpikeHits = 0
+
 	if REVEL then
 		mod:scheduleForUpdate(function()
 			mod:AstralRoomGenerator()
@@ -603,6 +614,9 @@ function mod:AstralRoomGenerator()
 	elseif (level:GetStage() == LevelStage.STAGE5 or corpseFlag) and not mod.savedata.planetAlive and not mod.savedata.planetKilled2 then
 		if mod.ModConfigs.roomSpawnChance2 == nil then mod.ModConfigs.roomSpawnChance2 = 30 end
 		totalchance = mod.ModConfigs.roomSpawnChance2/100
+		if corpseFlag then
+			totalchance = 1 - (1-totalchance)^0.5
+		end
 	end
 
 	if totalchance > 0 then
@@ -1145,6 +1159,7 @@ if HPBars then
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Terra2].ID).."."..tostring(mod.EntityInf[mod.Entity.Terra2].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Horsemen].ID).."."..tostring(mod.EntityInf[mod.Entity.Horsemen].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(EntityType.ENTITY_ADVERSARY)..".0"] = {function(entity) if entity:GetData().HeavensCall then return true end end}
 
 	--Adding the bars
 	Jid = tostring(mod.EntityInf[mod.Entity.Jupiter].ID).."."..tostring(mod.EntityInf[mod.Entity.Jupiter].VAR)
@@ -1179,7 +1194,7 @@ if HPBars then
 		barStyle = "PlanetariumHC"
     }
 
-	
+
 	HPBars.BossDefinitions[MRid] = {
         sprite = "gfx/bosses/icon_mercury.png",
 		barStyle = "PlanetariumHC"

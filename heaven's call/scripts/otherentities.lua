@@ -493,24 +493,6 @@ function mod:CandleUpdate(entity)
 				local sirenRags = mod:FindByTypeMod(mod.Entity.SirenRag)
 				if #(sirenRags)>0 then
 					sprite:Play("SingLoop",true)
-					
-					--[[if data.SirenResummonCount >= mod.VConst.sirenResummonRate then
-
-						if #sirenRags >= 50 then
-							for _, e in ipairs(sirenRags) do
-								e:Remove()
-							end
-						end
-
-						for i=1, mod.VConst.sirenSummons do
-							local sirenRag = mod:SpawnEntity(mod.Entity.SirenRag, entity.Position, Vector.Zero, entity)
-							sirenRag.Parent = entity
-							mod:SirenRagSprite(sirenRag)
-						end
-
-						data.SirenResummonCount = 0
-					end]]
-
 					data.SirenResummonCount = data.SirenResummonCount + 1
 				else
 					sprite:Play("SingEnd",true)
@@ -853,68 +835,7 @@ function mod:SirenRagUpdate(entity)
 
 		entity.State = 10
 	end
-
-	--Start sing = 10
-	--Sing = 3
-
-	--[[
-	local sprite = entity:GetSprite()
-	local animName = sprite:GetAnimation()
-	if animName == "Attack2BStart" then
-		print(entity.State)
-	else
-		print(animName)
-	end
-
-	if mod.EntityInf[mod.Entity.SirenRag].VAR == entity.Variant and mod.EntityInf[mod.Entity.SirenRag].SUB == entity.SubType  then
-		local sprite = entity:GetSprite()
-		local data = entity:GetData()
-
-		--Init
-		if data.Skip == nil then 
-			data.Skip = true 
-
-			entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-
-			entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-
-			mod:SirenRagSprite(entity)
-
-			sprite:Play("Attack2BStart")
-		end
-		entity.State = 10
-
-
-		--Skip all animations until Siren decides to sing
-		local animName = sprite:GetAnimation()
-		if animName ~= "Attack2BStart" and animName ~= "Attack2BLoop" and animName ~= "Attack2BEnd" and data.Skip == true then
-			sprite:SetLastFrame ()
-			entity.Visible = false
-		end
-
-		--She singed and triggered the steal
-		if sprite:IsEventTriggered("SingFlag") then
-			data.Skip = false
-		end
-
-		--Loop that one animation
-		if data.Skip == false then
-			sprite:Play("Attack2BLoop",true)
-		end
-
-		--If Its going to attack stop her
-		if animName == "Attack1Start" or animName == "Teleport" then
-			entity:Remove()
-		end
-
-		if entity.Parent then
-			entity.Position = entity.Parent.Position
-			entity.Velocity = Vector.Zero
-		end
-
-	end]]
 end
---mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.SirenRagUpdate, EntityType.ENTITY_SIREN)
 
 function mod:SirenRagSprite(entity)
 	local sprite = entity:GetSprite()
@@ -1770,6 +1691,7 @@ function mod:LunaDoorUpdate(entity)
 				local luna = entity.Parent
 
 				luna:GetData().DashFlag = false
+				luna:GetData().Height = nil
 				luna.Velocity = Vector.Zero
 
 				--Luna teleport
@@ -1850,7 +1772,7 @@ function mod:LunaDoorUpdate(entity)
 
 		for i=0, game:GetNumPlayers ()-1 do
 			local player = game:GetPlayer(i)
-			if player.Position:Distance(entity.Position) < 10 then 
+			if player.Position:Distance(entity.Position) < 30 then 
 				player:TakeDamage(2, DamageFlag.DAMAGE_CURSED_DOOR, EntityRef(entity.Parent), 0)
 			end
 		end
@@ -1861,7 +1783,10 @@ function mod:LunaDoorUpdate(entity)
 
 	elseif doorType == mod.DoorType.ARCADE then
 
-		if data.Frame == timeDespawn then
+		if data.Frame == timeDespawn/2 then
+			local card = mod:SpawnEntity(mod.Entity.Card, entity.Position, Vector.Zero, entity.Parent)
+			card.Parent = entity.Parent
+		elseif data.Frame == timeDespawn then
 			sprite:Play("Close", true)
 		end
 
@@ -1980,6 +1905,195 @@ function mod:SpawnLunaDoor(entity, doorType, position)
 
 end
 
+function mod:LunaMegaSatanDoorUpdate(entity)
+	local sprite = entity:GetSprite()
+	local data = entity:GetData()
+
+	if not data.Frame then data.Frame = 0 end
+	data.Frame = data.Frame + 1
+
+	if sprite:IsFinished("Open") and entity.Parent then
+		sprite:Play("Opened", true)
+
+		local angle = -90
+		if (entity.Position.Y < game:GetRoom():GetCenterPos().Y) then
+			angle = 90
+		end
+
+		local laser = EntityLaser.ShootAngle(LaserVariant.GIANT_RED, entity.Position, angle, 55, Vector.Zero, entity.Parent):ToLaser()
+		laser:AddTearFlags(TearFlags.TEAR_SPECTRAL)
+		laser.DepthOffset = 10
+		laser.DisableFollowParent = true
+
+	elseif sprite:IsFinished("Close") then
+		entity:Remove()
+	elseif data.Frame == 140 then
+		sprite:Play("Close", true)
+	end
+
+end
+
+--Card Show Luna--------------------------------------------------------------------------------------------------------------------
+function mod:CardShowUpdate(entity)
+	local sprite = entity:GetSprite()
+	local data = entity:GetData()
+
+	if not data.Init then
+		data.Init = true
+		local random = mod:RandomInt(1,4)
+		if random==1 then
+			sprite:Play("Heart", true)
+		elseif random==2 then
+			sprite:Play("Key", true)
+		elseif random==3 then
+			sprite:Play("Bomb", true)
+		else
+			sprite:Play("Coin", true)
+		end
+
+		entity.Parent = entity.SpawnerEntity
+	end
+	
+	if sprite:IsFinished("Heart") then
+		for i=1, mod.LConst.nCoins do
+			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
+			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 3, 0, entity.Position + offset, offset/5, entity.Parent)
+			coin.Parent = entity.Parent
+		end
+		entity:Remove()
+	elseif sprite:IsFinished("Key") then
+		for i=1, mod.LConst.nCoins do
+			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
+			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 1, 0, entity.Position + offset, offset/5, entity.Parent)
+			coin.Parent = entity.Parent
+		end
+		entity:Remove()
+	elseif sprite:IsFinished("Bomb") then
+		for i=1, mod.LConst.nCoins do
+			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
+			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 2, 0, entity.Position + offset, offset/5, entity.Parent)
+			coin.Parent = entity.Parent
+		end
+		entity:Remove()
+	elseif sprite:IsFinished("Coin") then
+		for i=1, mod.LConst.nCoins do
+			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
+			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 0, 0, entity.Position + offset, offset/5, entity.Parent)
+			coin.Parent = entity.Parent
+		end
+		entity:Remove()
+	end
+
+
+end
+
+--Spike Luna--------------------------------------------------------------------------------------------------------------------
+function mod:LunaSpikeUpdate(entity)
+	local sprite = entity:GetSprite()
+	local data = entity:GetData()
+
+	local tookDamage = false
+	entity.DepthOffset = -100
+	if sprite:IsEventTriggered("LowDamage") then
+		for i=0, game:GetNumPlayers ()-1 do
+			local player = game:GetPlayer(i)
+			if player.Position:Distance(entity.Position) < 20 and not player.CanFly then
+				tookDamage = player:TakeDamage(2, 0, EntityRef(entity.Parent), 0)
+			end
+		end
+	elseif sprite:IsEventTriggered("HightDamage") then
+		for i=0, game:GetNumPlayers ()-1 do
+			local player = game:GetPlayer(i)
+			if player.Position:Distance(entity.Position) < 20 then
+				tookDamage = player:TakeDamage(2, DamageFlag.DAMAGE_SPIKES, EntityRef(entity.Parent), 0)
+			end
+		end
+	end
+
+	if tookDamage and entity.Parent then
+		local spikeHits = mod.ModFlags.SpikeHits + 1
+		mod.ModFlags.SpikeHits = spikeHits
+
+		local position = game:GetRoom():GetCenterPos() + Vector(0,30)
+		position = Isaac.GetFreeNearPosition(position, 50)
+
+		local random = rng:RandomFloat()
+		if spikeHits <= 2 then
+			if random < 0.5 then
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position, Vector.Zero, nil)
+			end
+		elseif spikeHits == 3 then
+			if random < 0.666667 then
+				game:GetLevel():AddAngelRoomChance(game:GetRoom():GetDevilRoomChance() * 0.15)
+			end
+		elseif spikeHits == 4 then
+			if random < 0.5 then
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_CHEST, 0, position, Vector.Zero, nil)
+			end
+		elseif spikeHits == 5 then
+			if random < 0.666667 then
+				game:GetLevel():AddAngelRoomChance(game:GetRoom():GetDevilRoomChance() * 0.5)
+			else
+				for i=1,3 do
+					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position, Vector.Zero, nil)
+					position = Isaac.GetFreeNearPosition(position, 50)
+				end
+			end
+		elseif spikeHits == 6 then
+			if random < 0.666667 then
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_CHEST, 0, position, Vector.Zero, nil)
+			else
+				game:GetPlayer(0):UseCard (Card.CARD_JOKER)
+			end
+		elseif spikeHits == 7 then
+			if random < 0.666667 then
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_SOUL, position, Vector.Zero, nil)
+			else
+				local item = game:GetItemPool():GetCollectible(ItemPoolType.POOL_ANGEL)
+				Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, item, position, Vector.Zero, nil)
+			end
+		elseif spikeHits == 8 then
+			for i=1,6 do
+				mod:scheduleForUpdate(function()
+					Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_TROLL, 0, game:GetRoom():GetRandomPosition(0), Vector.Zero, nil)
+				end, i*5)
+			end
+		elseif spikeHits == 9 then
+			Isaac.Spawn(EntityType.ENTITY_URIEL, 0,0, position, Vector.Zero, nil)
+		elseif spikeHits == 10 then
+
+			if random < 0.5 then
+				for i=1,30 do
+					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position, Vector.Zero, nil)
+					position = Isaac.GetFreeNearPosition(position, 50)
+				end
+			else
+				for i=1,7 do
+					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_SOUL, position, Vector.Zero, nil)
+					position = Isaac.GetFreeNearPosition(position, 50)
+				end
+			end
+		elseif spikeHits == 11 then
+			Isaac.Spawn(EntityType.ENTITY_GABRIEL, 0,0, position, Vector.Zero, nil)
+		elseif spikeHits >= 12 then
+			if random < 0.5 then
+				mod.ModFlags.SpikeHits = 0
+
+				--dark room
+				local newlevel = {LevelStage = LevelStage.STAGE6, StageType = StageType.STAGETYPE_ORIGINAL, IsAscent = false}
+				
+				game:GetPlayer(0):UseActiveItem(CollectibleType.COLLECTIBLE_FORGET_ME_NOW)
+				game:GetLevel():SetStage(newlevel.LevelStage, newlevel.StageType)
+				game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, newlevel.IsAscent)
+				
+				game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+				game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
+			end
+		end
+	end
+
+end
+
 --Revelations doors--------------------------------------------------------------------------------------------------------------------
 function mod:RevelationsDoorsUpdate(entity)
 	local parent = mod.RevelationDoor
@@ -2040,7 +2154,15 @@ function mod:UpdateEffect(effect, data)
 	elseif variant == mod.EntityInf[mod.Entity.ICUP].VAR then
 		mod:ICUPUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.LunaDoor].VAR then
-		mod:LunaDoorUpdate(effect)
+		if subType == mod.EntityInf[mod.Entity.LunaDoor].SUB then
+			mod:LunaDoorUpdate(effect)
+		else
+			mod:LunaMegaSatanDoorUpdate(effect)
+		end
+	elseif variant == mod.EntityInf[mod.Entity.Card].VAR then
+		mod:CardShowUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.Spike].VAR then
+		mod:LunaSpikeUpdate(effect)
 	end
 
 end
@@ -2057,9 +2179,10 @@ function mod:DisappearEffect(effect, data)
 	variant == mod.EntityInf[mod.Entity.TimeFreezeObjective].VAR and subType == mod.EntityInf[mod.Entity.TimeFreezeObjective].SUB or
 	variant == mod.EntityInf[mod.Entity.SonicBoom].VAR and subType == mod.EntityInf[mod.Entity.SonicBoom].SUB or
 	variant == mod.EntityInf[mod.Entity.MarsBoost].VAR and subType == mod.EntityInf[mod.Entity.MarsBoost].SUB or
-	variant == mod.EntityInf[mod.Entity.MercuryTrace].VAR and subType == mod.EntityInf[mod.Entity.MercuryTrace].SUB
+	variant == mod.EntityInf[mod.Entity.MercuryTrace].VAR and subType == mod.EntityInf[mod.Entity.MercuryTrace].SUB or
+	variant == mod.EntityInf[mod.Entity.Spike].VAR and subType == mod.EntityInf[mod.Entity.Spike].SUB
 	if valid then
-		if effect:GetSprite():IsFinished("Idle") or effect:GetSprite():IsFinished("BigIdle") then
+		if effect:GetSprite():IsFinished("Idle") then
 			effect:Remove()
 			return
 		end
@@ -2557,7 +2680,7 @@ end)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 --Burning effect
-function mod:PlayerBurning(entity)
+function mod:PlayerEffects(entity)
 	local data = entity:GetData()
 	local sprite = entity:GetSprite()
 	if data.BurnTime and data.BurnTime >= 0 and entity:GetPlayerType() ~= PlayerType.PLAYER_THEFORGOTTEN_B then
@@ -2604,6 +2727,12 @@ function mod:PlayerBurning(entity)
 			game:SpawnParticles (entity.Position, EffectVariant.EMBER_PARTICLE, 2, 2)
 		end
 
+	elseif data.GodheadTime then
+		if data.GodheadTime >= 0 then
+			data.GodheadTime = data.GodheadTime - 1
+		end
+		
+		sprite.Color = Color.Lerp(sprite.Color, Color(1,1,1,1), 0.05)
 	end
 end
 
@@ -2621,18 +2750,16 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, ref, 
         end
     end
 end)
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerBurning, 0)
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerEffects, 0)
 
 --[[
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_,entity)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_,entity)
 
-	for i, e in ipairs(Isaac.FindInRadius(entity.Position, 10)) do
-		if e.Type ~= EntityType.ENTITY_PLAYER then
-			print(e.Type)
-			print(e.Variant)
-			print(e.Subtype)
-			print()
-		end
-	end
+	print(entity.State)
+	print(entity.V1)
+	print(entity.V2)
+	print(entity.I1)
+	print(entity.I2)
+	print()
 
-end)]]
+end, EntityType.ENTITY_ADVERSARY)]]
