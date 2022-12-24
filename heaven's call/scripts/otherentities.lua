@@ -1222,6 +1222,134 @@ function mod:TarBombUpdate(entity)
 	end
 end
 
+--Luna Wisp-----------------------------------------------------------------------------------------------------------------------
+function mod:LunaWispUpdate(entity)
+	if entity.Parent then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity.Parent:ToNPC():GetPlayerTarget()
+
+		if sprite:IsFinished("Idle") then
+			local targetAim = (target.Position - entity.Parent.Position):Normalized()
+			local velocity = targetAim*mod.LConst.wispShotSpeed
+			local shot =  Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity.Parent):ToProjectile()
+			sprite:Play("Idle", true)
+
+			shot:GetSprite().Color = mod.Colors.redlight
+			shot.Scale = shot.Scale/3
+		end
+	else
+		entity:Remove()
+	end
+
+end
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
+	if entity.Type == mod.EntityInf[mod.Entity.LunaWisp].ID and entity.Variant == mod.EntityInf[mod.Entity.LunaWisp].VAR then
+		sfx:Play(SoundEffect.SOUND_CANDLE_LIGHT,1.5)
+	end
+end)
+
+--Luna Knife-----------------------------------------------------------------------------------------------------------------------
+function mod:LunaKnifeUpdate(entity)
+	if not entity.Parent then
+		entity:Remove()
+	end
+	local parent = entity.Parent:ToNPC()
+	local target = parent:GetPlayerTarget()
+
+	local vector = (target.Position - parent.Position):Normalized()
+	local distance = mod.LConst.knifeRange * (1 + math.sin(entity.FrameCount/12))
+
+	local sprite = entity:GetSprite()
+	sprite.Rotation = vector:GetAngleDegrees() - 90
+
+	local objective = parent.Position + vector*distance
+	entity.Position = mod:Lerp(entity.Position, objective, 0.1)
+
+	entity.Velocity = parent.Velocity
+
+end
+
+--Luna Incubus-----------------------------------------------------------------------------------------------------------------------
+function mod:LunaIncubusUpdate(entity)
+	if not entity.Parent then
+		entity:Remove()
+	end
+	local parent = entity.Parent:ToNPC()
+	local target = parent:GetPlayerTarget()
+
+	local sprite = entity:GetSprite()
+	local parentSprite = parent:GetSprite()
+
+	local data = entity:GetData()
+
+	if not data.Init then
+		sprite:Play("Float", true)
+		data.targetvelocity = Vector.Zero
+		data.Init = true
+	end
+
+	if (parentSprite:IsPlaying("NormalAttack") or parentSprite:IsPlaying("LaserAttack")) and parentSprite:IsEventTriggered("Attack") then
+		mod:LunaSynergy(entity, entity:GetData(), sprite, target, game:GetRoom(), true)
+
+	elseif parentSprite:IsEventTriggered("Incubus1") then
+		sprite:Play("FloatShoot", true)
+	elseif parentSprite:IsEventTriggered("Incubus2") then
+		sprite:Play("Float", true)
+	elseif parentSprite:IsEventTriggered("Incubus3") then
+		sprite:Play("Charge", true)
+	elseif parentSprite:IsEventTriggered("Incubus4") then
+		sprite:Play("FloatCharged", true)
+	elseif parentSprite:IsEventTriggered("Incubus5") then
+		sprite:Play("Shoot2", true)
+	end
+
+	--Movement
+	if not data.idleTime then 
+		data.idleTime = mod:RandomInt(mod.LConst.idleTimeInterval.X, mod.LConst.idleTimeInterval.Y)
+
+		if parent.Position:Distance(entity.Position) > 20 then
+			data.targetvelocity = (parent.Position - entity.Position):Normalized()
+		end
+	end
+	
+	--If run out of idle time
+	if data.idleTime and data.idleTime <= 0 then
+		data.idleTime = nil
+	else
+		data.idleTime = data.idleTime - 1
+	end
+	
+	--Do the actual movement
+	entity.Velocity = (data.targetvelocity * 0.3 + entity.Velocity * 0.7) * mod.LConst.speed
+	data.targetvelocity = data.targetvelocity * 0.5
+
+end
+
+
+
+--Fix Position
+function mod:FixPosition(entity)
+	local data = entity:GetData()
+	if data.Position_HC then
+		entity.Position = data.Position_HC
+		entity.Velocity = Vector.Zero
+	end
+end
+--Selfdestruct
+function mod:Selfdestruct(entity)
+	local data = entity:GetData()
+	if not data.FrameCount then
+		data.FrameCount = 0
+	end
+
+	if data.FrameCount > data.MaxFrames then
+		local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
+		poof.DepthOffset = 100
+		entity:Remove()
+	end
+	data.FrameCount = data.FrameCount + 1
+end
 
 --Entity updates
 function mod:UpdateEntity(entity, data)
@@ -1254,6 +1382,25 @@ function mod:UpdateEntity(entity, data)
 		end
 	elseif id == mod.EntityInf[mod.Entity.Statue].ID then
 		mod:StatueUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.LunaWisp].ID and variant == mod.EntityInf[mod.Entity.LunaWisp].VAR then
+		mod:OrbitParent(entity)
+		mod:LunaWispUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.LunaKnife].ID and variant == mod.EntityInf[mod.Entity.LunaKnife].VAR then
+		mod:LunaKnifeUpdate(entity)
+	elseif id == mod.EntityInf[mod.Entity.LunaIncubus].ID and variant == mod.EntityInf[mod.Entity.LunaIncubus].VAR  then
+		mod:LunaIncubusUpdate(entity)
+	elseif id == EntityType.ENTITY_ATTACKFLY then
+		sprite.Color = mod.Colors.red
+	elseif id == EntityType.ENTITY_CLUTCH and variant == 1 then
+		mod:OrbitParent(entity)
+
+	elseif id == EntityType.ENTITY_ULTRA_DOOR then
+		if data.FixPosition then
+			mod:FixPosition(entity)
+		end
+		if data.Selfdestruct then
+			mod:Selfdestruct(entity)
+		end
 	end
 
 end
@@ -1699,7 +1846,10 @@ function mod:LunaDoorUpdate(entity)
 				luna.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 
 				mod:scheduleForUpdate(function()
-					luna:GetSprite():Play("TrapdoorOut",true)
+
+					if luna:GetSprite():IsPlaying("ChargeR") or luna:GetSprite():IsPlaying("ChargeL") then
+						luna:GetSprite():Play("TrapdoorOut",true)
+					end
 					luna.Visible = true
 					luna.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
 				end, 25, ModCallbacks.MC_POST_UPDATE)
@@ -1747,12 +1897,13 @@ function mod:LunaDoorUpdate(entity)
 			local random = mod:RandomInt(1,4)
 
 			sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+			local boss
 			if random == 1 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_MONSTRO, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+				boss = Isaac.Spawn(EntityType.ENTITY_MONSTRO, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
 			elseif random == 2 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_DUKE, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+				boss = Isaac.Spawn(EntityType.ENTITY_DUKE, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
 			elseif random == 3 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_GEMINI, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+				boss = Isaac.Spawn(EntityType.ENTITY_GEMINI, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
 			elseif random == 4 then
 				local boss1 = Isaac.Spawn(EntityType.ENTITY_LARRYJR, 0, 0, entity.Position + Vector(0,10), Vector.Zero, nil)
 				for i=1,6 do
@@ -1762,6 +1913,11 @@ function mod:LunaDoorUpdate(entity)
 
 					boss1 = boss2
 				end
+			end
+
+			if boss then
+				boss.MaxHitPoints = 125
+				boss.HitPoints = 125
 			end
 
 		elseif data.Frame == 45 then
@@ -1909,7 +2065,10 @@ function mod:LunaMegaSatanDoorUpdate(entity)
 	local sprite = entity:GetSprite()
 	local data = entity:GetData()
 
-	if not data.Frame then data.Frame = 0 end
+	if not data.Frame then 
+		data.Frame = 0
+		sfx:Play(SoundEffect.SOUND_SATAN_BLAST)
+	 end
 	data.Frame = data.Frame + 1
 
 	if sprite:IsFinished("Open") and entity.Parent then
@@ -1959,6 +2118,9 @@ function mod:CardShowUpdate(entity)
 			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
 			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 3, 0, entity.Position + offset, offset/5, entity.Parent)
 			coin.Parent = entity.Parent
+
+			coin.MaxHitPoints = 35
+			coin.HitPoints = 35
 		end
 		entity:Remove()
 	elseif sprite:IsFinished("Key") then
@@ -1966,26 +2128,70 @@ function mod:CardShowUpdate(entity)
 			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
 			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 1, 0, entity.Position + offset, offset/5, entity.Parent)
 			coin.Parent = entity.Parent
+
+			coin.MaxHitPoints = 35
+			coin.HitPoints = 35
 		end
+
+
+		local room = game:GetRoom()
+		local randomPos = (room:GetRandomPosition(0) - room:GetCenterPos())*0.9 + room:GetCenterPos()
+
+		local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, randomPos + Vector(5,0), Vector.Zero, nil)
+		poof.DepthOffset = 100
+
+		local door = Isaac.Spawn(EntityType.ENTITY_ULTRA_DOOR, 0, 0, randomPos, Vector.Zero, nil)
+		local doorData = door:GetData()
+
+		mod:scheduleForUpdate(function()
+			doorData.HeavensCall = true
+
+			doorData.FixPosition = true
+			doorData.Position = door.Position
+			door.Position = randomPos
+
+			doorData.Selfdestruct = true
+			doorData.MaxFrames = 300
+
+			door:GetSprite().Rotation = 0
+		end,2)
+
 		entity:Remove()
 	elseif sprite:IsFinished("Bomb") then
 		for i=1, mod.LConst.nCoins do
 			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
 			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 2, 0, entity.Position + offset, offset/5, entity.Parent)
 			coin.Parent = entity.Parent
+
+			coin.MaxHitPoints = 35
+			coin.HitPoints = 35
 		end
 		entity:Remove()
 	elseif sprite:IsFinished("Coin") then
 		for i=1, mod.LConst.nCoins do
-			local offset = Vector(rng:RandomFloat()*20, 0):Rotated(rng:RandomFloat()*360)
+			local offset = Vector(rng:RandomFloat()*40, 0):Rotated(rng:RandomFloat()*360)
 			local coin = Isaac.Spawn(EntityType.ENTITY_ULTRA_COIN, 0, 0, entity.Position + offset, offset/5, entity.Parent)
 			coin.Parent = entity.Parent
+			coin.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+			
+			coin.MaxHitPoints = 35
+			coin.HitPoints = 35
 		end
 		entity:Remove()
 	end
 
 
 end
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
+	if entity:GetSprite():IsPlaying("HeartChange") and entity:GetSprite():GetFrame() == 11 then
+		for _, l in ipairs(mod:FindByTypeMod(mod.Entity.Luna)) do
+			mod:LunaHeal(l, mod.LConst.healPerSleep)
+		end
+	elseif entity.FrameCount > 350 then
+		entity:Die()
+	end
+
+end, EntityType.ENTITY_ULTRA_COIN)
 
 --Spike Luna--------------------------------------------------------------------------------------------------------------------
 function mod:LunaSpikeUpdate(entity)
@@ -2002,6 +2208,11 @@ function mod:LunaSpikeUpdate(entity)
 			end
 		end
 	elseif sprite:IsEventTriggered("HightDamage") then
+		if not data.Flag then
+			data.Flag = true
+			sfx:Play(SoundEffect.SOUND_TOOTH_AND_NAIL)
+		end
+
 		for i=0, game:GetNumPlayers ()-1 do
 			local player = game:GetPlayer(i)
 			if player.Position:Distance(entity.Position) < 20 then
@@ -2035,8 +2246,8 @@ function mod:LunaSpikeUpdate(entity)
 				game:GetLevel():AddAngelRoomChance(game:GetRoom():GetDevilRoomChance() * 0.5)
 			else
 				for i=1,3 do
-					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position, Vector.Zero, nil)
-					position = Isaac.GetFreeNearPosition(position, 50)
+					local position2 = Isaac.GetFreeNearPosition(position, 50)
+					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position2, Vector.Zero, nil)
 				end
 			end
 		elseif spikeHits == 6 then
@@ -2064,13 +2275,13 @@ function mod:LunaSpikeUpdate(entity)
 
 			if random < 0.5 then
 				for i=1,30 do
-					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position, Vector.Zero, nil)
-					position = Isaac.GetFreeNearPosition(position, 50)
+					local position2 = Isaac.GetFreeNearPosition(position, 50)
+					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COIN, CoinSubType.COIN_PENNY, position2, Vector.Zero, nil)
 				end
 			else
 				for i=1,7 do
-					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_SOUL, position, Vector.Zero, nil)
-					position = Isaac.GetFreeNearPosition(position, 50)
+					local position2 = Isaac.GetFreeNearPosition(position, 50)
+					Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_SOUL, position2, Vector.Zero, nil)
 				end
 			end
 		elseif spikeHits == 11 then
@@ -2673,6 +2884,30 @@ mod:AddCallback(ModCallbacks.MC_POST_PROJECTILE_UPDATE, function(_, projectile)
 	end
 end)
 
+
+--LASERS----------------------------------------------------------------------------------------------------------------------------
+
+--Luna Maw-----------------------------------------------------------------------------------------------------------------------
+function mod:LunaMawUpdate(entity)
+	if not entity.Parent then
+		entity:Remove()
+	end
+	local parent = entity.Parent:ToNPC()
+
+	local data = entity:GetData()
+
+	if not data.Init then
+		data.Init = true
+
+		entity.Timeout = mod.LConst.mawTimeout
+		entity.Radius = 0
+	end
+
+	entity.Radius = mod.LConst.mawRadius * (1 - math.cos( (1 - entity.Timeout/mod.LConst.mawTimeout) * 2 * math.pi ))
+
+end
+
+
 --PLAYER----------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -2736,20 +2971,41 @@ function mod:PlayerEffects(entity)
 	end
 end
 
---Burn sfx and burning effect for venus
-mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, _, _, ref, _)
-    if entity.Type == EntityType.ENTITY_PLAYER and ref.Entity then
-        if (ref.Entity:GetData().IsFlamethrower_HC or  ref.Entity:GetData().IsFireball_HC or ref.Entity.Type == mod.EntityInf[mod.Entity.Venus].ID ) then
+--Player damage
+function mod:PlayerDamage(entity, amount, damageFlags, sourceRef, frames)
+
+	local source = sourceRef.Entity
+
+	entity = entity:ToPlayer()
+
+    if source then
+
+		--Luna strenght hit
+		if source.Type == mod.EntityInf[mod.Entity.Luna].ID and source.Variant == mod.EntityInf[mod.Entity.Luna].VAR then
+			local strong = source.SpawnerEntity and (source.SpawnerEntity:GetData().StrengthTime >= 0 or source.SpawnerEntity:GetData().AssistP == mod.LAssistPassives.POLYPHEMUS or source.SpawnerEntity:GetData().AssistP == mod.LAssistPassives.MAGIC_MUSHROOM)
+
+			if strong and (damageFlags & DamageFlag.DAMAGE_INVINCIBLE) == 0 then
+				entity:TakeDamage(amount, damageFlags | DamageFlag.DAMAGE_INVINCIBLE, sourceRef, frames)
+			end
+		end
+
+		--If fire damage (Venus)
+        if source:GetData().IsFlamethrower_HC or source:GetData().IsFireball_HC or source.Type == mod.EntityInf[mod.Entity.Venus].ID then
             sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS)
-        elseif  ref.Entity.Type == EntityType.ENTITY_PROJECTILE and ref.Entity.Variant == mod.EntityInf[mod.Entity.Kiss].VAR and ref.Entity.SubType == mod.EntityInf[mod.Entity.Kiss].SUB then
-			if not entity:ToPlayer():HasCollectible(CollectibleType.COLLECTIBLE_EVIL_CHARM) then
+
+        elseif source.Type == EntityType.ENTITY_PROJECTILE and source.Variant == mod.EntityInf[mod.Entity.Kiss].VAR and source.SubType == mod.EntityInf[mod.Entity.Kiss].SUB then
+			if not entity:HasCollectible(CollectibleType.COLLECTIBLE_EVIL_CHARM) then
             	entity:GetData().BurnTime = mod.ModConstants.burningFrames
 			end
+
             sfx:Play(SoundEffect.SOUND_FIREDEATH_HISS)
 			return false
         end
     end
-end)
+end
+
+--Burn sfx and burning effect for venus
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.PlayerDamage, EntityType.ENTITY_PLAYER)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.PlayerEffects, 0)
 
 --[[
@@ -2762,4 +3018,16 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_,entity)
 	print(entity.I2)
 	print()
 
-end, EntityType.ENTITY_ADVERSARY)]]
+end, EntityType.ENTITY_CLUTCH)
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_, player)
+	for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER),1,3) do
+		if e.Type == EntityType.ENTITY_LASER then
+			e=e:ToLaser()
+			print(e.Radius)
+			print(e.Size)
+			print(e.Shrink)
+			print(e.Timeout)
+			print()
+		end
+	end
+end,0)]]

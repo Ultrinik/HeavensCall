@@ -44,6 +44,9 @@ mod.Entity ={
     MercuryBird = 54,
     Horsemen = 61,
     Turd = 53,
+    LunaWisp = 78,
+    LunaKnife = 79,
+    LunaIncubus = 80,
 
     ---------
 
@@ -145,6 +148,10 @@ mod.EntityInf[mod.Entity.TongueCord] = {ID = Isaac.GetEntityTypeByName("Tongue C
 
 mod.EntityInf[mod.Entity.Deimos] = {ID = Isaac.GetEntityTypeByName("Deimos the Tarnished"), VAR = Isaac.GetEntityVariantByName("Deimos the Tarnished"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Phobos] = {ID = Isaac.GetEntityTypeByName("Phobos the Tarnished"), VAR = Isaac.GetEntityVariantByName("Phobos the Tarnished"),  SUB = mod.DefaultEntitySub}
+
+mod.EntityInf[mod.Entity.LunaWisp] = {ID = Isaac.GetEntityTypeByName("Luna Wisp (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Wisp (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.LunaKnife] = {ID = Isaac.GetEntityTypeByName("Luna Knife (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Knife (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.LunaIncubus] = {ID = Isaac.GetEntityTypeByName("Luna Incubus (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Incubus (HC)"),  SUB = mod.DefaultSub}
 
 --EFFECTS-----------------------------------------------------------------------------------------------
 

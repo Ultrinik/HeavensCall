@@ -5,7 +5,7 @@
 	</entity>
 
 	<!-- Jupiter -->
-	<entity name="Jupiter the Gargantuan" id="700" variant="370" subtype="0" anm2path="entity_Jupiter.anm2"  baseHP="425" stageHP="50" shieldStrength="30" boss="1" champion="0" collisionDamage="1" collisionMass="100" collisionRadius="33" friction="0.9" numGridCollisionPoints="12" shadowSize="60" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="0">
+	<entity name="Jupiter the Gargantuan" id="700" variant="370" subtype="0" anm2path="entity_Jupiter.anm2"  baseHP="425" stageHP="50" shieldStrength="40" boss="1" champion="0" collisionDamage="1" collisionMass="100" collisionRadius="33" friction="0.9" numGridCollisionPoints="12" shadowSize="60" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="0">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -19,7 +19,7 @@
     </entity>
 	
 	<!-- Saturn -->
-	<entity name="Saturn the Intransigent" id="701" variant="370" subtype="0" anm2path="entity_Saturn.anm2" baseHP="400" stageHP="50" shieldStrength="30" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="50" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
+	<entity name="Saturn the Intransigent" id="701" variant="370" subtype="0" anm2path="entity_Saturn.anm2" baseHP="400" stageHP="50" shieldStrength="40" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="50" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -49,7 +49,7 @@
     </entity>
 	
 	<!-- Uranus -->
-	<entity name="Uranus the Unpleasant" id="702" variant="370" subtype="0" anm2path="entity_Uranus.anm2" baseHP="375" stageHP="50" shieldStrength="30" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="40" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
+	<entity name="Uranus the Unpleasant" id="702" variant="370" subtype="0" anm2path="entity_Uranus.anm2" baseHP="375" stageHP="50" shieldStrength="40" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="40" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="2">
 		<bestiary transform="0,0,1" anim="Twerk" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -80,7 +80,7 @@
     </entity>
 	
 	<!-- Neptune -->
-	<entity name="Neptune the Unfathomable" id="703" variant="370" subtype="0" anm2path="entity_Neptune.anm2" baseHP="375" stageHP="50" shieldStrength="30" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.8" numGridCollisionPoints="12" shadowSize="40" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="3" >
+	<entity name="Neptune the Unfathomable" id="703" variant="370" subtype="0" anm2path="entity_Neptune.anm2" baseHP="375" stageHP="50" shieldStrength="40" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.8" numGridCollisionPoints="12" shadowSize="40" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="3" >
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -94,12 +94,12 @@
     </entity>
 
 	<!-- Mercury -->
-	<entity name="Mercury the Unwary" id="704" variant="370" subtype="0" anm2path="entity_Mercury.anm2" baseHP="1100" stageHP="0" shieldStrength="20" boss="1" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="5">
+	<entity name="Mercury the Unwary" id="704" variant="370" subtype="0" anm2path="entity_Mercury.anm2" baseHP="1100" stageHP="0" shieldStrength="55" boss="1" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="5">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Mercury Bird (HC)" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="9999" stageHP="0" shieldStrength="15" boss="1" champion="0" collisionDamage="0" collisionMass="10" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="11">
+	<entity name="Mercury Bird (HC)" id="704" variant="371" subtype="0" anm2path="entity_MercuryBird.anm2" baseHP="9999" stageHP="0" shieldStrength="20" boss="1" champion="0" collisionDamage="0" collisionMass="10" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="11">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -118,7 +118,7 @@
     </entity>
 
 	<!-- Venus -->
-	<entity name="Venus the Termagant" id="705" variant="370" subtype="0" anm2path="entity_Venus.anm2" baseHP="1000" stageHP="0" shieldStrength="20" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="6">
+	<entity name="Venus the Termagant" id="705" variant="370" subtype="0" anm2path="entity_Venus.anm2" baseHP="1000" stageHP="0" shieldStrength="55" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="6">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -174,7 +174,7 @@
 	<entity name="Terra the Fatalist (rock)" id="706" variant="371" subtype="0" anm2path="entity_Terra2.anm2" baseHP="9999" stageHP="0" shieldStrength="999" boss="1" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="35" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="8">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Terra the Fatalist (eden)" id="706" variant="372" subtype="0" anm2path="entity_Terra3.anm2" baseHP="1300" stageHP="0" shieldStrength="20" boss="1" champion="0" collisionDamage="0" collisionMass="25" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="9">
+	<entity name="Terra the Fatalist (eden)" id="706" variant="372" subtype="0" anm2path="entity_Terra3.anm2" baseHP="1300" stageHP="0" shieldStrength="55" boss="1" champion="0" collisionDamage="0" collisionMass="25" collisionRadius="23" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="ground" tags="nodelirium" portrait="9">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
@@ -193,11 +193,11 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
-	<entity name="Horsemen (HC)" id="724" variant="370" subtype="0" anm2path="entity_Horsemen.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="none" tags="nodelirium" portrait="9">
+	<entity name="Horsemen (HC)" id="724" variant="370" subtype="0" anm2path="entity_Horsemen.anm2" baseHP="9999" stageHP="0" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="none" tags="nodelirium" portrait="9">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Tar Bomb (HC)" id="725" variant="370" subtype="160" anm2path="entity_Tarbomb.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="8">
+	<entity name="Tar Bomb (HC)" id="725" variant="370" subtype="160" anm2path="entity_Tarbomb.anm2" baseHP="9999" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="8">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -209,7 +209,7 @@
     </entity>
 
 	<!-- Mars -->
-	<entity name="Mars the Vainglorious" id="707" variant="370" subtype="0" anm2path="entity_Mars.anm2" baseHP="1400" stageHP="0" shieldStrength="20" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="10">
+	<entity name="Mars the Vainglorious" id="707" variant="370" subtype="0" anm2path="entity_Mars.anm2" baseHP="1400" stageHP="0" shieldStrength="55" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="35" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="10">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -248,7 +248,7 @@
     </entity>
 
 	<!-- Luna -->
-	<entity name="Luna the Tainted" id="708" variant="370" subtype="0" anm2path="entity_Luna.anm2" baseHP="2500" stageHP="0" shieldStrength="35" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
+	<entity name="Luna the Tainted" id="708" variant="370" subtype="0" anm2path="entity_Luna.anm2" baseHP="3000" stageHP="0" shieldStrength="75" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="27" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -260,18 +260,26 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	<entity name="Luna Door (HC)" id="1000" variant="383" subtype="160" anm2path="effect_LunaDoor.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	<entity name="Mega Satan Luna Door (HC)" id="1000" variant="383" subtype="161" anm2path="effect_LunaMegaSatan.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
 	<entity name="Card (HC)" id="1000" variant="384" subtype="160" anm2path="effect_CardShow.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
 	
 	<entity name="Luna Spike (HC)" id="1000" variant="385" subtype="160" anm2path="effect_LunaSpike.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
-        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
     </entity>
+	
+	<entity name="Luna Wisp (HC)" id="708" variant="371" subtype="160" anm2path="entity_LunaWisp.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="10" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	
+	<entity name="Luna Knife (HC)" id="708" variant="372" subtype="160" anm2path="008.000_moms knife.anm2" baseHP="350" stageHP="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	
+	<entity name="Luna Incubus (HC)" id="708" variant="373" subtype="160" anm2path="entity_LunaIncubus.anm2" baseHP="550" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="20" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
 
 </entities>

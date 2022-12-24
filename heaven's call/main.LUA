@@ -46,7 +46,9 @@ mod.Colors = {
 	wax = Color(1,1,1,1,1,0.85,0.8),
 	booger = Color(1,1,1,1),
 	white = Color(1,1,1,1),
+	red = Color(10,0.5,0.5,1),
 	whiteish = Color(1,1,1,1,0.1,0.1,0.1),
+	redlight = Color(3,0.75,0.75,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -66,8 +68,10 @@ function mod:ColorizeColors()
 	mod.Colors.mercury:SetColorize(7,5,7,1)
 	mod.Colors.tar:SetColorize(1, 1, 1, 1)
 	mod.Colors.booger:SetColorize(0.3, 2, 0.2, 1)
+	mod.Colors.red:SetColorize(5, 0, 0, 1)
 	mod.Colors.white:SetColorize(10, 10, 10, 1)
 	mod.Colors.whiteish:SetColorize(5, 5, 5, 1)
+	mod.Colors.redlight:SetColorize(4, 1, 1, 1)
 end
 mod:ColorizeColors()
 

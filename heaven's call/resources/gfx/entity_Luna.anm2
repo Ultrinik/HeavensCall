@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="Unknown" CreatedOn="17-12-2022 1:56:23" Version="205" Fps="30"/>
+	<Info CreatedBy="Unknown" CreatedOn="23-12-2022 21:26:44" Version="206" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="bosses\Luna.png" Id="0"/>
@@ -23,6 +23,9 @@
 			<Event Name="Jump" Id="7"/>
 			<Event Name="Land" Id="8"/>
 			<Event Name="Preland" Id="9"/>
+			<Event Name="Incubus1" Id="10"/>
+			<Event Name="Incubus2" Id="11"/>
+			<Event Name="Incubus3" Id="12"/>
 		</Events>
 	</Content>
 	<Animations DefaultAnimation="Appear">
@@ -303,7 +306,9 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
+				<Trigger EventId="12" AtFrame="10"/>
 				<Trigger EventId="6" AtFrame="12"/>
+				<Trigger EventId="11" AtFrame="14"/>
 			</Triggers>
 		</Animation>
 		<Animation Name="GoToSleep" FrameNum="22" Loop="false">
