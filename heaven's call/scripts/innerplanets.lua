@@ -2096,12 +2096,14 @@ function mod:Terra3Horsemen(entity, data, sprite, target,room)
             local position = Vector(margen*i, room:GetCenterPos().Y + mod:RandomInt(-150,150))
             local horsemen = mod:SpawnEntity(mod.Entity.Horsemen, position, Vector.Zero, entity):ToNPC()
             horsemen.I1 = i
+            horsemen.I2 = 0
         end
         
         local position = Vector(margen*2, room:GetCenterPos().Y + mod:RandomInt(-50,50))
         for i=-1, 1, 2 do
             local horsemen = mod:SpawnEntity(mod.Entity.Horsemen, Vector(position.X, position.Y + 150*i), Vector.Zero, entity):ToNPC()
             horsemen.I1 = i/2 + 7/2
+            horsemen.I2 = 0
         end
     end
 end

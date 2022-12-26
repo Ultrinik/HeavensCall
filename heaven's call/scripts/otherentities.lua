@@ -989,11 +989,17 @@ end)
 
 --Horsemen---------------------------------------------------------------------------------------------------------------------
 function mod:HorsemenUpdate(entity)
-	if mod.EntityInf[mod.Entity.Horsemen].VAR == entity.Variant then
+	if mod.EntityInf[mod.Entity.Horsemen].VAR == entity.Variant or mod.EntityInf[mod.Entity.AltHorsemen].VAR == entity.Variant then
 		local sprite = entity:GetSprite()
 		local target = entity:GetPlayerTarget()
 		local parent = entity.Parent
 		local data = entity:GetData()
+
+		if mod.EntityInf[mod.Entity.AltHorsemen].VAR == entity.Variant then
+			entity.I2 = 1
+		else
+			entity.I2 = 0
+		end
 
 		if entity.I1 == 0 or entity.I1 == nil then --Famine
 
@@ -1019,8 +1025,14 @@ function mod:HorsemenUpdate(entity)
 			if sprite:IsEventTriggered("Attack") then
 				local direction = (target.Position - entity.Position):Normalized()
 
-				for i=-1, 1 do
-					local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction:Rotated(i*mod.TConst.famineShotAngle)*mod.TConst.famineShotSpeed, entity):ToProjectile()
+				if entity.I2 == 0 then
+					for i=-1, 1 do
+						local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, direction:Rotated(i*mod.TConst.famineShotAngle)*mod.TConst.famineShotSpeed, entity):ToProjectile()
+					end
+				else
+					local waterParams = ProjectileParams()
+					waterParams.Variant = ProjectileVariant.PROJECTILE_TEAR
+					entity:FireBossProjectiles (5, target.Position + direction*100, 0, waterParams )
 				end
 
 				sfx:Play(SoundEffect.SOUND_MONSTER_GRUNT_0)
@@ -1058,11 +1070,22 @@ function mod:HorsemenUpdate(entity)
 					data.Farting = true
 				end
 				
-				if data.Farting and game:GetFrameCount()%3==0 then
-					local gas = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SMOKE_CLOUD, 0, entity.Position, Vector.Zero, entity):ToEffect()
-					gas.Timeout = mod.TConst.pestilenceGasTime
-					
-					local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
+				if data.Farting then
+					if entity.FrameCount % 3 == 0 then
+						local gas = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.SMOKE_CLOUD, 0, entity.Position, Vector.Zero, entity):ToEffect()
+						gas.Timeout = mod.TConst.pestilenceGasTime
+						
+						local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
+					end
+
+					if entity.I1 == 1 and entity.FrameCount % 5 == 0 then
+						for i=-1,1,2 do
+							local velocity = entity.Velocity:Rotated(i*90)/4
+							local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+							tear:GetSprite().Color = mod.Colors.boom
+							tear.Scale = 1.5
+						end
+					end
 				end
 
 				if sprite:IsFinished("Pestilence") then
@@ -1082,7 +1105,10 @@ function mod:HorsemenUpdate(entity)
 	
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 
-				data.Speed = mod.TConst.horsemenSpeed + 5
+				data.Speed = mod.TConst.horsemenSpeed
+				if entity.I2 == 0 then
+					data.Speed = data.Speed + 5
+				end
 	
 				entity.CollisionDamage = 0
 			end
@@ -1094,13 +1120,26 @@ function mod:HorsemenUpdate(entity)
 
 				local direction = (target.Position - entity.Position):Normalized()
 
-				local rocket = mod:SpawnEntity(mod.Entity.MarsRocket, entity.Position + direction*100, direction, entity):ToBomb()
-				rocket:GetData().IsDirected_HC = true
-				rocket:GetData().Direction = direction
-				rocket:GetSprite().Rotation = direction:GetAngleDegrees()
+				if entity.I2 == 0 then
+					entity.Velocity = Vector(direction.X, -direction.Y) * data.Speed*2
+					entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 
-				entity.Velocity = Vector(direction.X, -direction.Y) * data.Speed*2
-				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+					local rocket = mod:SpawnEntity(mod.Entity.MarsRocket, entity.Position + direction*100, direction, entity):ToBomb()
+					rocket:GetData().IsDirected_HC = true
+					rocket:GetData().Direction = direction
+					rocket:GetSprite().Rotation = direction:GetAngleDegrees()
+				else
+					for i=1,3 do
+						local velocity = (15 + rng:RandomFloat()*15) * direction * 10
+						velocity = velocity:Rotated(mod:RandomInt(-45,45))
+						local bomb = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_NORMAL, 0, entity.Position, velocity, entity):ToBomb()
+						bomb.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+						bomb:SetExplosionCountdown(60)
+
+						bomb:GetSprite():ReplaceSpritesheet(0, "gfx/items/pick ups/mars_bomb.png")
+						bomb:GetSprite():LoadGraphics()
+					end	
+				end
 			end
 
 			if sprite:IsFinished("War") then
@@ -1142,7 +1181,12 @@ function mod:HorsemenUpdate(entity)
 			end
 		end
 		
-		entity.Velocity =  Vector(data.Speed, entity.Velocity.Y)
+		local direction = 1
+		if entity.I2 and entity.I2 == 1 then
+			direction = -1
+		end
+
+		entity.Velocity =  Vector(direction * data.Speed, entity.Velocity.Y)
 	end
 end
 
@@ -1344,9 +1388,13 @@ function mod:Selfdestruct(entity)
 	end
 
 	if data.FrameCount > data.MaxFrames then
-		local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
-		poof.DepthOffset = 100
-		entity:Remove()
+		if data.Die then
+			entity:Die()
+		else
+			local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
+			poof.DepthOffset = 100
+			entity:Remove()
+		end
 	end
 	data.FrameCount = data.FrameCount + 1
 end
@@ -1393,14 +1441,14 @@ function mod:UpdateEntity(entity, data)
 		sprite.Color = mod.Colors.red
 	elseif id == EntityType.ENTITY_CLUTCH and variant == 1 then
 		mod:OrbitParent(entity)
+	end
 
-	elseif id == EntityType.ENTITY_ULTRA_DOOR then
-		if data.FixPosition then
-			mod:FixPosition(entity)
-		end
-		if data.Selfdestruct then
-			mod:Selfdestruct(entity)
-		end
+	--other
+	if data.FixPosition then
+		mod:FixPosition(entity)
+	end
+	if data.Selfdestruct then
+		mod:Selfdestruct(entity)
 	end
 
 end
@@ -1880,14 +1928,19 @@ function mod:LunaDoorUpdate(entity)
 
 	elseif doorType == mod.DoorType.GLACIAR then
 		if data.Frame == 30 then
-
+			if REVEL then
+				local chillwisp = Isaac.Spawn(Isaac.GetEntityTypeByName("Chill O' Wisp"), Isaac.GetEntityVariantByName("Chill O' Wisp"), 0, entity.Position + Vector(0,10), Vector.Zero, nil)
+				chillwisp:GetData().HeavensCall = true
+				chillwisp:GetData().Selfdestruct = true
+				chillwisp:GetData().Die = true
+				chillwisp:GetData().MaxFrames = 30*15
+			end
 		elseif data.Frame == timeDespawn then
 			sprite:Play("Close", true)
 		end
 
 	elseif doorType == mod.DoorType.TOMB then
-		dir = "gfx/grid/revel2/tomb.png"
-
+		
 		if data.Frame == timeDespawn then
 			sprite:Play("Close", true)
 		end
@@ -2010,9 +2063,9 @@ function mod:SpawnLunaDoor(entity, doorType, position)
 	elseif doorType == mod.DoorType.TAINTED then
 		dir = "gfx/grid/taintedtreasureroomdoor.png"
 	elseif doorType == mod.DoorType.GLACIAR then
-		dir = "gfx/grid/revel1/glacier.png"
+		dir = "gfx/grid/revel1/doors/glacier.png"
 	elseif doorType == mod.DoorType.TOMB then
-		dir = "gfx/grid/revel2/tomb.png"
+		dir = "gfx/grid/revel2/doors/tomb.png"
 	elseif doorType == mod.DoorType.LIBRARY then
 		dir = "gfx/grid/door_13_librarydoor.png"
 	elseif doorType == mod.DoorType.SECRET then
@@ -2319,6 +2372,94 @@ function mod:RevelationsDoorsUpdate(entity)
 	end
 end
 
+--Revelation traps----- srl, It easier to reimplement the trap than to figure out how they work in the mod
+function mod:RevelationTrapUpdate(entity)
+	local sprite = entity:GetSprite()
+	local data = entity:GetData()
+
+	if entity.SubType == mod.EntityInf[mod.Entity.TrapTile].SUB then
+		if not data.Init then
+			data.Init = true
+
+			entity.DepthOffset = -500
+			sprite:Play("Arrow", true)
+			sprite:Stop()
+			sprite:SetFrame(0)
+
+			local position, rotation = mod:RandomUpDown()
+			position = Vector(entity.Position.X, position.Y)
+			local trap = mod:SpawnEntity(mod.Entity.Trap, position, Vector.Zero, entity)
+			trap:GetSprite().Rotation = rotation
+
+			trap.Parent = entity
+			entity.Child = trap
+			
+			local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
+			poof.DepthOffset = 100
+			local poof2 = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, trap.Position + Vector(5,0), Vector.Zero, nil)
+			poof2.DepthOffset = 100
+			
+		end
+
+		if sprite:GetFrame() == 0 then
+			local flag = false
+
+			for i=0, game:GetNumPlayers ()-1 do
+				local player = game:GetPlayer(i)
+				if player.Position:Distance(entity.Position) <= 20 then 
+					flag = true
+					break
+				end
+			end
+			if not flag then
+				for _, l in ipairs(mod:FindByTypeMod(mod.Entity.Luna)) do
+					if l.Position:Distance(entity.Position) <= 20 then 
+						flag = true
+						break
+					end
+				end
+			end
+
+			if flag and entity.Child then
+				sprite:SetFrame(1)
+				entity.Child:GetSprite():Play("Shoot", true)
+				sfx:Play(SoundEffect.SOUND_BUTTON_PRESS)
+			end
+		end
+		
+	elseif entity.SubType == mod.EntityInf[mod.Entity.Trap].SUB then
+		local parent = entity.Parent
+		if not parent then entity:Remove() end
+
+		local arrowProjectilePositionOffset = Vector(0, 17)
+		local arrowProjectileDamage = 14
+	
+		if entity:GetSprite():IsEventTriggered("Shootx3") then
+			local t = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, 0, 0, entity.Position+(Vector.FromAngle(entity:GetSprite().Rotation+90)*3)+arrowProjectilePositionOffset, (Vector.FromAngle(entity:GetSprite().Rotation+90)*10), entity):ToProjectile()
+			t:GetData().IsArrowTrapProjectile = true
+			local flags = BitOr(ProjectileFlags.HIT_ENEMIES, ProjectileFlags.NO_WALL_COLLIDE)
+	
+			REVEL.sfx:Play(SoundEffect.SOUND_STONESHOOT, 1, 0, false, 2)
+	
+			t:AddProjectileFlags(flags)
+			t.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_NONE
+			t.FallingSpeed = 0
+			t.FallingAccel = -0.09
+			t.Height = -20
+			t:GetData().ArrowTrapHitGrids = {}
+			t.CollisionDamage = arrowProjectileDamage
+		end
+
+		if sprite:IsFinished("Shoot") or sprite:IsFinished("ShootOnce") then
+			sprite:Play("Idle")
+
+			parent:GetSprite():SetFrame(0)
+		end
+		
+	end
+	
+end
+
 --Effects updates
 function mod:UpdateEffect(effect, data)
 	local variant = effect.Variant
@@ -2374,6 +2515,13 @@ function mod:UpdateEffect(effect, data)
 		mod:CardShowUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.Spike].VAR then
 		mod:LunaSpikeUpdate(effect)
+	elseif variant == mod.EntityInf[mod.Entity.TrapTile].VAR then
+		mod:RevelationTrapUpdate(effect)
+	end
+
+	--others
+	if data.Selfdestruct then
+		mod:Selfdestruct(effect)
 	end
 
 end
@@ -2851,6 +2999,46 @@ mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, coll
 	end
 end)
 
+--LunaFetus-------------------------------------------------------------------------------------------------------------------------------
+function mod:LunaFetusUpdate(tear, collided)
+	local sprite = tear:GetSprite()
+	local data = tear:GetData()
+
+	if data.Init == nil then
+		data.Init = true
+
+		tear:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
+
+		if tear.Scale < 1 then
+			sprite:Play("Rotate1")
+		elseif tear.Scale < 1.5 then
+			sprite:Play("Rotate2")
+		elseif tear.Scale < 2.5 then
+			sprite:Play("Rotate3")
+		else
+			sprite:Play("Rotate4")
+		end
+	end
+
+	--If tear collided then
+	if tear:IsDead() or collided then
+
+		local blood = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BLOOD_EXPLOSION, 0, tear.Position, Vector.Zero, nil)
+		blood.SpriteScale = math.sqrt(tear.Scale) * Vector.One
+		blood:GetSprite().Color = sprite.Color
+
+		sfx:Play(SoundEffect.SOUND_SPLATTER)
+		tear:Die()
+	end
+end
+mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
+	if tear.Variant == mod.EntityInf[mod.Entity.LunaFetus].VAR then
+		if collider.Type == EntityType.ENTITY_PLAYER then
+			mod:LunaFetusUpdate(tear,true)
+		end
+	end
+end)
+
 --Projectile Updates
 function mod:UpdateProjectile(projectile, data)
 	local variant = projectile.Variant
@@ -2874,6 +3062,8 @@ function mod:UpdateProjectile(projectile, data)
 		mod:KeyUpdate(projectile)
 	elseif data.IsBismuth_HC then
 		mod:BismuthUpdate(projectile)
+	elseif projectile.Variant == mod.EntityInf[mod.Entity.LunaFetus].VAR then
+		mod:LunaFetusUpdate(projectile,false)
 	end
 end
 

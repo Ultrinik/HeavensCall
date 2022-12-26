@@ -47,6 +47,7 @@ mod.Entity ={
     LunaWisp = 78,
     LunaKnife = 79,
     LunaIncubus = 80,
+    AltHorsemen = 82,
 
     ---------
 
@@ -75,6 +76,8 @@ mod.Entity ={
     LunaMegaSatanDoor = 74,
     Card = 76,
     Spike = 77,
+    TrapTile = 83,
+    Trap = 84,
 
     ---------
     
@@ -92,6 +95,7 @@ mod.Entity ={
     Leaf = 58,
     ChaosCard = 68,
     Bismuth = 70,
+    LunaFetus = 81,
     
     ---------
 
@@ -152,6 +156,7 @@ mod.EntityInf[mod.Entity.Phobos] = {ID = Isaac.GetEntityTypeByName("Phobos the T
 mod.EntityInf[mod.Entity.LunaWisp] = {ID = Isaac.GetEntityTypeByName("Luna Wisp (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Wisp (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.LunaKnife] = {ID = Isaac.GetEntityTypeByName("Luna Knife (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Knife (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.LunaIncubus] = {ID = Isaac.GetEntityTypeByName("Luna Incubus (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Incubus (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.AltHorsemen] = {ID = Isaac.GetEntityTypeByName("Alt Horsemen (HC)"), VAR = Isaac.GetEntityVariantByName("Alt Horsemen (HC)"),  SUB = mod.DefaultSub}
 
 --EFFECTS-----------------------------------------------------------------------------------------------
 
@@ -184,6 +189,8 @@ mod.EntityInf[mod.Entity.LunaDoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac
 mod.EntityInf[mod.Entity.LunaMegaSatanDoor] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Mega Satan Luna Door (HC)"),  SUB = mod.DefaultSub+1}
 mod.EntityInf[mod.Entity.Card] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Card (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Spike] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Luna Spike (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.TrapTile] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tomb Traptile (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Trap] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tomb Trap (HC)"),  SUB = mod.DefaultSub + 1}
 
 --PROJECTILES-----------------------------------------------------------------------------------------------
 
@@ -205,6 +212,8 @@ mod.EntityInf[mod.Entity.Kiss] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac
 
 mod.EntityInf[mod.Entity.Missile] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Missile (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.ChaosCard] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Chaos Card (HC)"),  SUB = mod.DefaultSub}
+
+mod.EntityInf[mod.Entity.LunaFetus] = {ID = EntityType.ENTITY_PROJECTILE, VAR = Isaac.GetEntityVariantByName("Luna Fetus (HC)"),  SUB = mod.DefaultSub}
 
 --OTHERS-------------------------------------------------------------------------------------------------
 

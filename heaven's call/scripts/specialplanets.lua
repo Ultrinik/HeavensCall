@@ -204,13 +204,13 @@ mod.LItemType = {
 
 if TaintedTreasure then
     mod.LMainPassive.LIL_SLUGGER = 33
-    mod.LAssistPassives.BUGULON = 34
+    --mod.LAssistPassives.BUGULON = 34
     mod.LMainPassive.SPIDER_FREAK = 35
 
     mod.LItemDoor[mod.LMainPassive.LIL_SLUGGER] = mod.DoorType.TAINTED
     mod.LItemPath[mod.LMainPassive.LIL_SLUGGER] = "gfx/items/collectibles/collectible_lilslugger.png"
-    mod.LItemDoor[mod.LAssistPassives.BUGULON] = mod.DoorType.TAINTED
-    mod.LItemPath[mod.LAssistPassives.BUGULON] = "gfx/items/collectibles/collectible_bugulonsuperfan.png"
+    --mod.LItemDoor[mod.LAssistPassives.BUGULON] = mod.DoorType.TAINTED
+    --mod.LItemPath[mod.LAssistPassives.BUGULON] = "gfx/items/collectibles/collectible_bugulonsuperfan.png"
     mod.LItemDoor[mod.LMainPassive.SPIDER_FREAK] = mod.DoorType.TAINTED
     mod.LItemPath[mod.LMainPassive.SPIDER_FREAK] = "gfx/items/collectibles/collectible_spiderfreak.png"
 end
@@ -233,7 +233,7 @@ end
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Plan   Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.IDLE] =           {0.000, 0.200, 0.230, 0.000, 0.050, 0.250, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
-    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 1.000, 0.500, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
+    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.350, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.100, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -264,7 +264,7 @@ mod.LConst = {--Some constant variables of Luna
     curseSpeed = 20,
 
     sleepShield = 80,
-    healPerSleep = 10,--10
+    healPerSleep = 1000,--10
 
     nCoins = 3,
 
@@ -332,8 +332,10 @@ function mod:LunaUpdate(entity)
         end
         
         --print(data.State)
+        --print(data.StateFrame)
 
         --Frame
+        --data.StateFrame = 0
         data.StateFrame = data.StateFrame + 1
         
         if not data.SSFlag and entity.HitPoints < entity.MaxHitPoints * mod.LConst.hpSS and data.State == mod.LMSState.IDLE then
@@ -431,6 +433,11 @@ function mod:LunaUpdate(entity)
         if data.HasMaw then
             mod:LunaMaw(entity, data, entity:GetSprite(), target, room)
         end
+
+        --[[
+        if entity.FrameCount % 200 == 0 then
+            mod:LunaUseActive(entity, nil)
+        end]]
 
     end
 end
@@ -606,17 +613,8 @@ function mod:LunaMegaSatan(entity, data, sprite, target,room)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
 
-        local direction = mod.RoomWalls.UP
-        local rotation = 0
-        if rng:RandomFloat() < 0.5 then
-            rotation = 180
-            direction = mod.RoomWalls.DOWN
-        end
-
-        local shape = room:GetRoomShape()
-        local position = mod.BorderRoom[direction][shape]
-
-        local door = mod:SpawnEntity(mod.Entity.LunaMegaSatanDoor, Vector(mod:RandomInt(70+mod.BorderRoom[mod.RoomWalls.LEFT][shape],-70+mod.BorderRoom[mod.RoomWalls.RIGHT][shape]),position), Vector.Zero, entity)
+        local position, rotation = mod:RandomUpDown()
+        local door = mod:SpawnEntity(mod.Entity.LunaMegaSatanDoor, position, Vector.Zero, entity)
         door:GetSprite().Rotation = rotation
         door.Parent = entity
         entity.Child = door
@@ -749,16 +747,44 @@ function mod:LunaSpecial(entity, data, sprite, target,room)
     if data.StateFrame == 1 then
         if REVEL then
             sprite:Play("SummonDoor",true)
+            data.Revel = 1
+            if rng:RandomFloat() < 0.5 then
+                data.Revel = 2
+            end
         else
             data.State = mod:MarkovTransition(data.State, mod.chainL)
             data.StateFrame = 0
         end
     elseif sprite:IsFinished("SummonDoor") then
+        if data.Revel == 1 then
+            data.State = mod:MarkovTransition(data.State, mod.chainL)
+            data.StateFrame = 0
+        else
+            sprite:Play("Jump",true)
+        end
+    elseif sprite:IsFinished("Jump") then
         data.State = mod:MarkovTransition(data.State, mod.chainL)
         data.StateFrame = 0
 
     elseif sprite:IsEventTriggered("SummonDoor") then
+        if data.Revel == 1 then
+            local door = mod:SpawnLunaDoor(entity, mod.DoorType.GLACIAR)
+        else
+            local door = mod:SpawnLunaDoor(entity, mod.DoorType.TOMB, entity.Position)
+        end
 
+    elseif sprite:IsEventTriggered("Preland") and entity.Child then
+        entity.Child:GetSprite():Play("Close",true)
+    elseif sprite:IsEventTriggered("Land") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+        --TRAPS
+        for i=1,2 do
+            local position = room:GetGridPosition(room:GetClampedGridIndex (room:GetRandomPosition(0)))
+            local trap = mod:SpawnEntity(mod.Entity.TrapTile, position, Vector.Zero, entity)
+            trap:GetData().Selfdestruct = true
+            trap:GetData().MaxFrames = 30*30
+        end
     end
 
 end
@@ -842,9 +868,9 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
         end
     end
 
-    --mainP = mod.LMainPassive.REVELATIONS
-    --secondaryP = mod.LSecondaryPassives.SACRED_HEART
-    --scale = 2
+    --mainP = mod.LMainPassive.BRIMSTONE
+    --secondaryP = mod.LSecondaryPassives.CLASSIC_WORM
+    --scale = 3
 
     if mainP == 0 then
 
@@ -911,6 +937,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
 
+            tear:GetSprite().Color = mod.Colors.parasite
+
             tear:GetData().LunaProjectile = true
             tear:GetData().LunaParasite = true
 
@@ -933,9 +961,9 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
     elseif mainP == mod.LMainPassive.C_SECTION then
 
         local velocity = (target.Position - entity.Position):Normalized()*10
-        local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+        --local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
+        local tear = mod:SpawnEntity(mod.Entity.LunaFetus, entity.Position, velocity, entity):ToProjectile()
         
-        tear:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
         tear.Velocity = tear.Velocity/3*2
         mod:TearFallAfter(tear, 100*scale)
         tear.Scale = scale
@@ -952,10 +980,10 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
             tear.Position = tear.Position + tear.Velocity:Normalized():Rotated(90)*mod.LConst._20_20_distance
             
-            local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, tear.Velocity, entity):ToProjectile()
+            --local tear2 = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, tear.Velocity, entity):ToProjectile()
+            local tear2 = mod:SpawnEntity(mod.Entity.LunaFetus, entity.Position, velocity, entity):ToProjectile()
             tear2.Position = tear2.Position + tear2.Velocity:Normalized():Rotated(-90)*mod.LConst._20_20_distance
             
-            tear2:AddProjectileFlags(ProjectileFlags.SMART_PERFECT)
             tear2.Velocity = tear2.Velocity/3*2
             tear2.Scale = scale
             mod:TearFallAfter(tear2, 100*scale)
@@ -997,6 +1025,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
             tear.Velocity = tear.Velocity * 1.25
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
+
+            tear:GetSprite().Color = mod.Colors.parasite
 
             tear:GetData().LunaProjectile = true
             tear:GetData().LunaParasite = true
@@ -1078,6 +1108,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
 
+            bomb:GetSprite().Color = mod.Colors.parasite
+
             bomb:GetData().LunaBomb = true
             bomb:GetData().LunaParasite = true
 
@@ -1150,6 +1182,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
             ring:GetSprite().Color = mod.Colors.white
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
+
+            ring:GetSprite().Color = mod.Colors.parasite
 
             ring.Parent = entity
             ring:GetData().LunaRing = true
@@ -1229,6 +1263,7 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
 
+            tear:GetSprite().Color = mod.Colors.parasite
             tear:GetData().LunaParasite = true
 
         elseif secondaryP == mod.LSecondaryPassives.CONTINUUM then
@@ -1350,6 +1385,7 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
             
+            laser:GetSprite().Color = mod.Colors.parasite
             mod:scheduleForUpdate(function()
                 --Need to get end of laser
                 local position = laser:GetEndPoint()
@@ -1375,7 +1411,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
         elseif secondaryP == mod.LSecondaryPassives.CLASSIC_WORM then --TODO
             
-            --:(
+            laser:AddTearFlags(TearFlags.TEAR_WIGGLE)
+            laser.CurveStrength = 100
 
         end
 
@@ -1503,6 +1540,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
             
+            laser:GetSprite().Color = mod.Colors.parasite
+
             local laser2 = EntityLaser.ShootAngle(LaserVariant.THIN_RED, entity.Position, direction:GetAngleDegrees(), 15, Vector.Zero, entity):ToLaser()
             laser2.Visible = false
             laser2.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
@@ -1636,6 +1675,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
             for i=1,nTears do
                 local tear = tears[i]
 
+                tear:GetSprite().Color = mod.Colors.parasite
+
                 tear:GetData().LunaProjectile = true
                 tear:GetData().LunaParasite = true
 
@@ -1733,6 +1774,8 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
             tear.Velocity = velocity
 
         elseif secondaryP == mod.LSecondaryPassives.PARASITE then
+            
+            saw:GetSprite().Color = mod.Colors.parasite
 
             tear:GetData().LunaProjectile = true
             tear:GetData().LunaSawParasite = true
@@ -1819,7 +1862,6 @@ function mod:SpawnSaw(entity, velocity, scale, tears)
 
     return saw, tear, tears
 end
-
 
 --Move
 function mod:LunaMove(entity, data, room, target)   
@@ -1986,12 +2028,17 @@ function mod:LunaUseActive(entity, itemNum)
         end
 
     elseif itemNum == mod.LActives.BIBLE then
-		sfx:Play(SoundEffect.SOUND_BOOK_PAGE_TURN_12)  
+		sfx:Play(SoundEffect.SOUND_BOOK_PAGE_TURN_12, 1.5)  
         local target = entity:ToNPC():GetPlayerTarget()
 
         local velocity = (target.Position - entity.Position):Normalized()*20
         local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
         local tearSprite = tear:GetSprite()
+
+        tear:GetData().LunaProjectile = true
+        tear:GetData().LunaBible = true
+
+        tear:AddEntityFlags(EntityFlag.FLAG_NO_DEATH_TRIGGER)
 
         mod:scheduleForUpdate(function()
             tearSprite:Load("gfx/effect_ICUP.anm2", true)
@@ -2050,7 +2097,7 @@ function mod:LunaUseActive(entity, itemNum)
     elseif itemNum == mod.LActives.FIEND_FOLIO then
 		sfx:Play(SoundEffect.SOUND_BOOK_PAGE_TURN_12)  
 
-        local randon = mod:RandomInt(1,3)
+        local random = mod:RandomInt(1,3)
 
         local position = entity.Position + Vector(75, 0):Rotated(rng:RandomFloat()*360)
 		for i=0, 100 do
@@ -2072,19 +2119,41 @@ function mod:LunaUseActive(entity, itemNum)
 
     elseif itemNum == mod.LActives.BOOK_REVELATIONS then
 		sfx:Play(SoundEffect.SOUND_BOOK_PAGE_TURN_12)
+
         local room = game:GetRoom()
         local margen = -900
+
         for i=0, 2 do
-            local position = Vector(margen*i, room:GetCenterPos().Y + mod:RandomInt(-150,150))
-            local horsemen = mod:SpawnEntity(mod.Entity.Horsemen, position, Vector.Zero, entity):ToNPC()
-            horsemen.I1 = i
+            
+            local delay = 0
+            if i==0 then
+                delay = 25
+            elseif i==1 then
+                delay = 90
+            end
+
+            mod:scheduleForUpdate(function()
+                local position = Vector(margen*i, room:GetCenterPos().Y + mod:RandomInt(-150,150))
+                position = room:GetCenterPos() - (position - room:GetCenterPos())
+
+                if i==2 then
+                    position = Vector(margen*i, room:GetCenterPos().Y + mod:RandomInt(-130,130))
+                    position = room:GetCenterPos() - (position - room:GetCenterPos())
+                    position = position + Vector(margen + 200, 0)
+                end
+    
+                local horsemen = mod:SpawnEntity(mod.Entity.AltHorsemen, position, Vector.Zero, entity):ToNPC()
+                horsemen.I1 = i
+            end,delay)
+
         end
         
         local position = Vector(margen*2, room:GetCenterPos().Y + mod:RandomInt(-50,50))
-        for i=-1, 1, 2 do
-            local horsemen = mod:SpawnEntity(mod.Entity.Horsemen, Vector(position.X, position.Y + 150*i), Vector.Zero, entity):ToNPC()
-            horsemen.I1 = i/2 + 7/2
-        end
+        position = room:GetCenterPos() - (position - room:GetCenterPos())
+        local i = -1
+        local horsemen = mod:SpawnEntity(mod.Entity.AltHorsemen, Vector(position.X, position.Y + 150*i), Vector.Zero, entity):ToNPC()
+        horsemen.I1 = i/2 + 7/2
+
     end
 end
 
@@ -2100,6 +2169,20 @@ function mod:TearFallAfter(projectile, frames)
     projectile.FallingSpeed = 0
     projectile.FallingAccel = -0.1
 
+end
+--Get vertial up/down wall postion
+function mod:RandomUpDown()
+    local direction = mod.RoomWalls.UP
+    local rotation = 0
+    if rng:RandomFloat() < 0.5 then
+        rotation = 180
+        direction = mod.RoomWalls.DOWN
+    end
+    local room = game:GetRoom()
+    local shape = room:GetRoomShape()
+    local vertical = mod.BorderRoom[direction][shape]
+    local position = Vector(mod:RandomInt(70+mod.BorderRoom[mod.RoomWalls.LEFT][shape],-70+mod.BorderRoom[mod.RoomWalls.RIGHT][shape]),vertical)
+    return position, rotation
 end
 
 --Projectile collision effects
@@ -2181,6 +2264,10 @@ function mod:LunaProjectile(tear,collided)
                 local velocity = data.Velocity:Rotated(90*(2*i-1))
                 saw2, tear2 = mod:SpawnSaw(tear, velocity, tear.Scale*mod.LConst.incubusScale, {})
             end
+
+        elseif data.LunaBible then
+		    game:SpawnParticles (tear.Position, EffectVariant.NAIL_PARTICLE, 9, 5, mod.Colors.wax)
+
         end
         
         if data.LunaBrust then
@@ -2371,6 +2458,9 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
                 mantle.DepthOffset =400
                 mantle.SpriteScale = 1.5*Vector.One
                 data.HasMantle = false
+
+                sfx:Play(SoundEffect.SOUND_HOLY_MANTLE)
+
                 return false
             end
 

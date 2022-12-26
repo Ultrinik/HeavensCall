@@ -49,6 +49,7 @@ mod.Colors = {
 	red = Color(10,0.5,0.5,1),
 	whiteish = Color(1,1,1,1,0.1,0.1,0.1),
 	redlight = Color(3,0.75,0.75,1),
+	parasite = Color(0.9, 0.3, 0.08, 1, 0, 0, 0),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
