@@ -60,7 +60,11 @@ mod.LMSState = {
     PLANETARIUM = 12,
     VAULT = 13,
     SPECIAL = 14,
-    SACRIFICE = 15
+    SACRIFICE = 15,
+
+    MEGA_MUSH = 100,
+    MOMS_SHOVEL = 99,
+    FLIP = 98
 }
 
 --TOTAL ITEMS = 40 [0-39]
@@ -232,8 +236,8 @@ end
 
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Plan   Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.IDLE] =           {0.000, 0.200, 0.230, 0.000, 0.050, 0.250, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
-    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 1.000},
+    --[mod.LMSState.IDLE] =           {0.000, 0.200, 0.230, 0.000, 0.050, 0.250, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
+    [mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.350, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.100, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -299,6 +303,19 @@ mod.LConst = {--Some constant variables of Luna
 
     sluggerSpeed = 7,
 
+    impactDamage = 25,
+    maxImpacts = 5,
+    impactBlastAngle = 5,
+    nBlasts = 5,
+    shovelSpeed = 40,
+    maxShovels = 6,
+    nFinalPatas = 6,
+    maxFlipAttacks = 5,
+    wave1Flip = 8,
+    wave2Flip = 16,
+    wave3Flip = 12,
+    waveFlipSpeed = 12,
+
 }
 
 function mod:LunaUpdate(entity)
@@ -324,6 +341,12 @@ function mod:LunaUpdate(entity)
             data.HasMantle = false
             data.HasMaw = false
             data.MawTime = 0
+
+            data.ImpactsDone = 0
+            data.ShovelsDone = 0
+            data.FlipAttacksDone = 0
+
+            data.TargetPos = Vector.Zero
 
             for i=1,4 do
                 local door = Isaac.Spawn(EntityType.ENTITY_ULTRA_DOOR, 0, 0, room:GetCenterPos(), Vector.Zero, nil)
@@ -352,8 +375,7 @@ function mod:LunaUpdate(entity)
                     entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
                     entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
                 elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
-                    data.State = mod:MarkovTransition(data.State, mod.chainL)
-                    data.StateFrame = 0
+                    mod:LunaChangeState(entity)
                 elseif sprite:IsEventTriggered("EndAppear") then
                     entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
                 end
@@ -362,8 +384,7 @@ function mod:LunaUpdate(entity)
                 if data.StateFrame == 1 then
                     sprite:Play("Idle",true)
                 elseif sprite:IsFinished("Idle") then
-                    data.State = mod:MarkovTransition(data.State, mod.chainL)
-                    data.StateFrame = 0
+                    mod:LunaChangeState(entity)
                     
                 else
                     mod:LunaMove(entity, data, room, target)
@@ -397,6 +418,12 @@ function mod:LunaUpdate(entity)
                 mod:LunaSpecial(entity, data, sprite, target,room)
             elseif data.State == mod.LMSState.SACRIFICE then
                 mod:LunaSacrifice(entity, data, sprite, target,room)
+            elseif data.State == mod.LMSState.MEGA_MUSH then
+                mod:LunaMegaMush(entity, data, sprite, target,room)
+            elseif data.State == mod.LMSState.MOMS_SHOVEL then
+                mod:LunaShovel(entity, data, sprite, target,room)
+            elseif data.State == mod.LMSState.FLIP then
+                mod:LunaFlip(entity, data, sprite, target,room)
             end
         end
 
@@ -441,27 +468,25 @@ function mod:LunaUpdate(entity)
 
     end
 end
-function mod:LunaAttack(entity, data, sprite, target,room)
+function mod:LunaAttack(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("NormalAttack",true)
         data.TargetAim = target.Position
     elseif sprite:IsFinished("NormalAttack") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("Attack") then
         mod:LunaSynergy(entity, data, sprite, target, room, false)
     end
 
 end
-function mod:LunaCharge(entity, data, sprite, target,room)
+function mod:LunaCharge(entity, data, sprite, target, room)
     if data.Height then
         entity.Position = Vector(entity.Position.X, data.Height)
     end
 
     if data.StateFrame == 1 then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
         --XDDDDD
 
         data.Height = entity.Position.Y
@@ -486,8 +511,7 @@ function mod:LunaCharge(entity, data, sprite, target,room)
     elseif sprite:IsFinished("DashR") or sprite:IsFinished("DashL") or sprite:IsFinished("TrapdoorOut") then
         data.Height = nil
         data.DashFlag = false
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("Attack") then
         data.DashFlag = true
@@ -498,7 +522,7 @@ function mod:LunaCharge(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaTeleport(entity, data, sprite, target,room)
+function mod:LunaTeleport(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
@@ -508,8 +532,7 @@ function mod:LunaTeleport(entity, data, sprite, target,room)
         trapdoor:GetSprite():Play("BigIdle", true)
 
     elseif sprite:IsFinished("TrapdoorOut") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
     elseif sprite:IsFinished("TrapdoorIn") and entity.Visible then
 
         entity.Visible = false
@@ -533,7 +556,7 @@ function mod:LunaTeleport(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaItem(entity, data, sprite, target,room)
+function mod:LunaItem(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
@@ -542,8 +565,7 @@ function mod:LunaItem(entity, data, sprite, target,room)
         
         mod:GiveItemLuna(entity, data.LastItem)
 
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("PickUp",true)
 
@@ -554,6 +576,7 @@ function mod:LunaItem(entity, data, sprite, target,room)
 
         local itemType = 0 -- 00001 active, 00010 a.passive, 00100 m.passive, 01000 s.passive, 10000 special
         local itemNum = -1
+        local oldItem = 0
 
         local random = mod:RandomInt(1,9)
         if random <= 2 then
@@ -561,13 +584,16 @@ function mod:LunaItem(entity, data, sprite, target,room)
             itemNum = mod:random_elem(mod.LActives)
         elseif random <= 4 then
             itemType = mod.LItemType.MAIN
-            itemNum = mod:LunaChooseItem(mod.LMainPassive, data.mainP)
+            itemNum = mod:LunaChooseItem(mod.LMainPassive, data.MainP)
+            oldItem = data.MainP
         elseif random <= 6 then
             itemType = mod.LItemType.SECONDARY
-            itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.secondaryP)
+            itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP)
+            oldItem = data.SecondaryP
         elseif random <= 8 then
             itemType = mod.LItemType.ASSIST
             itemNum = mod:LunaChooseItem(mod.LAssistPassives, data.AssistP)
+            oldItem = data.AssistP
         else
             itemType = mod.LItemType.SPECIAL
             itemNum = mod:random_elem(mod.LSpecials)
@@ -576,24 +602,27 @@ function mod:LunaItem(entity, data, sprite, target,room)
         data.LastItem = itemNum
         data.LastItemType = itemType
         
-        sprite:ReplaceSpritesheet(1, mod.LItemPath[data.LastItem])
+        sprite:ReplaceSpritesheet(1, mod.LItemPath[itemNum])
+        if oldItem == 0 then
+            sprite:ReplaceSpritesheet(2, "")
+        else
+            sprite:ReplaceSpritesheet(2, mod.LItemPath[oldItem])
+        end
         sprite:LoadGraphics()
 
         local door = mod:SpawnLunaDoor(entity, mod.LItemDoor[itemNum], entity.Position + Vector(50,0))
     end
 
 end
-function mod:LunaBoss(entity, data, sprite, target,room)
+function mod:LunaBoss(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         if mod:LunaBossCount() <= 0 then
             sprite:Play("SummonDoor",true)
         else
-            data.State = mod:MarkovTransition(data.State, mod.chainL)
-            data.StateFrame = 0
+            mod:LunaChangeState(entity)
         end
     elseif sprite:IsFinished("Cheer") or data.StateFrame > 150 then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Idle",true)
     elseif entity.Child and entity.Child:GetData().Frame == 30 then
@@ -604,12 +633,11 @@ function mod:LunaBoss(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaMegaSatan(entity, data, sprite, target,room)
+function mod:LunaMegaSatan(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("SummonDoorMega",true)
     elseif sprite:IsFinished("SummonDoorMega") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
 
@@ -621,14 +649,13 @@ function mod:LunaMegaSatan(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaCurse(entity, data, sprite, target,room)
+function mod:LunaCurse(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("Snap") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
         data.CuseFlag = false
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Snap",true)
@@ -645,26 +672,24 @@ function mod:LunaCurse(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaArcade(entity, data, sprite, target,room)
+function mod:LunaArcade(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("SummonDoor") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
         local door = mod:SpawnLunaDoor(entity, mod.DoorType.ARCADE)
     end
 
 end
-function mod:LunaBed(entity, data, sprite, target,room)
+function mod:LunaBed(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("SleepEnd") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("GoToSleep",true)
@@ -687,20 +712,19 @@ function mod:LunaBed(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaDice(entity, data, sprite, target,room)
+function mod:LunaDice(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("Dice") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Dice",true)
 
     elseif sprite:IsEventTriggered("Dice") then
         sfx:Play(SoundEffect.SOUND_EDEN_GLITCH,1)
         
-        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LMainPassive, data.mainP, true), mod.LItemType.MAIN)
-        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LSecondaryPassives, data.secondaryP, true), mod.LItemType.SECONDARY)
+        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LMainPassive, data.MainP, true), mod.LItemType.MAIN)
+        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP, true), mod.LItemType.SECONDARY)
         mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LAssistPassives, data.AssistP, true), mod.LItemType.ASSIST)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
@@ -708,17 +732,15 @@ function mod:LunaDice(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaPlanetarium(entity, data, sprite, target,room)
+function mod:LunaPlanetarium(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         if mod:LunaBossCount() <= 0 then
             sprite:Play("SummonDoor",true)
         else
-            data.State = mod:MarkovTransition(data.State, mod.chainL)
-            data.StateFrame = 0
+            mod:LunaChangeState(entity)
         end
     elseif sprite:IsFinished("Cheer") or data.StateFrame > 150 then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Idle",true)
     elseif entity.Child and entity.Child:GetData().Frame == 30 then
@@ -729,19 +751,18 @@ function mod:LunaPlanetarium(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaVault(entity, data, sprite, target,room)
+function mod:LunaVault(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("SummonDoor") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
         local door = mod:SpawnLunaDoor(entity, mod.DoorType.VAULT)
     end
 
 end
-function mod:LunaSpecial(entity, data, sprite, target,room)
+function mod:LunaSpecial(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
@@ -752,19 +773,16 @@ function mod:LunaSpecial(entity, data, sprite, target,room)
                 data.Revel = 2
             end
         else
-            data.State = mod:MarkovTransition(data.State, mod.chainL)
-            data.StateFrame = 0
+            mod:LunaChangeState(entity)
         end
     elseif sprite:IsFinished("SummonDoor") then
         if data.Revel == 1 then
-            data.State = mod:MarkovTransition(data.State, mod.chainL)
-            data.StateFrame = 0
+            mod:LunaChangeState(entity)
         else
             sprite:Play("Jump",true)
         end
     elseif sprite:IsFinished("Jump") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
         if data.Revel == 1 then
@@ -788,14 +806,13 @@ function mod:LunaSpecial(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaSacrifice(entity, data, sprite, target,room)
+function mod:LunaSacrifice(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("Jump") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity, fixState)
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Jump",true)
 
@@ -824,17 +841,335 @@ function mod:LunaSacrifice(entity, data, sprite, target,room)
     end
 
 end
-function mod:LunaSS(entity, data, sprite, target,room)
+function mod:LunaSS(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Idle",true)
     elseif sprite:IsFinished("Idle") then
-        data.State = mod:MarkovTransition(data.State, mod.chainL)
-        data.StateFrame = 0
+        mod:LunaChangeState(entity, fixState)
 
     elseif sprite:IsEventTriggered("Attack") then
 
     end
 
+end
+function mod:LunaMegaMush(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("MegaMush",true)
+        entity.Child = nil
+    elseif sprite:IsFinished("MegaMush") then
+        entity.Visible = false
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        sprite:Play("TrapdoorOut")
+        sprite:Stop()
+
+        local position = room:GetRandomPosition(0)
+        local moon = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0, position, Vector.Zero, entity)
+        moon:GetData().TargetPos = position
+
+        moon.DepthOffset = 10
+        moon:GetSprite():Load("gfx/effect_LunaMegaMush.anm2", true)
+        moon:GetSprite():Play("In1", true)
+        entity.Child = moon
+
+        for _, f in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0)) do
+            f:Remove()
+        end
+
+    elseif entity.Child then
+        local moon = entity.Child
+        local moonSprite = moon:GetSprite()
+        local moonData = moon:GetData()
+        if moonSprite:IsFinished("In1") or moonSprite:IsFinished("In") then
+            data.ImpactsDone = data.ImpactsDone + 1
+            if data.ImpactsDone > mod.LConst.maxImpacts then
+                data.ImpactsDone = 0
+                moonData.TargetPos = Vector.Zero
+                moonSprite:Play("Bounce2")
+            else
+                moonSprite:Play("Bounce")
+            end
+            
+            --Self Damage
+            local hp = entity.HitPoints - mod.LConst.impactDamage
+            if hp > 0 then
+                entity:TakeDamage(mod.LConst.impactDamage, DamageFlag.DAMAGE_CRUSH, EntityRef(entity), 0)
+            end
+
+            --Explosion
+            sfx:Play(SoundEffect.SOUND_HELLBOSS_GROUNDPOUND, 2)
+            mod:SpawnGlassFracture(moon, 2, 5)
+            game:ShakeScreen(70)
+
+            local offset = 360*rng:RandomFloat()
+            for i=1, mod.LConst.nBlasts do
+                local direction = Vector(1,0):Rotated(360*i/mod.LConst.nBlasts + offset)
+                local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 1, moon.Position, Vector.Zero, entity):ToEffect()
+                explosion:GetSprite().Color = Color(1,0,0,1)
+                explosion.Parent = entity
+                local explosionData = explosion:GetData()
+                explosionData.Direction = direction
+                explosionData.IsActive_HC = true
+                explosionData.HeavensCall = true
+                
+		        sfx:Stop(SoundEffect.SOUND_FART)
+            end
+
+
+        elseif moonSprite:IsPlaying("In1") or moonSprite:IsPlaying("In") or moonSprite:IsPlaying("Bounce2") then
+            moon.Position = mod:Lerp(moon.Position, moonData.TargetPos, 0.1)
+
+
+        elseif moonSprite:IsFinished("Bounce") then
+            moonData.TargetPos = mod:GetRandomPosition(moon.Position, 200)
+            moon:GetSprite():Play("In", true)
+
+        elseif moonSprite:IsFinished("Bounce2") then
+            entity.Visible = true
+            sprite:Play("TrapdoorOut", true)
+
+            local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position + Vector(0,-5), Vector.Zero, entity)
+            trapdoor:GetSprite():Play("BigIdle", true)
+
+            entity.Child = nil
+            moon:Remove()
+        end
+
+    elseif sprite:IsFinished("TrapdoorOut") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+        mod:LunaChangeState(entity, mod.LMSState.IDLE)
+    end
+end
+function mod:LunaShovel(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("ShovelSummon",true)
+    elseif sprite:IsFinished("ShovelSummon") then
+        local diff = (entity.Position - target.Position).X
+        if diff < 0 then
+            sprite:Play("ShovelR", true)
+        else
+            sprite:Play("ShovelL", true)
+        end
+
+        for i=0, game:GetNumPlayers ()-1 do
+            local player = game:GetPlayer(i)
+            local stomp = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.MOM_FOOT_STOMP, 0, player.Position, Vector.Zero, entity)
+        end
+
+    elseif sprite:IsPlaying("ShovelL") or sprite:IsPlaying("ShovelR") then
+        if sprite:IsEventTriggered("Aim") then
+            local diff = (entity.Position - target.Position).X
+            local frame = sprite:GetFrame()+1
+            if diff < 0 then
+                sprite:Play("ShovelR", true)
+            else
+                sprite:Play("ShovelL", true)
+            end
+            sprite:SetFrame(frame)
+
+            data.TargetPos = target.Position
+
+        elseif sprite:IsEventTriggered("Attack") then
+            local direction = (data.TargetPos - entity.Position):Normalized()
+            entity.Velocity = direction * mod.LConst.shovelSpeed
+        end
+
+    elseif sprite:IsFinished("ShovelL") or sprite:IsFinished("ShovelR") then
+        local stomp = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.MOM_FOOT_STOMP, 0, data.TargetPos, Vector.Zero, entity)
+
+        data.ShovelsDone = data.ShovelsDone + 1
+        if data.ShovelsDone > mod.LConst.maxShovels then
+            data.ShovelsDone = 0
+            sprite:Play("ShovelJump", true)
+        else
+            local diff = (entity.Position - target.Position).X
+            if diff < 0 then
+                sprite:Play("ShovelR", true)
+            else
+                sprite:Play("ShovelL", true)
+            end
+        end
+        
+    elseif sprite:IsPlaying("ShovelJump") then
+        if sprite:IsEventTriggered("Jump") then
+            entity.Velocity = Vector.Zero
+            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+            --Patas
+            local offset = 360*rng:RandomFloat()
+            for i=1, mod.LConst.nFinalPatas do 
+                local position = entity.Position + Vector(100, 0):Rotated(360*i/mod.LConst.nFinalPatas + offset)
+                local stomp = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.MOM_FOOT_STOMP, 0, position, Vector.Zero, entity)
+            end
+        elseif sprite:IsEventTriggered("Land") then
+            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+
+        end
+    elseif sprite:IsFinished("ShovelJump") then
+        mod:LunaChangeState(entity, mod.LMSState.ITEM)
+    end
+
+end
+function mod:LunaFlip(entity, data, sprite, target, room)
+    
+    if data.StateFrame == 1 then
+        sprite:Play("Flip",true)
+        sfx:Play(SoundEffect.SOUND_LAZARUS_FLIP_ALIVE)
+
+    elseif sprite:IsFinished("Flip") then
+        entity.Visible = false
+
+        local lunaFlip = Isaac.Spawn(EntityType.ENTITY_DOGMA, 10, 160, entity.Position, Vector.Zero, entity)
+        lunaFlip.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        lunaFlip:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        lunaFlip.Parent = entity
+        entity.Child = lunaFlip
+        data.FlipFlag = true
+        
+        sprite:Play("Idle",true)
+        sprite:Stop()
+    end
+
+    if data.FlipFlag then
+        if entity.Child then
+            entity.Position = entity.Child.Position
+        else
+            data.FlipFlag = false
+        end
+    end
+
+end
+
+function mod:LunaFlipUpdate(entity)
+    if entity.Variant == 10 and entity.SubType == 160 then
+        local data = entity:GetData()
+        local sprite = entity:GetSprite()
+
+        if not data.Init then
+            data.Init = true
+
+            sprite:Play("Idle", true)
+
+            data.FlipAttacksDone = 0
+        end
+    
+        if sprite:IsFinished("Idle") then
+            if data.FlipAttacksDone < mod.LConst.maxFlipAttacks then
+                if rng:RandomFloat() < 0.8 then
+                    data.FlipAttacksDone = data.FlipAttacksDone + 1
+    
+                    local random = mod:RandomInt(1,3)
+                    if random == 1 then
+                        sprite:Play("Attack1", true)
+                        data.WaveOffset = 360*rng:RandomFloat()
+                    elseif random == 2 then
+                        sprite:Play("Attack2", true)
+                    else
+                        sprite:Play("Attack3", true)
+                    end
+                else
+                    sprite:Play("Idle", true)
+                end
+
+            else
+                data.FlipAttacksDone = 0
+                sfx:Play(SoundEffect.SOUND_LAZARUS_FLIP_DEAD)
+                sprite:Play("Flip", true)
+            end
+
+        elseif sprite:IsFinished("Flip") or sprite:IsEventTriggered("End") then
+            entity.Parent:GetSprite():Play("Idle", true)
+            mod:LunaChangeState(entity.Parent, mod.LMSState.IDLE)
+            entity.Parent.Visible = true
+            entity.Parent:GetSprite():Play("Idle",true)
+            entity:Remove()
+        elseif sprite:IsFinished("Attack1") or sprite:IsFinished("Attack2") or sprite:IsFinished("Attack3") then
+            data.Dir1 = nil
+            data.Dir2 = nil
+            data.Dir3 = nil
+            sprite:Play("Idle", true)
+
+        elseif sprite:IsPlaying("Attack1") then
+            local n
+            if sprite:IsEventTriggered("Attack1") then
+                n = mod.LConst.wave1Flip
+            elseif sprite:IsEventTriggered("Attack2") then
+                n = mod.LConst.wave2Flip
+            elseif sprite:IsEventTriggered("Attack3") then
+                n = mod.LConst.wave3Flip
+            end
+
+            if n then
+                for i=1, n do
+                    local velocity = Vector(1,0):Rotated(i*360/n + data.WaveOffset) * mod.LConst.waveFlipSpeed
+                    local shot = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_WING, 0, entity.Position, velocity, entity):ToProjectile()
+
+                    shot:GetSprite():ReplaceSpritesheet(0, "gfx/effects/static_diamond.png")
+                    shot:GetSprite():LoadGraphics()
+                end
+                sfx:Play(SoundEffect.SOUND_THUMBS_DOWN, 1, 2, false, 1.2)
+            end
+
+        elseif sprite:IsPlaying("Attack2") then
+            if sprite:IsEventTriggered("Attack1") then
+                local offset = 360*rng:RandomFloat()
+                for i=1,2 do
+                    local position = entity.Position + Vector(50, 0):Rotated(i*360/2+offset)
+                    local angel = Isaac.Spawn(EntityType.ENTITY_DOGMA, 10, 0, position, Vector.Zero, entity)
+                end
+            end
+
+        elseif sprite:IsPlaying("Attack3") then
+            if sprite:IsEventTriggered("Attack1") then
+                local dirs
+                if not data.Dir1 then
+                    dirs = {360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat()}
+                    data.Dir1 = dirs
+                elseif not data.Dir2 then
+                    dirs = {360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat()}
+                    data.Dir2 = dirs
+                elseif not data.Dir3 then
+                    dirs = {360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat()}
+                    data.Dir3 = dirs
+                end
+
+                for i=1,4 do
+                    local direction = dirs[i]
+                    local laser = EntityLaser.ShootAngle(LaserVariant.TRACTOR_BEAM, entity.Position , direction, 5, Vector.Zero, entity)
+                    laser:GetSprite().Color = Color(1,1,1,1, 2, 2, 2)
+                end
+                sfx:Play(SoundEffect.SOUND_DOGMA_JACOBS)
+
+            elseif sprite:IsEventTriggered("Attack2") then
+                local dirs
+                if data.Dir1 then
+                    dirs = data.Dir1
+                    data.Dir1 = nil
+                elseif data.Dir2 then
+                    dirs = data.Dir2
+                    data.Dir2 = nil
+                elseif data.Dir3 then
+                    dirs = data.Dir3
+                    data.Dir3 = nil
+                end
+
+                for i=1,4 do
+                    local direction = dirs[i]
+                    local laser = EntityLaser.ShootAngle(LaserVariant.THICK_RED, entity.Position , direction, 25, Vector.Zero, entity)
+                    laser:Update()
+                    laser:GetSprite().Color = Color.Default
+
+                    laser:GetSprite():ReplaceSpritesheet(0, "gfx/effects/static_brimstone.png")
+                    laser:GetSprite():LoadGraphics()
+
+                    sfx:Stop(SoundEffect.SOUND_BLOOD_LASER)
+                    sfx:Play(SoundEffect.SOUND_DOGMA_JACOBS_ZAP)
+                end
+            end
+
+        end
+
+        mod:LunaFlipMove(entity, data, game:GetRoom())
+    end
 end
 
 function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
@@ -1862,6 +2197,24 @@ function mod:SpawnSaw(entity, velocity, scale, tears)
 
     return saw, tear, tears
 end
+function mod:LunaChangeState(entity, fixState)
+    local data = entity:GetData()
+
+    --print()
+    --print("Chage state")
+    ---print(data.State)
+    --print(fixState)
+    --print(entity:GetSprite():GetAnimation())
+    
+    if fixState then
+        data.State = fixState
+    elseif data.State ~= mod.LMSState.MEGA_MUSH and data.State ~= mod.LMSState.FLIP and data.State ~= mod.LMSState.MOMS_SHOVEL then
+        data.State = mod:MarkovTransition(data.State, mod.chainL)
+    end
+    data.StateFrame = 0
+
+    --Play maw
+end
 
 --Move
 function mod:LunaMove(entity, data, room, target)   
@@ -1896,6 +2249,30 @@ function mod:LunaMove(entity, data, room, target)
     
     --Do the actual movement
     entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * speed
+    data.targetvelocity = data.targetvelocity * 0.99
+end
+function mod:LunaFlipMove(entity, data, room)
+    local center = room:GetCenterPos()
+    --idleTime == frames moving in the same direction
+    if not data.idleTime then 
+        data.idleTime = mod:RandomInt(mod.VConst.idleTimeInterval.X, mod.VConst.idleTimeInterval.Y)--Venus things
+
+        if center:Distance(entity.Position) < 25 then
+            data.targetvelocity = (-(center - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-45, 45))
+        else
+            data.targetvelocity = ((center - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+        end
+    end
+    
+    --If run out of idle time
+    if data.idleTime <= 0 and data.idleTime ~= nil then
+        data.idleTime = nil
+    else
+        data.idleTime = data.idleTime - 1
+    end
+    
+    --Do the actual movement
+    entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * 1.2
     data.targetvelocity = data.targetvelocity * 0.99
 end
 
@@ -1945,7 +2322,12 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         tipo = data.LastItemType
     end
 
+
+    --tipo = mod.LItemType.SPECIAL
+    --itemNum = mod.LSpecials.FLIP
     --mod:LunaUseActive(entity, mod.LActives.BOOK_BELIAL)
+
+
     if tipo == mod.LItemType.ACTIVE then
         mod:LunaUseActive(entity, itemNum)
     elseif tipo == mod.LItemType.MAIN then
@@ -1983,8 +2365,14 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         elseif itemNum == mod.LAssistPassives.MAW_VOID then
             data.HasMaw = true
         end
-    else
-        --SPECIAL
+    else --SPECIAL
+        if itemNum == mod.LSpecials.MEGA_MUSH then
+            mod:LunaChangeState(entity, mod.LMSState.MEGA_MUSH)
+        elseif itemNum == mod.LSpecials.MOMS_SHOVEL then
+            mod:LunaChangeState(entity, mod.LMSState.MOMS_SHOVEL)
+        elseif itemNum == mod.LSpecials.FLIP then
+            mod:LunaChangeState(entity, mod.LMSState.FLIP)
+        end
     end
     
 end
@@ -2183,6 +2571,19 @@ function mod:RandomUpDown()
     local vertical = mod.BorderRoom[direction][shape]
     local position = Vector(mod:RandomInt(70+mod.BorderRoom[mod.RoomWalls.LEFT][shape],-70+mod.BorderRoom[mod.RoomWalls.RIGHT][shape]),vertical)
     return position, rotation
+end
+--Get random post
+function mod:GetRandomPosition(originalPos, range)
+    local room = game:GetRoom()
+
+    local position = room:GetRandomPosition(0)
+    if originalPos and range then
+        for i=1, 100 do
+            if position:Distance(originalPos) > range then break end
+            position = room:GetRandomPosition(0)
+        end
+    end
+    return position
 end
 
 --Projectile collision effects
@@ -2432,12 +2833,22 @@ end
 --Callbacks
 --Luna updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.LunaUpdate, mod.EntityInf[mod.Entity.Luna].ID)
+--Luna flip update
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.LunaFlipUpdate, EntityType.ENTITY_DOGMA)
 
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
 	if entity.Type == mod.EntityInf[mod.Entity.Luna].ID and entity.Variant == mod.EntityInf[mod.Entity.Luna].VAR then
         local data = entity:GetData()
         local sprite = entity:GetSprite()
 
+        --DAMAGE NULLIFICATION
+        if source.Type == EntityType.ENTITY_EFFECT and source.Variant == EffectVariant.MOM_FOOT_STOMP then
+            return false
+        elseif source.Type == EntityType.ENTITY_DOGMA and source.Variant == 10 then
+            return false
+        end
+
+        --DAMAGE REDUCTION
         if flags & DamageFlag.DAMAGE_EXPLOSION == DamageFlag.DAMAGE_EXPLOSION and source.Type == EntityType.ENTITY_BOMB and source.Entity and source.Entity.SpawnerEntity and source.Entity.SpawnerEntity.Type == mod.EntityInf[mod.Entity.Luna].ID  then
             entity:TakeDamage(math.floor(amount/10), flags - DamageFlag.DAMAGE_EXPLOSION, source, frames)
             return false
@@ -2451,8 +2862,10 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
             light:GetSprite().PlaybackSpeed = 0.35
         end
 
+        --NO SHIELD
         if data.ShieldTime and data.ShieldTime <= 0 then
 
+            --MANTLE
             if data.HasMantle then
                 local mantle = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF02, 11, entity.Position, Vector.Zero, entity)
                 mantle.DepthOffset =400
@@ -2464,15 +2877,16 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
                 return false
             end
 
-            --Sleeping
+            --SLEEPING
             data.SleepShield = data.SleepShield - amount
             if sprite:IsPlaying("Sleeping") and data.SleepShield <= 0 then
                 data.SleepShield = 0
                 sprite:Play("SleepEnd", true)
             end
 
+        --SHIELD
         elseif data.ShieldTime then
-
+            sfx:Stop(SoundEffect.SOUND_BISHOP_HIT)
             return false
         end
 	end

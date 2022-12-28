@@ -1289,7 +1289,7 @@ function mod:LunaWispUpdate(entity)
 end
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(_,entity)
 	if entity.Type == mod.EntityInf[mod.Entity.LunaWisp].ID and entity.Variant == mod.EntityInf[mod.Entity.LunaWisp].VAR then
-		sfx:Play(SoundEffect.SOUND_CANDLE_LIGHT,1.5)
+		sfx:Play(SoundEffect.SOUND_STEAM_HALFSEC,1)
 	end
 end)
 
@@ -2460,6 +2460,36 @@ function mod:RevelationTrapUpdate(entity)
 	
 end
 
+function mod:RedFartUpdate(entity)
+	local data = entity:GetData()
+	if data.IsActive_HC and entity:GetSprite():GetFrame() == 3 then
+		local position = entity.Position + data.Direction * 60
+
+		if not mod:IsOutsideRoom(position, game:GetRoom()) then
+			local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 1, position, Vector.Zero, entity):ToEffect()
+			explosion:GetSprite().Color = Color(1,0,0,1)
+			explosion:GetSprite().PlaybackSpeed = 0.7
+			local explosionData = explosion:GetData()
+			explosionData.Direction = data.Direction:Rotated(mod.LConst.impactBlastAngle * 2 * rng:RandomFloat() - mod.LConst.impactBlastAngle)
+			explosionData.IsActive_HC = true
+			explosionData.HeavensCall = true
+
+		end
+
+		sfx:Stop(SoundEffect.SOUND_FART)
+
+		--Damage
+		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 50)) do
+			if e.Type ~= EntityType.ENTITY_PLAYER and e.Type ~= mod.EntityInf[mod.Entity.Luna].ID then
+				e:TakeDamage(100, DamageFlag.DAMAGE_CRUSH, EntityRef(entity.Parent), 0)
+			elseif e.Type == EntityType.ENTITY_PLAYER then
+					e:TakeDamage(2, DamageFlag.DAMAGE_CRUSH, EntityRef(entity.Parent), 0)
+			end
+		end
+		data.IsActive_HC = false
+	end
+end
+
 --Effects updates
 function mod:UpdateEffect(effect, data)
 	local variant = effect.Variant
@@ -2471,6 +2501,8 @@ function mod:UpdateEffect(effect, data)
 		mod:MeteorUpdate(effect)
 	elseif variant == EffectVariant.BIG_ROCK_EXPLOSION then
 		mod:RockblastUpdate(effect)
+	elseif variant == EffectVariant.FART and subType == 1 then
+		mod:RedFartUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.TerraTarget].VAR and subType == mod.EntityInf[mod.Entity.TerraTarget].SUB then
 		effect.DepthOffset = -50
 		if effect.Timeout <= 1 then
@@ -2518,7 +2550,7 @@ function mod:UpdateEffect(effect, data)
 	elseif variant == mod.EntityInf[mod.Entity.TrapTile].VAR then
 		mod:RevelationTrapUpdate(effect)
 	end
-
+	
 	--others
 	if data.Selfdestruct then
 		mod:Selfdestruct(effect)

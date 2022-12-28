@@ -754,6 +754,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 		--SPACEEE
 		local wallspos = room:GetCenterPos()-Vector(0,1)*room:GetCenterPos().Y/2
 		local effect = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0, wallspos, Vector.Zero, nil) --Some inert thing thats in the floor
+		effect.DepthOffset = 1
 		local sprite = effect:GetSprite()
 		sprite.Color = Color(1,1,1,1)
 		sprite:Load("gfx/backdrop/astralchallengecosmos.anm2", true)
@@ -761,6 +762,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure ro
 		sprite:Play("idle", true)
 
 		local effect = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0, wallspos, Vector.Zero, nil) --Some inert thing thats in the floor
+		effect.DepthOffset = 2
 		local sprite = effect:GetSprite()
 		sprite.Color = Color(1,1,1,1)
 		sprite:Load("gfx/backdrop/astralchallengestars1.anm2", true)

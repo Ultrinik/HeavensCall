@@ -252,6 +252,8 @@
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
+	<entity name="Luna the Illustrated (Flip)" id="950" variant="10" subtype="160" anm2path="entity_LunaFlip.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="1" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="0" friction="1" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none" tags="nodelirium" portrait="1">
+	</entity>
 
 	<entity name="Red Trapdoor (HC)" id="1000" variant="374" subtype="160" anm2path="effect_Redtrapdoor.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
@@ -266,6 +268,8 @@
 	<entity name="Tomb Traptile (HC)" id="1000" variant="386" subtype="160" anm2path="grid/revel2/traps/traptiles.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
     </entity>
 	<entity name="Tomb Trap (HC)" id="1000" variant="386" subtype="161" anm2path="grid/revel2/traps/trap_arrowtrap.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+    </entity>
+	<entity name="Luna Spike (HC)" id="1000" variant="385" subtype="160" anm2path="effect_LunaSpike.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
     </entity>
 	
 	<entity name="Card (HC)" id="1000" variant="384" subtype="160" anm2path="effect_CardShow.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >

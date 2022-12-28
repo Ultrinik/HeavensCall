@@ -757,13 +757,15 @@ function mod:MercuryDying(entity)
 	end
 end
 
-function mod:SpawnGlassFracture(entity, size)
+function mod:SpawnGlassFracture(entity, size, n)
+    if not n then n = 50 end
+
 	local roomdesc = game:GetLevel():GetCurrentRoomDesc()
 	if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
         if size == nil then size = 1 end
 
         local fractures = Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0)
-        if #fractures > 50 then
+        if #fractures > n then
             fractures[1]:Remove()
         end
     
