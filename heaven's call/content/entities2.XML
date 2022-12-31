@@ -281,7 +281,7 @@
 	<entity name="Luna Knife (HC)" id="708" variant="372" subtype="160" anm2path="008.000_moms knife.anm2" baseHP="350" stageHP="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Luna Incubus (HC)" id="708" variant="373" subtype="160" anm2path="entity_LunaIncubus.anm2" baseHP="550" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="20" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+	<entity name="Luna Incubus (HC)" id="708" variant="373" subtype="160" anm2path="entity_LunaIncubus.anm2" baseHP="666" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="20" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	<entity name="Alt Horsemen (HC)" id="724" variant="371" subtype="0" anm2path="entity_AltHorsemen.anm2" baseHP="9999" stageHP="0" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="none" tags="nodelirium" portrait="9">

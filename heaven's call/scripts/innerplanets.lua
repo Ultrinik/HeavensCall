@@ -484,7 +484,7 @@ function mod:MercuryDrill(entity, data, sprite, target,room)
                     
                     --Color
                     local roomdesc = game:GetLevel():GetCurrentRoomDesc()
-                    if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+                    if roomdesc and mod:IsGlassRoom(roomdesc) then
                         local newColor = Color(1,1,1,0.65)
                         newColor:SetColorize(1,1,1.2,1)
                         tear:GetSprite().Color = newColor
@@ -761,7 +761,7 @@ function mod:SpawnGlassFracture(entity, size, n)
     if not n then n = 50 end
 
 	local roomdesc = game:GetLevel():GetCurrentRoomDesc()
-	if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+	if roomdesc and mod:IsGlassRoom(roomdesc) then
         if size == nil then size = 1 end
 
         local fractures = Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0)

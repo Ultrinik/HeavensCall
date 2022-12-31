@@ -255,7 +255,7 @@ function mod:IceTurdFinishedAppear(entity)
 		entity:GetSprite():SetFrame(mod:RandomInt(0,40))
 		entity:GetSprite().PlaybackSpeed = 0.2
 	end
-	if roomdesc and (mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)) then
+	if roomdesc and mod:IsGlassRoom(roomdesc) then
 		local reflection = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.DIRT_PATCH, 0, entity.Position, Vector.Zero, entity)
 		local refSprite = reflection:GetSprite()
 		refSprite:Load("gfx/entity_IceTurdGlass.anm2", true)
@@ -1333,8 +1333,12 @@ function mod:LunaIncubusUpdate(entity)
 		data.Init = true
 	end
 
-	if (parentSprite:IsPlaying("NormalAttack") or parentSprite:IsPlaying("LaserAttack")) and parentSprite:IsEventTriggered("Attack") then
+	if (parentSprite:IsPlaying("NormalAttack") or parentSprite:IsPlaying("NormalLaser") or parentSprite:IsPlaying("LongLaser")) and parentSprite:IsEventTriggered("Attack") then
 		mod:LunaSynergy(entity, entity:GetData(), sprite, target, game:GetRoom(), true)
+	elseif parentSprite:IsPlaying("NormalLaser") and parentSprite:IsEventTriggered("Aim") and parent:GetData().SecondaryP == mod.LSecondaryPassives.CONTINUUM then
+		mod:scheduleForUpdate(function()
+			mod:LunaTraceLaser(entity, entity:GetData(), sprite, target, game:GetRoom(), true)
+		end, 3)
 
 	elseif parentSprite:IsEventTriggered("Incubus1") then
 		sprite:Play("FloatShoot", true)
@@ -1342,14 +1346,14 @@ function mod:LunaIncubusUpdate(entity)
 		sprite:Play("Float", true)
 	elseif parentSprite:IsEventTriggered("Incubus3") then
 		sprite:Play("Charge", true)
-	elseif parentSprite:IsEventTriggered("Incubus4") then
+	elseif sprite:IsFinished("Charge") then
 		sprite:Play("FloatCharged", true)
-	elseif parentSprite:IsEventTriggered("Incubus5") then
+	elseif parentSprite:IsEventTriggered("Incubus4") then
 		sprite:Play("Shoot2", true)
 	end
 
 	--Movement
-	if not data.idleTime then 
+	--[[if not data.idleTime then 
 		data.idleTime = mod:RandomInt(mod.LConst.idleTimeInterval.X, mod.LConst.idleTimeInterval.Y)
 
 		if parent.Position:Distance(entity.Position) > 20 then
@@ -1366,7 +1370,15 @@ function mod:LunaIncubusUpdate(entity)
 	
 	--Do the actual movement
 	entity.Velocity = (data.targetvelocity * 0.3 + entity.Velocity * 0.7) * mod.LConst.speed
-	data.targetvelocity = data.targetvelocity * 0.5
+	data.targetvelocity = data.targetvelocity * 0.8]]
+
+	entity.Velocity = mod:Lerp(entity.Velocity, Vector.Zero, 0.1)
+
+    local direction = parent.Position - entity.Position
+
+	if parent.Position:Distance(entity.Position) > 50 then
+		entity.Velocity = mod:Lerp(entity.Velocity, direction / 10, 0.1)
+	end
 
 end
 
@@ -2479,7 +2491,7 @@ function mod:RedFartUpdate(entity)
 		sfx:Stop(SoundEffect.SOUND_FART)
 
 		--Damage
-		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 50)) do
+		for i, e in ipairs(Isaac.FindInRadius(entity.Position, 40)) do
 			if e.Type ~= EntityType.ENTITY_PLAYER and e.Type ~= mod.EntityInf[mod.Entity.Luna].ID then
 				e:TakeDamage(100, DamageFlag.DAMAGE_CRUSH, EntityRef(entity.Parent), 0)
 			elseif e.Type == EntityType.ENTITY_PLAYER then

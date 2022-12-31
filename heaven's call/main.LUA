@@ -41,6 +41,7 @@ mod.Colors = {
 	mercury = Color(0.3,0.3,0.3,1),
 	tar = Color(0.5,0.5,0.5, 1, 0,0,0),
 	black = Color(0,0,0,1,0,0,0),
+	maw = Color(0.1,0.1,0.1,1,0,0,0),
 	ghost = Color(1,1,1,0.6,1,1,1),
 	greenEden = Color(0.5,1,0.5,0.6,0.4,1,0.4),
 	wax = Color(1,1,1,1,1,0.85,0.8),
@@ -494,15 +495,17 @@ if MinimapAPI then
 end
 mod.minimaprooms = {} --Stores rooms that need to be updated on MinimapAPI
 
-function mod:IsRoomDescAstralChallenge(roomdesc) --Oh yes, if true return true, if false, return false, nice
+function mod:IsRoomDescAstralChallenge(roomdesc)
 	if roomdesc and roomdesc.Data and roomdesc.Data.Type == RoomType.ROOM_DICE and roomdesc.Data.Variant >= mod.minvariant1 and roomdesc.Data.Variant <= mod.maxvariant2 then
 		return true
-	else
-		return false
 	end
+	return false
 end
 function mod:IsRedRoom(roomdesc)
 	return roomdesc.Flags & RoomDescriptor.FLAG_RED_ROOM == RoomDescriptor.FLAG_RED_ROOM
+end
+function mod:IsGlassRoom(roomdesc)
+	return mod:IsRoomDescAstralChallenge(roomdesc) or (roomdesc.Data.Type == RoomType.ROOM_PLANETARIUM)
 end
 
 --Load (or reset) things when the run is started or continued
@@ -1160,12 +1163,14 @@ if HPBars then
 	}
 
 	local truFunc = function(entity)
-		return true
+		return entity:HasEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
 	end
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Statue].ID).."."..tostring(mod.EntityInf[mod.Entity.Statue].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.MercuryBird].ID).."."..tostring(mod.EntityInf[mod.Entity.MercuryBird].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Terra2].ID).."."..tostring(mod.EntityInf[mod.Entity.Terra2].VAR)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Horsemen].ID).."."..tostring(mod.EntityInf[mod.Entity.Horsemen].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Horsemen].ID).."."..tostring(mod.EntityInf[mod.Entity.Horsemen].VAR+1)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(EntityType.ENTITY_DOGMA)..".10"] = {truFunc}
 	HPBars.BossIgnoreList[tostring(EntityType.ENTITY_ADVERSARY)..".0"] = {function(entity) if entity:GetData().HeavensCall then return true end end}
 
 	--Adding the bars

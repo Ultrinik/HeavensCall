@@ -64,7 +64,8 @@ mod.LMSState = {
 
     MEGA_MUSH = 100,
     MOMS_SHOVEL = 99,
-    FLIP = 98
+    FLIP = 98,
+    MAW = 97,
 }
 
 --TOTAL ITEMS = 40 [0-39]
@@ -234,14 +235,14 @@ if Althorsemen then
     mod.LItemPath[mod.LActives.BOOK_REVELATIONS] = "gfx/items/collectibles/collectibles_078_bookofrevelations.png"
 end
 
-mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Plan   Vault  Speci  Sacrfice
+mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Planet Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    --[mod.LMSState.IDLE] =           {0.000, 0.200, 0.230, 0.000, 0.050, 0.250, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
-    [mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
-    [mod.LMSState.ATTACK] =         {0.000, 0.350, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.100, 0.100, 0.000, 0.000, 0.000, 0.000},
+    [mod.LMSState.IDLE] =           {0.000, 0.200, 0.430, 0.000, 0.050, 0.050, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
+    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
+    [mod.LMSState.ATTACK] =         {0.000, 0.100, 0.500, 0.000, 0.000, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.ITEM] =           {0.000, 0.000, 0.500, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
+    [mod.LMSState.ITEM] =           {0.000, 0.100, 0.600, 0.000, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.BOSSROOM] =       {0.000, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.300, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.MEGASATAN] =      {0.000, 0.100, 0.000, 0.000, 0.000, 0.300, 0.000, 0.000, 0.300, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CURSE] =          {0.000, 0.750, 0.250, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -257,11 +258,11 @@ mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   B
 mod.LConst = {--Some constant variables of Luna
     idleTimeInterval = Vector(10,15),
     speed = 1.4,
-    superSpeed = 1.55,
+    superSpeed = 1.5,
 
     dashSpeed = 60,
 
-    hpSS = 0.075,
+    hpSS = 0,
 
     minDistanceToReappear = 120,
 
@@ -341,6 +342,10 @@ function mod:LunaUpdate(entity)
             data.HasMantle = false
             data.HasMaw = false
             data.MawTime = 0
+
+            data.MawColor = Color.Default
+
+            data.TargetAim = Vector.Zero
 
             data.ImpactsDone = 0
             data.ShovelsDone = 0
@@ -424,6 +429,8 @@ function mod:LunaUpdate(entity)
                 mod:LunaShovel(entity, data, sprite, target,room)
             elseif data.State == mod.LMSState.FLIP then
                 mod:LunaFlip(entity, data, sprite, target,room)
+            elseif data.State == mod.LMSState.MAW then
+                mod:LunaMaw(entity, data, sprite, target,room)
             end
         end
 
@@ -458,21 +465,38 @@ function mod:LunaUpdate(entity)
         end
         
         if data.HasMaw then
-            mod:LunaMaw(entity, data, entity:GetSprite(), target, room)
+            data.MawTime = data.MawTime + 1
+
+            data.MawColor = Color.Lerp(data.MawColor, mod.Colors.maw, 0.01)
+            sprite.Color = data.MawColor
         end
 
-        --[[
-        if entity.FrameCount % 200 == 0 then
+        
+       --[[ if entity.FrameCount % 200 == 0 then
             mod:LunaUseActive(entity, nil)
-        end]]
+        end
+        data.StateFrame = 0]]
 
     end
 end
 function mod:LunaAttack(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
-        sprite:Play("NormalAttack",true)
+        if data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS then
+            if data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD then
+                sprite:Play("LongLaser",true)
+            else
+                sprite:Play("NormalLaser",true)
+            end
+        else
+            sprite:Play("NormalAttack",true)
+        end
+    elseif sprite:IsEventTriggered("Aim") then
         data.TargetAim = target.Position
-    elseif sprite:IsFinished("NormalAttack") then
+        
+        if data.SecondaryP == mod.LSecondaryPassives.CONTINUUM and (data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS) then
+            mod:LunaTraceLaser(entity, data, sprite, target, room, false)
+        end
+    elseif sprite:IsFinished("NormalAttack") or sprite:IsFinished("NormalLaser") or sprite:IsFinished("LongLaser") then
         mod:LunaChangeState(entity)
 
     elseif sprite:IsEventTriggered("Attack") then
@@ -544,11 +568,11 @@ function mod:LunaTeleport(entity, data, sprite, target, room)
             entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
         end, 5,ModCallbacks.MC_POST_UPDATE)
 
-		local position = Isaac.GetRandomPosition(0)
-		while position:Distance(target.Position) < mod.LConst.minDistanceToReappear do
-			position = Isaac.GetRandomPosition(0)
-		end
-        entity.Position = position
+        local position = Isaac.GetRandomPosition(0)
+        while position:Distance(target.Position) < mod.LConst.minDistanceToReappear do
+            position = Isaac.GetRandomPosition(0)
+        end
+		mod:LunaTeleportTo(entity, position)
 
 		local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, position, Vector.Zero, entity)
         trapdoor:GetSprite():Play("BigIdle", true)
@@ -560,6 +584,10 @@ function mod:LunaItem(entity, data, sprite, target, room)
     entity.Velocity = Vector.Zero
 
     if data.StateFrame == 1 then
+        
+        --mod:LunaChangeState(entity)
+        --return
+
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("PickUp") then
         
@@ -578,25 +606,25 @@ function mod:LunaItem(entity, data, sprite, target, room)
         local itemNum = -1
         local oldItem = 0
 
-        local random = mod:RandomInt(1,9)
+        local random = mod:RandomInt(1,12)
         if random <= 2 then
             itemType = mod.LItemType.ACTIVE
-            itemNum = mod:random_elem(mod.LActives)
-        elseif random <= 4 then
+            itemNum = mod:LunaChooseItem(mod.LActives, nil)
+        elseif random <= 5 then
             itemType = mod.LItemType.MAIN
             itemNum = mod:LunaChooseItem(mod.LMainPassive, data.MainP)
             oldItem = data.MainP
-        elseif random <= 6 then
+        elseif random <= 8 then
             itemType = mod.LItemType.SECONDARY
             itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP)
             oldItem = data.SecondaryP
-        elseif random <= 8 then
+        elseif random <= 11 then
             itemType = mod.LItemType.ASSIST
             itemNum = mod:LunaChooseItem(mod.LAssistPassives, data.AssistP)
             oldItem = data.AssistP
         else
             itemType = mod.LItemType.SPECIAL
-            itemNum = mod:random_elem(mod.LSpecials)
+            itemNum = mod:LunaChooseItem(mod.LSpecials, nil)
         end
 
         data.LastItem = itemNum
@@ -753,7 +781,11 @@ function mod:LunaPlanetarium(entity, data, sprite, target, room)
 end
 function mod:LunaVault(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
-        sprite:Play("SummonDoor",true)
+        if true then 
+            mod:LunaChangeState(entity)
+        else
+            sprite:Play("SummonDoor",true)
+        end
     elseif sprite:IsFinished("SummonDoor") then
         mod:LunaChangeState(entity)
 
@@ -857,14 +889,14 @@ function mod:LunaMegaMush(entity, data, sprite, target, room)
         sprite:Play("MegaMush",true)
         entity.Child = nil
     elseif sprite:IsFinished("MegaMush") then
-        entity.Visible = false
-        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        mod:LunaTurnInvisible(entity, true)
         sprite:Play("TrapdoorOut")
         sprite:Stop()
 
         local position = room:GetRandomPosition(0)
         local moon = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0, position, Vector.Zero, entity)
         moon:GetData().TargetPos = position
+        moon.DepthOffset = -1500
 
         moon.DepthOffset = 10
         moon:GetSprite():Load("gfx/effect_LunaMegaMush.anm2", true)
@@ -924,7 +956,8 @@ function mod:LunaMegaMush(entity, data, sprite, target, room)
             moon:GetSprite():Play("In", true)
 
         elseif moonSprite:IsFinished("Bounce2") then
-            entity.Visible = true
+            mod:LunaTurnInvisible(entity, false)
+            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
             sprite:Play("TrapdoorOut", true)
 
             local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position + Vector(0,-5), Vector.Zero, entity)
@@ -1037,6 +1070,30 @@ function mod:LunaFlip(entity, data, sprite, target, room)
         end
     end
 
+end
+function mod:LunaMaw(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Maws",true)
+    elseif sprite:IsFinished("Maws") then
+        mod:LunaChangeState(entity, mod.LMSState.IDLE)
+
+    elseif sprite:IsEventTriggered("Attack") then
+        sprite.Color = Color.Default
+        data.MawColor = Color.Default
+        data.MawTime = -30
+
+        sfx:Play(SoundEffect.SOUND_MAW_OF_VOID)
+
+        local ring = Isaac.Spawn(EntityType.ENTITY_LASER, LaserVariant.THICK_RED, LaserSubType.LASER_SUBTYPE_RING_FOLLOW_PARENT, entity.Position, Vector.Zero, entity):ToLaser()
+        ring.Parent = entity
+        ring:GetSprite().Color = mod.Colors.black
+        ring.Radius = 0
+        ring.Shrink = true
+        ring.DepthOffset = 500
+
+        ring:GetData().HeavensCall = true
+        ring:GetData().LunaMaw = true
+    end
 end
 
 function mod:LunaFlipUpdate(entity)
@@ -1169,6 +1226,7 @@ function mod:LunaFlipUpdate(entity)
         end
 
         mod:LunaFlipMove(entity, data, game:GetRoom())
+        sprite.Color = entity.Parent:GetSprite().Color
     end
 end
 
@@ -1204,7 +1262,7 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
     end
 
     --mainP = mod.LMainPassive.BRIMSTONE
-    --secondaryP = mod.LSecondaryPassives.CLASSIC_WORM
+    --secondaryP = mod.LSecondaryPassives.CONTINUUM
     --scale = 3
 
     if mainP == 0 then
@@ -1750,9 +1808,6 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
             laser.CurveStrength = 100
 
         end
-
-    --elseif data.MainP == mod.LMainPassive.EPIC_FETUS then
-        --a
     elseif mainP == mod.LMainPassive.REVELATIONS then
         
         local direction = (data.TargetAim - entity.Position):Normalized()
@@ -1884,7 +1939,7 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
             mod:scheduleForUpdate(function()
                 --Need to get end of laser
-                local position = laser:GetEndPoint()
+                local position = laser2:GetEndPoint()
                 for i = 0, 1 do
                     local laser = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, position , direction:GetAngleDegrees() + 90*(2*i-1), 15, Vector.Zero, entity)
                 end
@@ -2130,29 +2185,6 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
 
     end
 end
-function mod:LunaMaw(entity, data, sprite, target, room)
-    if data.MawTime >= mod.LConst.mawFrames then
-        data.MawTime = 0
-        sprite.Color = Color.Default
-        sfx:Play(SoundEffect.SOUND_MAW_OF_VOID)
-
-        local ring = Isaac.Spawn(EntityType.ENTITY_LASER, LaserVariant.THICK_RED, LaserSubType.LASER_SUBTYPE_RING_FOLLOW_PARENT, entity.Position, Vector.Zero, entity):ToLaser()
-        ring.Parent = entity
-        ring:GetSprite().Color = mod.Colors.black
-        ring.Radius = 0
-        ring.Shrink = true
-        ring.DepthOffset = 500
-
-        ring:GetData().HeavensCall = true
-        ring:GetData().LunaMaw = true
-
-    else
-        data.MawTime = data.MawTime + 1
-
-        sprite.Color = Color.Lerp(sprite.Color, mod.Colors.black, 0.01)
-
-    end
-end
 function mod:LunaHeal(entity, amount)
     --Heal
     local healHeart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HEART, 0, entity.Position + Vector(0,-100), Vector.Zero, entity)
@@ -2202,10 +2234,17 @@ function mod:LunaChangeState(entity, fixState)
 
     --print()
     --print("Chage state")
-    ---print(data.State)
+    --print(data.State)
     --print(fixState)
     --print(entity:GetSprite():GetAnimation())
-    
+
+    if data.MawTime >= mod.LConst.mawFrames and not fixState then
+        data.State = mod.LMSState.MAW
+        data.StateFrame = 0
+        return
+    end
+
+
     if fixState then
         data.State = fixState
     elseif data.State ~= mod.LMSState.MEGA_MUSH and data.State ~= mod.LMSState.FLIP and data.State ~= mod.LMSState.MOMS_SHOVEL then
@@ -2213,11 +2252,79 @@ function mod:LunaChangeState(entity, fixState)
     end
     data.StateFrame = 0
 
-    --Play maw
+    if data.AssistP ~= mod.LAssistPassives.MAW_VOID then
+        entity:GetSprite().Color = Color.Default
+        data.MawColor = Color.Default
+    end
+
+end
+function mod:LunaTraceLaser(entity, data, sprite, target, room, incubus)
+    local mainP
+    local secondaryP
+
+    local parent
+
+    local scale = 1
+    local laserFrac = 1
+
+    if incubus then
+        parent = entity.Parent:ToNPC()
+
+        mainP = parent:GetData().MainP
+        secondaryP = parent:GetData().SecondaryP
+
+        scale = mod.LConst.incubusScale
+        laserFrac = 2
+
+        data.TargetAim = parent:GetData().TargetAim + (entity.Position - parent.Position)
+
+    else
+        mainP = data.MainP
+        secondaryP = data.SecondaryP
+
+        local strong = data.StrengthTime >= 0 or data.AssistP == mod.LAssistPassives.POLYPHEMUS or data.AssistP == mod.LAssistPassives.MAGIC_MUSHROOM
+        if strong then
+            scale = scale + 0.5
+        end
+    end
+
+    scale = scale/2
+
+    if mainP == mod.LMainPassive.REVELATIONS or mainP == mod.LMainPassive.BRIMSTONE then
+        
+        local direction = (data.TargetAim - entity.Position):Normalized()
+        local laser = EntityLaser.ShootAngle(LaserVariant.TRACTOR_BEAM, entity.Position, direction:GetAngleDegrees(), 10, Vector.Zero, entity):ToLaser()
+        laser.Size = laser.Size/laserFrac
+
+        --sfx:Stop(SoundEffect.SOUND_ANGEL_BEAM)
+
+        if secondaryP == mod.LSecondaryPassives.CONTINUUM then
+            laser:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+
+            local laser2 = EntityLaser.ShootAngle(LaserVariant.TRACTOR_BEAM, entity.Position, direction:GetAngleDegrees(), 10, Vector.Zero, entity)
+            laser2.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+            laser2.CollisionDamage = 0
+            laser2.Visible = false
+
+            mod:scheduleForUpdate(function()
+                --Need to get end of laser
+                local endPos = laser2:GetEndPoint()
+                local vector = endPos - room:GetCenterPos()
+                local position = room:GetCenterPos() - vector*1.4
+
+                local laser3 = EntityLaser.ShootAngle(LaserVariant.TRACTOR_BEAM, position, direction:GetAngleDegrees(), 10, Vector.Zero, entity)
+                laser3:AddTearFlags(TearFlags.TEAR_CONTINUUM)
+                laser3.Size = laser3.Size/laserFrac
+
+                --sfx:Stop(SoundEffect.SOUND_ANGEL_BEAM)
+
+            end, 3)
+        end
+    end
 end
 
 --Move
-function mod:LunaMove(entity, data, room, target)   
+function mod:LunaMove(entity, data, room, target)
 
     local speed = mod.LConst.speed
     if data.AssistP == mod.LAssistPassives.MAGIC_MUSHROOM or data.AssistP == mod.LAssistPassives.STOPWATCH then
@@ -2276,6 +2383,44 @@ function mod:LunaFlipMove(entity, data, room)
     data.targetvelocity = data.targetvelocity * 0.99
 end
 
+--Teleport Luna
+function mod:LunaTeleportTo(entity, position)
+    entity.Position = position
+
+    for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.Luna].ID)) do
+        if e.Variant ~= mod.EntityInf[mod.Entity.Luna].VAR and e.Parent == entity then
+            e.Position = position
+        end
+    end
+end
+function mod:LunaTurnInvisible(entity, into)
+    if into then--Turn invisible
+        entity.Visible = false
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+        for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.Luna].ID)) do
+            if e.Variant ~= mod.EntityInf[mod.Entity.Luna].VAR and e.Parent == entity then
+                e.Visible = false
+                e.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                e.AddEntityFlags(EntityFlag.FLAG_FREEZE)
+            end
+        end
+
+    else--Turn visible
+        entity.Visible = true
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+        for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.Luna].ID)) do
+            if e.Variant ~= mod.EntityInf[mod.Entity.Luna].VAR and e.Parent == entity then
+                e.Visible = true
+                e.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                e.ClearEntityFlags(EntityFlag.FLAG_FREEZE)
+            end
+        end
+
+    end
+end
+
 --Count bosses summones
 function mod:LunaBossCount()
     local total = #Isaac.FindByType(EntityType.ENTITY_MONSTRO) + #Isaac.FindByType(EntityType.ENTITY_DUKE) + #Isaac.FindByType(EntityType.ENTITY_GEMINI) + #Isaac.FindByType(EntityType.ENTITY_LARRYJR)
@@ -2304,6 +2449,10 @@ function mod:LunaChooseItem(itemList, itemOld, dice)
         itemNum = mod:LunaPick(itemList, itemOld)
     end
 
+    while (not mod:IsGlassRoom(game:GetLevel():GetCurrentRoomDesc()) ) and itemNum == mod.LSpecials.MEGA_MUSH do
+        itemNum = mod:LunaPick(itemList, itemOld)
+    end
+
     return itemNum
 end
 function mod:LunaPick(itemList, itemOld)
@@ -2322,21 +2471,23 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         tipo = data.LastItemType
     end
 
-
-    --tipo = mod.LItemType.SPECIAL
-    --itemNum = mod.LSpecials.FLIP
+    --tipo = mod.LItemType.SECONDARY
+    --itemNum = mod.LMainPassive.CONTINUUM
     --mod:LunaUseActive(entity, mod.LActives.BOOK_BELIAL)
-
 
     if tipo == mod.LItemType.ACTIVE then
         mod:LunaUseActive(entity, itemNum)
     elseif tipo == mod.LItemType.MAIN then
+        --itemNum = mod.LMainPassive.REVELATIONS
+
         data.MainP = itemNum
     elseif tipo == mod.LItemType.SECONDARY then
+        --itemNum = mod.LSecondaryPassives.GOD_HEAD
+        
         data.SecondaryP = itemNum
     elseif tipo == mod.LItemType.ASSIST then
 
-        --itemNum = mod.LAssistPassives.MAGIC_MUSHROOM
+        --itemNum = mod.LAssistPassives.BOWL_TEARS
 
         for _,k in ipairs(mod:FindByTypeMod(mod.Entity.LunaKnife)) do
             k:Remove()
@@ -2344,10 +2495,11 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         for _,i in ipairs(mod:FindByTypeMod(mod.Entity.LunaIncubus)) do
             i:Remove()
         end
-        --data.MawTime = mod.LConst.mawFrames
+        
         data.MawTime = 0
         data.HasMaw = false
         entity:GetSprite().Color = Color.Default
+        data.MawColor = Color.Default
 
         data.AssistP = itemNum
 
@@ -2380,13 +2532,15 @@ end
 function mod:LunaUseActive(entity, itemNum)
     local data = entity:GetData()
 
+    --itemNum = mod.LActives.BIBLE
+
     if itemNum == mod.LActives.ABYSS then
         for i=1, mod.LConst.nLocust do
             local position = entity.Position + Vector(20,0):Rotated(i/mod.LConst.nLocust*360)
             local locust = Isaac.Spawn(EntityType.ENTITY_ATTACKFLY, 0, 0, position, Vector.Zero, entity)
             locust:GetSprite().Color = mod.Colors.red
-            locust.MaxHitPoints = 100
-            locust.HitPoints = 100
+            locust.MaxHitPoints = 35
+            locust.HitPoints = 35
             locust:GetData().HeavensCall = true
 
             locust.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
@@ -2501,6 +2655,8 @@ function mod:LunaUseActive(entity, itemNum)
         else
             boss = Isaac.Spawn(Isaac.GetEntityTypeByName("Buster"), Isaac.GetEntityVariantByName("Buster"), 0, position, Vector.Zero, entity)
         end
+
+        boss:AddEntityFlags(EntityFlag.FLAG_NO_DEATH_TRIGGER)
 
         boss.MaxHitPoints = 150
         boss.HitPoints = 150
@@ -2858,8 +3014,16 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
             return false
 
         elseif data.AssistP == mod.LAssistPassives.BOWL_TEARS and rng:RandomFloat() < mod.LConst.bowlChance then
-            local light = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CRACK_THE_SKY, 0, game:GetRoom():GetRandomPosition(0), Vector.Zero, nil)
-            light:GetSprite().PlaybackSpeed = 0.35
+
+            local position = game:GetRoom():GetRandomPosition(0)
+
+            local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TARGET, 0, position, Vector.Zero, entity):ToEffect()
+            target:SetTimeout(15)
+            target:GetSprite().Color = mod.Colors.white
+            mod:scheduleForUpdate(function()
+                local light = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.CRACK_THE_SKY, 0, position, Vector.Zero, nil)
+                light:GetSprite().PlaybackSpeed = 0.6
+            end, 10)
         end
 
         --NO SHIELD
@@ -2886,11 +3050,16 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, fla
 
         --SHIELD
         elseif data.ShieldTime then
-            sfx:Stop(SoundEffect.SOUND_BISHOP_HIT)
+            sfx:Play(SoundEffect.SOUND_BISHOP_HIT)
             return false
         end
 	end
 end)
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
+	if entity.Variant == 10 and entity.SubType == 160 then
+        return false
+    end
+end, EntityType.ENTITY_DOGMA)
 
 mod:AddCallback(ModCallbacks.MC_PRE_PROJECTILE_COLLISION, function(_, tear, collider)
 	if tear:GetData().LunaProjectile and collider.Type == EntityType.ENTITY_PLAYER then
