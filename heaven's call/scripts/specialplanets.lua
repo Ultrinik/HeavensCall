@@ -237,7 +237,7 @@ end
 
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Planet Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.IDLE] =           {0.000, 0.200, 0.430, 0.000, 0.050, 0.050, 0.030, 0.030, 0.030, 0.030, 0.000, 0.030, 0.030, 0.030, 0.030, 0.030},
+    [mod.LMSState.IDLE] =           {0.000, 0.150, 0.440, 0.000, 0.050, 0.050, 0.030, 0.040, 0.030, 0.030, 0.000, 0.040, 0.030, 0.040, 0.030, 0.040},
     --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.100, 0.500, 0.000, 0.000, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -269,7 +269,7 @@ mod.LConst = {--Some constant variables of Luna
     curseSpeed = 20,
 
     sleepShield = 80,
-    healPerSleep = 1000,--10
+    healPerSleep = 20,--10
 
     nCoins = 3,
 
@@ -292,7 +292,7 @@ mod.LConst = {--Some constant variables of Luna
 
     wispShotSpeed = 5,
 
-    bowlChance = 0.075,
+    bowlChance = 0.1,
 
     knifeRange = 65,
 
@@ -609,22 +609,22 @@ function mod:LunaItem(entity, data, sprite, target, room)
         local random = mod:RandomInt(1,12)
         if random <= 2 then
             itemType = mod.LItemType.ACTIVE
-            itemNum = mod:LunaChooseItem(mod.LActives, nil)
+            itemNum = mod:LunaChooseItem(mod.LActives, nil, false, entity)
         elseif random <= 5 then
             itemType = mod.LItemType.MAIN
-            itemNum = mod:LunaChooseItem(mod.LMainPassive, data.MainP)
+            itemNum = mod:LunaChooseItem(mod.LMainPassive, data.MainP, false, entity)
             oldItem = data.MainP
         elseif random <= 8 then
             itemType = mod.LItemType.SECONDARY
-            itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP)
+            itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP, false, entity)
             oldItem = data.SecondaryP
         elseif random <= 11 then
             itemType = mod.LItemType.ASSIST
-            itemNum = mod:LunaChooseItem(mod.LAssistPassives, data.AssistP)
+            itemNum = mod:LunaChooseItem(mod.LAssistPassives, data.AssistP, false, entity)
             oldItem = data.AssistP
         else
             itemType = mod.LItemType.SPECIAL
-            itemNum = mod:LunaChooseItem(mod.LSpecials, nil)
+            itemNum = mod:LunaChooseItem(mod.LSpecials, nil, false, entity)
         end
 
         data.LastItem = itemNum
@@ -751,9 +751,9 @@ function mod:LunaDice(entity, data, sprite, target, room)
     elseif sprite:IsEventTriggered("Dice") then
         sfx:Play(SoundEffect.SOUND_EDEN_GLITCH,1)
         
-        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LMainPassive, data.MainP, true), mod.LItemType.MAIN)
-        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP, true), mod.LItemType.SECONDARY)
-        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LAssistPassives, data.AssistP, true), mod.LItemType.ASSIST)
+        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LMainPassive, data.MainP, true, entity), mod.LItemType.MAIN)
+        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP, true, entity), mod.LItemType.SECONDARY)
+        mod:GiveItemLuna(entity, mod:LunaChooseItem(mod.LAssistPassives, data.AssistP, true, entity), mod.LItemType.ASSIST)
 
     elseif sprite:IsEventTriggered("SummonDoor") then
         local door = mod:SpawnLunaDoor(entity, mod.DoorType.DICE)
@@ -2428,7 +2428,9 @@ function mod:LunaBossCount()
     return total
 end
 --Pick item
-function mod:LunaChooseItem(itemList, itemOld, dice)
+function mod:LunaChooseItem(itemList, itemOld, dice, entity)
+
+    local data = entity:GetData()
 
     if dice then
         if itemOld == 0 then
@@ -2449,7 +2451,10 @@ function mod:LunaChooseItem(itemList, itemOld, dice)
         itemNum = mod:LunaPick(itemList, itemOld)
     end
 
-    while (not mod:IsGlassRoom(game:GetLevel():GetCurrentRoomDesc()) ) and itemNum == mod.LSpecials.MEGA_MUSH do
+    local incombatible = ((not mod:IsGlassRoom(game:GetLevel():GetCurrentRoomDesc()) ) and itemNum == mod.LSpecials.MEGA_MUSH) or
+    (((itemNum == mod.LMainPassive.MUTANT_SPIDER or itemNum == mod.LMainPassive.SPIDER_FREAK) and data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD) or (itemNum == mod.LSecondaryPassives.GOD_HEAD and (data.MainP == mod.LMainPassive.MUTANT_SPIDER or data.MainP == mod.LMainPassive.SPIDER_FREAK)))
+
+    while incombatible do
         itemNum = mod:LunaPick(itemList, itemOld)
     end
 
@@ -3092,3 +3097,845 @@ mod:AddCallback(ModCallbacks.MC_POST_LASER_UPDATE, function(_, laser)
     end
 end)
 
+
+
+--KUIPER BELT--------------------------------------------------------------------------------------------
+--PLUTO--------------------------------------------------------------------------------------------------
+--[[
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@%@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*******************/&@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@(********************************%@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@/****************************************#@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@***********************************************/@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@(/////***********************************************&@@@@@@@@@@@
+@@@@@@@@@@@@@///////******/*******************************************#@@@@@@@@@
+@@@@@@@@@@@(**//*******///**********************************************@@@@@@@@
+@@@@@@@@@@****************************************************************@@@%/(
+@@@@@@@@%*********,,,,,,,,**********,,,,,,*********************************@(##&
+@@@@@@@%*****,,,,,......,,,,,***,,,,,,....,,,,,,,,**************************#%%%
+@@@@@@@//*(,,,..        ..,,,,,......     .. .../,,,************/***//*****//&&&
+@@@@@@///*%&@@@@@@@@@*     .....              .&@@@@@@@@&&&*****//////*/*/*//#@@
+@@@@@&//&&&@@@@@@@@@@@@@                    &@@@@@@@@@@@@&&&&(////////*/*/*//(@@
+@@@@@((&&&&@@@@@@@@@@@@@@                  @@@@@@@@@@@@@@&&&&&////((///////(((@@
+@@@@@((&&&&@@@@@@@@@@@@@@                 *@@@@@@@@@@@@@@&&&&&#((((((((((/((##@@
+@@@@@##&&&&&@@@@@@@@@@@@@                 /@@@@@@@@@@@@@@&&&&&((#(((#(((((####@@
+@@@@@&#&&&&&@@@@@@@@@@@@                  .@@@@@@@@@@@@@@&&&&&####(##((#((###%@@
+@@@@@@%#&&&&@@@@@@@@@@(          %         *@@@@@@@@@@@@&&&&&#######%%%#%####%@@
+@@@@@@&%#(&&&@@@@@@@.       @@@@@@       ....%@@@@@@@@@@&&&%#%%&%%%%%%%%%%%%%@@@
+@@@@@@@%%###(//*,,..         %@@.      ....,**///#&&&@%%%%%@@@@@&&&%%%%%%%%%@@@@
+@@@@@@@@@@@@#((///,,,..              ....**/(((##%%%%%%%%@@@@@@&&&&&%%%%%%%@@@@@
+@@@@@@@@@@@@@&#&((((,#,...     &  ...,,,/(((##%%%%%%%%%%@@@@@@@&&&&&%%%%%%@@@@@@
+@@@@@@@@@@@@@@@@@@%##@%,,...  .@ . ,**/(((%@%%%%%%&@@@@@@@@@@@@&&&&%%%%%%@@@@@@@
+@@@@@@@@@@@@&%%%@@@@@@@%/**...#@#,**/((####@@&@@@@@@%%%%%%@@@@@&&##%###@@@@@@@@@
+@@@@@@@@@@@@@@@%%&##%@@@@@@@@@@@@&@@@@@@@@@@@@@%###@%%%#%%%##%#######@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@%%###@@%%%#((#&@&&&%%%####@&######%%#############%@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@############%%####%####@#############(##(((#@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@####(((###((########((((#######((#(#@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#((((((((((((((((((((((((%@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+]]--
+
+mod.PMSState = {
+	APPEAR = 0,
+	IDLE = 1,
+    ATTACK = 2,
+    SNAP = 3,
+}
+mod.chainP = {
+	[mod.PMSState.APPEAR] = 	{0,   1,   0,   0},
+	[mod.PMSState.IDLE] = 	    {0,   0.5, 0.3, 0.2},
+	--[mod.PMSState.IDLE] = 	{0,   0,   0,   1},
+	[mod.PMSState.ATTACK] = 	{0,   1,   0,   0},
+	[mod.PMSState.SNAP] = 	    {0,   1,   0,   0},
+	
+}
+mod.PConst = {--Some constant variables of Pluto
+
+	idleTimeInterval = Vector(20,30),
+	speed = 1.3,
+    distanceToleration = 150,
+
+    projectileSpeed = 11,
+    nBones = 4+1,
+    boneAngle = 15,
+}
+
+function mod:PlutoUpdate(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Pluto].VAR and entity.SubType == mod.EntityInf[mod.Entity.Pluto].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0 
+
+            data.ObjectivePosition = room:GetCenterPos()
+
+            data.FlagCharon = false
+            data.FlagEris = false
+            data.FlagMakemake = false
+            data.FlagHaumea = false
+		end
+		
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == mod.PMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod:MarkovTransition(data.State, mod.chainP)
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+                --Tail spawn
+                local parent = entity
+                for i=1,mod.PConst.nBones do 
+                    local bone = mod:SpawnEntity(mod.Entity.PlutoBone, entity.Position, Vector.Zero, entity):ToNPC()
+                    bone:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                    bone:GetSprite():Play("Normal", true)
+                    bone.CollisionDamage = 0
+                    bone.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    parent.Child = bone
+                    bone.Parent = parent
+                    bone.I1 = i
+                    
+                    parent = bone
+
+                    if i==mod.PConst.nBones then
+                        bone:GetSprite():Play("Spike", true)
+                    end
+                end
+			end
+			
+		elseif data.State == mod.PMSState.IDLE then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			elseif sprite:IsFinished("Idle") then
+				data.State = mod:MarkovTransition(data.State, mod.chainP)
+				data.StateFrame = 0
+				
+			else
+				mod:PlutoMove(entity, data, room, target)
+			end
+			
+		elseif data.State == mod.PMSState.ATTACK then
+			mod:PlutoAttack(entity, data, sprite, target, room)
+			
+		elseif data.State == mod.PMSState.SNAP then
+			mod:PlutoSnap(entity, data, sprite, target, room)
+		
+		end
+
+	end
+end
+function mod:PlutoAttack(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Attack",true)
+    elseif sprite:IsFinished("Attack") then
+        data.State = mod:MarkovTransition(data.State, mod.chainP)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Attack") then
+        local velocity = (target.Position - entity.Position):Normalized():Rotated(mod:RandomInt(-mod.PConst.boneAngle,mod.PConst.boneAngle))*mod.PConst.projectileSpeed
+        local bone = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_BONE, 0, entity.Position, velocity, entity):ToProjectile()
+    end
+end
+function mod:PlutoSnap(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        
+        local charon = mod:FindByTypeMod(mod.Entity.Charon2)[1]
+        if charon and charon:GetData().Anchored then
+            data.State = mod:MarkovTransition(data.State, mod.chainP)
+            data.StateFrame = 0
+        else
+            data.TargetPosition = target.Position
+            sprite:Play("Snap",true)
+        end
+    elseif sprite:IsFinished("Snap") then
+        data.State = mod:MarkovTransition(data.State, mod.chainP)
+        data.StateFrame = 0
+
+        local spike = entity.Child
+        for i=1,mod.PConst.nBones-1 do
+            spike = spike.Child
+        end
+        spike.Velocity = (target.Position - entity.Position):Normalized() * 20
+        spike:GetData().Launch = false
+        spike.CollisionDamage = 0
+        spike.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+    elseif sprite:IsEventTriggered("Attack") then
+
+        local spike = entity.Child
+        for i=1,mod.PConst.nBones-1 do
+            spike = spike.Child
+        end
+
+        local charon = mod:FindByTypeMod(mod.Entity.Charon2)[1]
+        if charon then
+            spike.Velocity = (charon.Position - spike.Position):Normalized() * 20
+            spike:GetData().Launch = true
+            spike.CollisionDamage = 1
+            spike.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+        else
+            spike.Velocity = (data.TargetPosition - entity.Position):Normalized() * 20
+            spike:GetData().Launch = true
+            spike.CollisionDamage = 1
+            spike.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+        end
+    end
+end
+
+
+--Move
+function mod:PlutoMove(entity, data, room, target)
+
+    local objectibe = data.ObjectivePosition
+
+	--idleTime == frames moving in the same direction
+	if not data.idleTime then 
+		data.idleTime = mod:RandomInt(mod.PConst.idleTimeInterval.X, mod.PConst.idleTimeInterval.Y)
+		--distance of Saturn from the center of the room
+		local distance = 0.95*(objectibe.X-entity.Position.X)^2 + 2*(objectibe.Y-entity.Position.Y)^2
+		
+		--If its too far away, return to the center
+		if distance > mod.PConst.distanceToleration then
+			data.targetvelocity = ((objectibe - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+		--Else, get closer to the player
+		else
+			data.targetvelocity = ((target.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-50, 50))
+		end
+	end
+
+	--If run out of idle time
+	if data.idleTime <= 0 and data.idleTime ~= nil then
+		data.idleTime = nil
+	else
+		data.idleTime = data.idleTime - 1
+	end
+
+	--Do the actual movement
+	entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.PConst.speed
+	data.targetvelocity = data.targetvelocity * 0.99
+end
+
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.PlutoUpdate, mod.EntityInf[mod.Entity.Pluto].ID)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.PlutoBone].VAR then
+        if entity.Parent then
+            local sprite = entity:GetSprite()
+
+            if sprite:GetAnimation() == "Spike" then
+                local data = entity:GetData()
+
+                sprite.Rotation = ( - entity.Parent.Position + entity.Position):GetAngleDegrees()
+
+                if data.Launch then
+                    sprite.Rotation = entity.Velocity:GetAngleDegrees()
+
+                    if entity:CollidesWithGrid() then
+                        data.Launch = false
+                        entity.CollisionDamage = 0
+                        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                    end 
+
+                    return
+                end
+            end
+
+            mod:FamiliarParentMovement(entity, 2, 1.5, 15)
+
+            local child = entity.Child
+            if child then
+
+                local spike = child
+                for i=entity.I1+1,mod.PConst.nBones-1 do
+                    spike = spike.Child
+                end
+
+                if spike:GetData().Launch then
+
+                    local parent = entity.Parent
+                    entity.Parent = child
+                    mod:FamiliarParentMovement(entity, 10, 2, 10)
+                    entity.Parent = parent
+
+                end
+            end
+        end
+    end
+end, mod.EntityInf[mod.Entity.PlutoBone].ID)--This is such a convoluted way to create a chain
+--CHARON--------------------------------------------------------------------------------------------------
+--[[
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&%%%%##%%%%%&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@%%%#####%%%###########&#####%@@&@@@@@@@@@@@@@@@@&@@@
+@@@@@@@@@@@@@@@@@@@@@@@%########%%%###############@@%########%@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@&########%#####################@@@%###((####(#@@@@@@@@@@@@@@@
+@@@@@@@@&@@@@@@@@######%%#############%&@@@@@@@@@@@@@@@@@%###((((((#@@@@@@@@@@@@
+@@@@@@@@@@@@@@&%#################################(#@@@@@@@@@@@@&((////@@@@@@@@@@
+@@@@@@@@@@@@&%%%%#############################((((((&@@#((((((((#%&&(///@@@@@@@@
+@@@@@@@@@@@%%%#############%###############((((((((((@@&((((((((///////((%@@@@@@
+@@@@@@@@@@%###############%#################((((((((((@@(((((////////((((((@@@@@
+@@@@@@@@@##################%#######@####((((((((((((((&@(((////////(((((((((@@@@
+@@@@@@@@%%#################&######%&((#((((((((((((((((@#(//(////((((((((((((@@@
+@@@@@@@%####%##############@#####(@@#%((((((((((((((((((((((((((((((((((&@&&&&@@
+@@@@@@&#########%#%########@@@#(#@@@%(((((((((#@@@@@%((((((((((@#((#&@@@@@@&&%@@
+@@@@@@#############&##%####@@@@@@@@@@@&((///(((@@(((((((/((((((&@@@@@#////(/(/&@
+@@@@@@###############&@@@@&%&@@@@@@@@@@((////(((((((&%#((((((@@@@%@@//////((//%@
+@@@@@@############((((%%%%&&&@@@@@@@@@@&((((((((((((///%@@@@@@@/(#//@(//((///*%@
+@@@@@@%(((((((((((((#(%%&&&@@@@@@@@@@@@#((((((((((////#&#@@@@@(//////(//(/////@@
+@@@@@@@(////(((######%%%%&&&&&@@@@@@@@@@&((((//////////@@@&///(@@////////(////@@
+@@@@@@@(//##%%&%##%%%%%%%&&&&@@@@@@@@@@@@(#&&((#&&%%#%@@@/////////%(/((((///*@@@
+@@@@@@@@(###%%//(####&&(((&&&@@@@@@@@@@@(((/////////@@@&&@@%//////////((((((%@@@
+/(((#####%%%%%%%%%%&&&(((#&#((&%&@@(((##((/////////&@@&(////////(((((((((((%@@@@
+%%#######%%&&&&&&&%(((((((((((((((#%////#///#/////(@@(///////((((((((((((#@@@@@@
+@@####%&&@@@((((///((((////(((//////(//////**/(%@@@@@@((/((((((((((((((##@@@@@@@
+&%%%%&&@@@@@@%**////////////////******/***///////#@@@&(((((((((((((((##@@@@@@@@@
+&&&&@@@@@@@@@@@%******,,****,,,,,,,,,,***********////((((((((((((####@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@*,,,,,,,,,,,,,,,,,,***********///((((((((((((((#&@@@@@@@@@@@@@
+@@@@@@@@@@@@&@@@@@@@@/,,,,,,,,,,,,,,,*********///(((((((((((###&@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@(,,,,******/////////((((((((######&@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@&(*****/////((((((((###&@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+]]--
+function mod:CharonUpdate(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Charon1].VAR and entity.SubType == mod.EntityInf[mod.Entity.Charon1].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		
+		--Custom data:
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+
+		end
+
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == 0 then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+                entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = 1
+				data.StateFrame = 0
+
+			elseif sprite:IsEventTriggered("EndAppear") then
+                local charon = mod:SpawnEntity(mod.Entity.Charon2, entity.Position, Vector.Zero, entity)
+                charon:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+                entity:Remove()
+			end
+
+		end
+	end
+end
+
+function mod:Charon2Update(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Charon2].VAR and entity.SubType == mod.EntityInf[mod.Entity.Charon2].SUB then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+        local data = entity:GetData()
+
+        if not data.Init then
+            data.Init = true
+
+            data.Anchored = false
+
+            for _, b in ipairs(mod:FindByTypeMod(mod.Entity.PlutoBone)) do
+                if b:GetSprite():GetAnimation()=="Spike" then
+                    entity.Parent = b
+                    break
+                end
+            end
+
+        end
+
+        if entity.Parent then
+
+            local spikeData = entity.Parent:GetData()
+            if spikeData.Launch then
+                if entity.Parent.Position:Distance(entity.Position) < 20 then
+                    data.Anchored = true
+                end
+            end
+
+            if data.Anchored then
+                mod:FamiliarParentMovement(entity, 2, 1.5, 20)
+                mod:FamiliarParentMovement(entity, 2, 1.5, 20)
+                mod:FamiliarParentMovement(entity, 2, 1.5, 20)
+                mod:FamiliarParentMovement(entity, 2, 1.5, 20)
+                --entity.Position = entity.Parent.Position
+
+                if rng:RandomFloat() < 0.002 then
+                    data.Anchored = false
+                end
+            end
+        end
+
+    end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.CharonUpdate, mod.EntityInf[mod.Entity.Charon1].ID)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.Charon2Update, mod.EntityInf[mod.Entity.Charon2].ID)
+--ERIS--------------------------------------------------------------------------------------------------
+--[[
+@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#.*@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@. .***@
+@@@@@@@@@@@@@@@@@@@@/,,,,,,,************(@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@. .***@@
+@@@@@@@@@@@@@@@%**,,,,,,,,*******************%@@@@@@@@@@@@@@@@@@@@@@@@@. .***@@@
+@@@@@@@@@@@@(/*********,,,*********,************#@@@@@@@@@@@@@@@@@@@@@, .***@@@@
+@@@@@@@@@@//////***(**,,,,,,**#&*,,,,,,,***********@@@@@@@@@@@@@@@@@@, .**(@@@@@
+@@@@@@@@///%**//*******&*%&*,,,,,,...,&,,,,(*,,,*,***@@@@@@@@@@@@@@@, .**#@@@@@@
+@@@@@@&/(&*#*********&#*,,#/,,,,,,...,,.,@%.&,&/*%/,,*@@@@@@@@@@@@@, .**%@@@@@@@
+@@@@@#(/&%*@******&****,,,,*,&,.......@..@/@.&,((,,(*,*%@@@@@@@@@@* .**@@@@@@@@@
+@@@@@(*****,*,,,**********,***,,,,,,.#.......,@&%,,*#,**& .(##/***..**@@@@@@@@@@
+@@@@*#%%%%%&&&#,****************,**,,,*%&%%%#,,,&******####(@@@#(((**@@@@@@@@@@@
+@@@@/%%%%%&&&&&&&/******///******&&&&&&&&%%%%%%*&*****###(@@@@@*.#(*@@@@@@@@@@@@
+@@@%,%%%%&&&&&&&&&&/**////////&&&&&&&&&&&&%%%%%**/*/*.(#(%###(((((*%(@@@@@@@@@@@
+@@@@../%%&&&&&&&&&&&&***////&&&&&&&&&&&&&&%%%%//////,.##/@@@@@#####%(/@&%%@@@@@@
+@@@@.....%&&&&&&&&&&&*/*///#&&&&&&&&&&&&&%%%////////.##(/@@@@@@@@@@@@*%(@@@@@&@@
+@@@@&,@.......(&&(,,,,*****/#&&&&&&&&&&%////////////,##(@@@@@@@@@@@@@(@@@@@@@@@@
+@@@@@/&...........,,,,,,*****////////////////@////%//(##@@@###(%@@@@%(@@@@@@@@@@
+@@@@@@#.............,,,,,,*****/*///*////////@/%//&//..,#@@@@@@@@@@@,/@@@@@@@@@@
+@@@@@@@@.&,&*...../&&&&&&&&#***********#(////&///////@..*((@@@@@@@&(*@@@@@@@@@@@
+@@@@@@@@@@..(.....(&&&&&&&&&&&*******(&***(//&/////@@@@@.(((((%#(*./@@@@@@@@@@@@
+@@@@@@@@@@@@*...........,.,,,,,,,*,,,,&,,**/&///(@@@@@@@@@(./.,(,/@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@/...........,,,,,,,,,,,,,*/***#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@&,.....,,,.,,,.,,,,,**@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+]]--
+mod.EMSState = {
+	APPEAR = 0,
+	IDLE = 1,
+    CHARGE = 2,
+}
+mod.chainE = {
+	[mod.EMSState.APPEAR] = 	{0,   1,   0},
+	[mod.EMSState.IDLE] = 	    {0,   0.9, 0.1},
+	--[mod.EMSState.IDLE] = 	{0,   0,   1},
+	[mod.EMSState.CHARGE] = 	{0,   1,   0},
+	
+}
+mod.EConst = {--Some constant variables of Eris
+
+	idleTime = 2,
+	speed = 1.35,
+    distanceToleration = 15,
+
+    chargeSpeed = 50,
+
+}
+
+function mod:ErisUpdate(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Eris].VAR and entity.SubType == mod.EntityInf[mod.Entity.Eris].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+		end
+
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == mod.EMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod:MarkovTransition(data.State, mod.chainE)
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+			elseif sprite:IsEventTriggered("SpawnSword") then
+                local naue = mod:SpawnEntity(mod.Entity.ErisNaue, entity.Position, Vector.Zero, entity):ToEffect()
+                naue.DepthOffset = -5
+                naue:FollowParent(entity)
+                naue.Parent = entity
+                entity.Child = naue
+			end
+			
+		elseif data.State == mod.EMSState.IDLE then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			elseif sprite:IsFinished("Idle") then
+				data.State = mod:MarkovTransition(data.State, mod.chainE)
+				data.StateFrame = 0
+				
+			else
+				mod:ErisMove(entity, data, room, target)
+			end
+			
+		elseif data.State == mod.EMSState.CHARGE then
+			mod:ErisCharge(entity, data, sprite, target, room)
+		end
+
+        if entity.Child and not sprite:IsPlaying("Spin") and not sprite:IsPlaying("Prepare") then
+            local naue = entity.Child
+            local naueSprite = naue:GetSprite()
+            local amount = 0.1
+            if sprite:IsPlaying("Attack") then amount = 0.5 end
+            naueSprite.Rotation = mod:AngleLerp(naueSprite.Rotation, (-entity.Velocity):GetAngleDegrees(), amount)
+
+            if naueSprite:IsFinished("Spin") then
+                naueSprite:Play("Idle", true)
+
+            end
+        end
+	end
+end
+function mod:ErisCharge(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        entity.Velocity = Vector.Zero
+        sprite:Play("Prepare",true)
+        data.TargetPos = target.Position
+        mod:FaceTarget(entity, target)
+    elseif sprite:IsFinished("Prepare") then
+        sprite:Play("Attack",true)
+        entity.Velocity = (data.TargetPos - entity.Position):Normalized()*mod.EConst.chargeSpeed
+        mod:FaceTarget(entity, target)
+        data.Charged = true
+    elseif sprite:IsFinished("Attack") or (entity:CollidesWithGrid() and data.Charged) then
+        data.Charged = false
+        entity.Velocity = Vector.Zero
+        sprite:Play("Spin",true)
+
+        --Spin sword
+        if entity.Child then
+            local naue = entity.Child
+            naue:GetSprite().Rotation = 0
+            naue:GetSprite():Play("Spin", true)
+        end
+
+    elseif sprite:IsFinished("Spin") then
+        data.State = mod:MarkovTransition(data.State, mod.chainE)
+        data.StateFrame = 0
+    end
+end
+
+
+--Move
+function mod:ErisMove(entity, data, room, target)
+	mod:FaceTarget(entity, target)
+    --idle move taken from 'Alt Death' by hippocrunchy
+    --It just basically stays around a something
+    
+    --idleTime == frames moving in the same direction
+    if not data.idleTime then 
+        data.idleTime = mod.EConst.idleTime
+
+        local localAntipode = (target.Position - room:GetCenterPos()):Rotated(180)
+        local antipode = localAntipode + room:GetCenterPos()
+        if localAntipode:Length() < 100 then
+            antipode = localAntipode:Normalized()*100 + room:GetCenterPos()
+        end
+        -- distance of Eris from the oposite place of the player
+        local distance = antipode:Distance(entity.Position)
+        
+        --If its too far away, return to the center
+        if distance > mod.EConst.distanceToleration then
+            data.targetvelocity = ((antipode - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+        end
+
+    end
+
+    --Not that close to the plater
+    if target.Position:Distance(entity.Position) < 100  or data.targetvelocity == nil then
+        data.targetvelocity = (-(target.Position - entity.Position):Normalized()*6):Rotated(mod:RandomInt(-45, 45))
+    end
+    
+    --If run out of idle time
+    if data.idleTime <= 0 and data.idleTime ~= nil then
+        data.idleTime = nil
+    else
+        data.idleTime = data.idleTime - 1
+    end
+    
+    --Do the actual movement
+    entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.EConst.speed
+    data.targetvelocity = data.targetvelocity * 0.99
+end
+
+--Angle lerp
+function mod:AngleLerp(angle1, angle2, amount)
+    local v1 = Vector.FromAngle(angle1)
+    local v2 = Vector.FromAngle(angle2)
+
+    return mod:Lerp(v1, v2, amount):GetAngleDegrees()
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.ErisUpdate, mod.EntityInf[mod.Entity.Eris].ID)
+
+--MAKEMAKE--------------------------------------------------------------------------------------------------
+--[[
+@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@##@@
+#@@@@@@@@@@@@@@@@@@@@@@@/@@@%%((((((((((((((((((((((%%@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@%@@@@@@@@@@@@@@&#(((((((((((((((((((((((((((((((((((//////(@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@%####((((((((((((((((((((((((((((((((((((((((//////////@@@@@@@@@@@@
+@@@@@@@@@########((((((((((((((((((((((((((((((((((((////////////////@@@@@@@@@@@
+@@@@@@@#############(((((((((((((((((((((((((((((/////////////////////@@@@@@@@@@
+@@@@@@#############################(#((((((((((((((///////////////////#@@@@@@@@@
+@@@@@@###################################((((((((((((((((//////////////@@@@@@@@@
+@@@@@@###############################((((((((((/////////((//////////////@@@@@@@@
+@@@@@@################################((((((((((((((((((((((((//////////(@@@@@@@
+@@@@@@%##############################((((((%&&&&&&&&&&&&&&&&%%(((((((/////@@@@@@
+@@@@@@@###%%%%%&&&&&&&&&&#############(((#&&&&&&&&&&&&&&&&&&%%(((((((//////@@@@@
+@@@@@@####%%&&&&&&&&&&&&&#############(###&&&&&&&&&&&&&&&&&&%%((((((((//////@@@@
+@@@@@#####%&&&&&&&&&&&&&##################(&&&&&&&&&&&&&&&&&#(((((((((((/////@@@
+@@@@&############&&&##%%##################(((###&&%##(((((((((((((((((((/////(@@
+@@@@#################%%%##########################(((((((((((((((((((((((/////@@
+@@@@##############%%%#############################((((((((((((((((((((((((////@@
+@@@@############%%%%#######################%%(####(#####(((#######(#((((((///(@@
+@@@@############%%%%######################%%%(((((#######(###########((((((/((@@
+@@@@###########%%%%%######################%%%((###################(#((((((/(((@@
+@@@@@##########%%%%#######################%%%#((#################((((((((((((&@@
+@@@@@%#########%%%%######################%%%%%(((#(#############(((((((((((((@@@
+@@@@@@#########%%%%######################%%%%%##(###(###############((((((((@@@@
+@@@@@@@########%%%%%##################%%%%%%%%######################(((((((@@@@@
+@@@@@@@@@######%%%%%%###########%%%%%%%%%%%%%%################((((###((((#@@@@@@
+@@@@@@@@@@######%%%%%%%%###%%%%%%%%%%%%%%%%%%###########################@@@@@@@@
+@@@@@@@@@@@@#######%%%%%%%%%%%%((((###################################@@@@@@@@@@
+@@@@@@@@@@@@@@######################################################@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@#############%%##################################@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@#####(#(((((((#############################@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@((((((((((########################@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&((##################@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+]]--
+
+function mod:MakemakeUpdate(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Makemake].VAR and entity.SubType == mod.EntityInf[mod.Entity.Makemake].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+            
+            data.Direction = Vector(1,0):Rotated(360*rng:RandomFloat())
+		end
+
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == 0 then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = 1
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+			end
+			
+		elseif data.State == 1 then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			else
+				mod:MakemakeMove(entity, data, room)
+			end
+
+		end
+
+	end
+end
+
+function mod:MakemakeMove(entity, data, room)
+    entity.Velocity = data.Direction * 5
+
+    if entity:CollidesWithGrid() then
+        mod:scheduleForUpdate(function()
+            data.Direction = entity.Velocity:Normalized()
+        end, 2)
+    end
+end
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.MakemakeUpdate, mod.EntityInf[mod.Entity.Makemake].ID)
+
+--HAUMEA--------------------------------------------------------------------------------------------------
+--[[
+@@@@@@@@@@@@@@@@@@@@@@@@@@&(@@*@@@@**@@@#**@@@*&@@**@@@@#@@@@@@@@@@@#@@@@@@@@@@@
+@@@@@@/@@@@@@*@@@@@@@@%*@@@**@@*@@@@**@@@**@@@@@@@@@@#@@@@&/*********/@@@@@@@@@@
+@@@@@@/*@@@@@@*@@@@@@@@**@@@**@**@@@@*&@@@@@&@@@@@@@@@/////////////********@@@@@
+@@@@@@@**@@@%***@@@@****/@@@@@/**@@@@@@@@@@@@@@@@@@@///////////////***********@@
+@@@@@@@@*#@@@@@@*@@@***@@@@@@@(@@@@@@@@@@@@@@@@@@@//////////((//(//////****@&@@@
+@@@@@@@#@*%@@@@@@*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@/**//////((##@####((((@(/#@@@@@
+@@@@@@@@@@*@@@@@#@&@@@@@@@@@&@@@@@@@@@@@&@@@@@@@////////(###@%@. ###%@@@&@&@@@@@
+@@@@@@@@@@@*@@@@@@@@@@@@@@@@@@@@@@*********,,,,*/@/////               #@@@&@@@@@
+@@@@@@@@@@&@@@@@@@@&@@@@@@@/////************//*,     /                  *@@@@@@@
+@@@&@@@@@@@@@@@@@@@@@@@////////////////////((          ,                ..  #@@@
+@@@@%@@@@@@@@@@@@@@@*****//////////////(((###%%( ,..,**,,,,,,      @@@ ....   @@
+@@@@@@@@@@@@@@@@@@*******//////////////((####%%%%%,,,*,*,,,,.,     @@@@ ..... @@
+@@@@@@@@@@@@@@@&********//////////***///((#%%%##.,,,,,,,,,,,,,,      @@@.... @@@
+@@@&@@@@@@@@@@@*******//////////******//((#%%%%####%#,,,,*,,,,,      @@@....@@@@
+@@@@&@@@@@@@@@******////////////*****///((#%%%%#%%,,,,,,,,,,,,.      @@....@@@@@
+@@@@@@@@@@@@@&*****////////////////*///((##%%%%%%#,,,,,,,,,,,          ... @@@@@
+@@@@@@@@@@@...****/////////////////////((####%%%###*,,,,,,.          ...  @@@@@@
+@@@@@@@@@...../////////(((((////////////((((#######(.              .... @@@@@@@@
+@@@#@@@@.,,,,,*///////((((((((((//////////////((((///***     ((   .....@@@#@@@@@
+@@@@@@,,,,,,,,,,///////((((((((//////////////***********  @@@@   ....(%@@@@@@@@@
+@@@@@..,,,,,,,,@@(//////////////*/////////////////*****@@@@@@ ......#@@@@@@@@@@@
+@@@@...,,,,,,,*@@@@@////////////***********/////////@&@@@#, .......@@@@@@@@@@@@@
+@@@....,,,,,,@@@#@@@@@@@/******************////@@@@@&@@   ......@@@@@@#@@@@@@@@@
+@@@ ....,,,@@@@@@&@@@@@@%@@@@@@@@@@@@@@@@@@@@@@@@@(  .......  @@@@@@@@@@@@@&@&@@
+@@@ .......@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@(%................@@@@@@@@@@@@@@@@@@@@
+@@@. .........,.,.,,,,,.........&@@@@...................@@@@@@@@@@@@@@@@@@@@@@@@
+@@@   ........,,,,,,,,,,,,,,,,..........,,,,,,,,,.....*@@@&@@#@@@@@@@@@@@@@@@@@@
+@@@@.  .......,,,,,,,.,,,,,,,,,,,,,,,,,,,,,,,,,....@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@*  ......,,,,,,,,,,,,,,,,,,,,,,...*@@@@@@@@@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@,,,,,,,,,,,,....@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@&....&@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+]]--
+mod.HMSState = {
+	APPEAR = 0,
+	IDLE = 1,
+    JUMP = 2,
+}
+mod.chainH = {
+	[mod.HMSState.APPEAR] = 	{0,   1,   0},
+	[mod.HMSState.IDLE] = 	    {0,   0.6, 0.4},
+	--[mod.HMSState.IDLE] = 	{0,   0,   1},
+	[mod.HMSState.JUMP] = 	    {0,   1,   0},
+	
+}
+
+function mod:HaumeaUpdate(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Haumea].VAR and entity.SubType == mod.EntityInf[mod.Entity.Haumea].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+		end
+
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == mod.HMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod:MarkovTransition(data.State, mod.chainH)
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+			end
+			
+		elseif data.State == mod.HMSState.IDLE then
+			if data.StateFrame == 1 then
+				sprite:Play("Idle",true)
+			elseif sprite:IsFinished("Idle") then
+				data.State = mod:MarkovTransition(data.State, mod.chainH)
+				data.StateFrame = 0
+			end
+			
+		elseif data.State == mod.HMSState.JUMP then
+			mod:HaumeaJump(entity, data, sprite, target, room)
+		end
+
+        entity.Velocity = Vector.Zero
+	end
+end
+function mod:HaumeaJump(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Jump",true)
+    elseif sprite:IsFinished("Jump") then
+        entity.Position = data.TargetPos
+        sprite:Play("Land",true)
+        entity.Visible = true
+    elseif sprite:IsFinished("Land") then
+        data.State = mod:MarkovTransition(data.State, mod.chainH)
+        data.StateFrame = 0
+
+    elseif sprite:IsEventTriggered("Out") then
+        entity.Visible = false
+    elseif sprite:IsEventTriggered("Jump") then
+        data.TargetPos = target.Position
+        local target = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.TARGET, 0, data.TargetPos, Vector.Zero, entity):ToEffect()
+        target:SetTimeout(45)
+
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+    elseif sprite:IsEventTriggered("Land") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+        for i=1,mod.NConst.nSplash do
+            local waterParams = ProjectileParams()
+            waterParams.Variant = ProjectileVariant.PROJECTILE_NORMAL
+            waterParams.FallingAccelModifier = 2.5
+            local angle = i*360/mod.NConst.nSplash
+            entity:FireBossProjectiles (3, entity.Position + Vector(1,0):Rotated(angle), 0, waterParams)
+        end
+    end
+end
+
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.HaumeaUpdate, mod.EntityInf[mod.Entity.Haumea].ID)
+
+--HERRANT--------------------------------------------------------------------------------------------------
+--[[
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&&&&&&&&%&&&&&@@@@@@@@@@@@@@@@@@@@@@@@@@ @@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@&&%%%############%%##%%%&@@@ ,@@@@@@@@@@@@@@@@@ @@@@@
+@@@@@@@@@@@@@@@@@@@@@&&&&%#############(###(((((((######%%%%&@@@@@ @@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@&%%&###/(////(((((######(((((((/((((((((((###%@@@@@@@@@@@@.@@@@
+@@@@@@@@@@@@@@%###(((/%///////////////%(/((((((/////((((((((((###%&@@@@@@@@@@@@@
+@@@@@@@@@@@&%#//*******##,***********/%////////((((((%((((####((((#%@@@@@@@@@@@@
+@@@@@@@@@%%#((/**********##(*****////%%////((((###&%%###(((((((//////(#%@@@@@@@@
+@@@@@@@&%%#(,***,,,*****##(*****//**/##///%((//(##((((((((///////*#///((#@@@@@@@
+@@@@@@&%#((///**,,,,,,##,*,***,,####/*****#//%%/(//(((((((((///#%///*///(%@@@@@@
+@@@@@@&%##((/////****//%#****/,,,(,###/**#*///#//((/(#(((((((%%(//////((((%&@@@@
+@@@@@(((((((((((//(/%///(##/*/###*******##///%/////%((((((%%((((((#(#((//(%&@@@@
+@@@&%##(%((/////////%///**####**********///%%////#(/////%%(////////(/////(#%%@@@
+@@@#((///*#******/*/##****#*****,,,**,,,**,,*(###****###**********///////((((#@@
+@&(((//*****#,,,,,,**,((#,,,,,,,,#((,,,.,,,,..,,((,((,,.......,,*,,,,,**//(*(#%@
+@@%(///**,,,*,####/**##,,,,((,...,....,,(/,,,,,,,.((,.,.,/(...,*,,,****//(((((%@
+@@&##((/***,,,,****##*,,,,*##,,(##(///.(((,,,,,,,,..(/(*..,(,,,/*,((,,*/////(((%
+@@@%###(///*****,,#**,,*,,,,,*#####////********,,,,,,,(..,,,///****,,,,*******/&
+@@&%####(((/////*/****,,******(#####///.**********,,,,,.........*/..,,,,,***/(%,
+@@&%%##((((((/%////#*/****###**######**(##(*****,*,*(,,.//......*.....,,,*//(#&@
+@@@###/(/////%%/*/*/##,********,*##***********,**#(,,,,./*....*...,,,,,,*/*(#%@@
+@%@@#((/**********#(***#,,*,,,.,,##*,,*,,,,***##/*,,,,,.,//./,...,,,****//(#%@ @
+@@@&&##(/********#*****#,#/**.,****,,*,****##***##,,,**../,,,,,,,,,**//(##%%&&@@
+@@@@&&%%(//**,**/***********((*********###************,#(,,,,,******//(###&&&@@@
+@@@@@&&%%((/*,*,,,,,,,,***#(***######****#**,,*,,,,*****,(*********/(((##%%@@@@@
+@@@@@@@@&%#(//**,,,,*******#////////#////#///*******///****(******/(((((#%@@@@@@
+@@@@@@@@@#&(##((////*/***(#*///***(//////##//******/**/******#**//(((((#@@@@@@@@
+@@@@@@@@@@@@@&,%#(((////#/**/***,,,(*,,,#,****************,,**/#(((##&@@@@@@@@@@
+@@@/@ @@@@@@@@&&%&(#((%//////////////****/****************///(##((%&@@@@@@@@%@@@
+@@@@@@@@@@@@@@@@@@@@#&##((((/////////////#****///****/((((##%%&@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@&&%%%###(#####(((((((########%%%%%%#&@@%@@%@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@ @@(@@@@@@&&&&&&%(%%&&&&&&&&&&&&&&&&&@@@@@@@@@@@@@ @@@@@@@@@@
+]]--

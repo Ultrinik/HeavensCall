@@ -18,11 +18,13 @@ mod.Entity ={
 
     Luna = 9,
     Pluto = 10,
-    Charon = 11,
+    Charon1 = 11,
+    Charon2 = 88,
     Eris = 12,
     Makemake = 13,
     Haumea = 14,
-    Quantum = 75,
+    Herrant = 75,
+    Interloper = 85,
 
     Sol = 15,
 
@@ -48,6 +50,7 @@ mod.Entity ={
     LunaKnife = 79,
     LunaIncubus = 80,
     AltHorsemen = 82,
+    PlutoBone = 86,
 
     ---------
 
@@ -78,6 +81,7 @@ mod.Entity ={
     Spike = 77,
     TrapTile = 83,
     Trap = 84,
+    ErisNaue = 87,
 
     ---------
     
@@ -124,6 +128,14 @@ mod.EntityInf[mod.Entity.Terra3] =  {ID = Isaac.GetEntityTypeByName("Terra the F
 mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars the Vainglorious"), VAR = Isaac.GetEntityVariantByName("Mars the Vainglorious"), SUB = mod.DefaultEntitySub}
 
 mod.EntityInf[mod.Entity.Luna] =  {ID = Isaac.GetEntityTypeByName("Luna the Tainted"), VAR = Isaac.GetEntityVariantByName("Luna the Tainted"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Pluto] =  {ID = Isaac.GetEntityTypeByName("Pluto the Frivolous"), VAR = Isaac.GetEntityVariantByName("Pluto the Frivolous"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Charon1] =  {ID = Isaac.GetEntityTypeByName("Charon the Benumbed Pre"), VAR = Isaac.GetEntityVariantByName("Charon the Benumbed Pre"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Charon2] =  {ID = Isaac.GetEntityTypeByName("Charon the Benumbed"), VAR = Isaac.GetEntityVariantByName("Charon the Benumbed"), SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Eris] =  {ID = Isaac.GetEntityTypeByName("Eris the Vehement"), VAR = Isaac.GetEntityVariantByName("Eris the Vehement"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Makemake] =  {ID = Isaac.GetEntityTypeByName("Makemake the Phlegmatic"), VAR = Isaac.GetEntityVariantByName("Makemake the Phlegmatic"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Haumea] =  {ID = Isaac.GetEntityTypeByName("Haumea the Diffident"), VAR = Isaac.GetEntityVariantByName("Haumea the Diffident"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Herrant] =  {ID = Isaac.GetEntityTypeByName("The Herrant"), VAR = Isaac.GetEntityVariantByName("The Herrant"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Interloper] =  {ID = Isaac.GetEntityTypeByName("The Interloper"), VAR = Isaac.GetEntityVariantByName("The Interloper"), SUB = mod.DefaultEntitySub}
 
 --ENEMIES-----------------------------------------------------------------------------------------------
 
@@ -158,6 +170,8 @@ mod.EntityInf[mod.Entity.LunaKnife] = {ID = Isaac.GetEntityTypeByName("Luna Knif
 mod.EntityInf[mod.Entity.LunaIncubus] = {ID = Isaac.GetEntityTypeByName("Luna Incubus (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Incubus (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.AltHorsemen] = {ID = Isaac.GetEntityTypeByName("Alt Horsemen (HC)"), VAR = Isaac.GetEntityVariantByName("Alt Horsemen (HC)"),  SUB = mod.DefaultSub}
 
+mod.EntityInf[mod.Entity.PlutoBone] = {ID = Isaac.GetEntityTypeByName("Pluto Bone (HC)"), VAR = Isaac.GetEntityVariantByName("Pluto Bone (HC)"),  SUB = mod.DefaultSub}
+
 --EFFECTS-----------------------------------------------------------------------------------------------
 
 mod.EntityInf[mod.Entity.Aurora] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Aurora (HC)"),  SUB = mod.DefaultSub}
@@ -191,6 +205,8 @@ mod.EntityInf[mod.Entity.Card] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.Get
 mod.EntityInf[mod.Entity.Spike] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Luna Spike (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.TrapTile] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tomb Traptile (HC)"),  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Trap] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Tomb Trap (HC)"),  SUB = mod.DefaultSub + 1}
+
+mod.EntityInf[mod.Entity.ErisNaue] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Eris Naue (HC)"),  SUB = mod.DefaultSub + 1}
 
 --PROJECTILES-----------------------------------------------------------------------------------------------
 

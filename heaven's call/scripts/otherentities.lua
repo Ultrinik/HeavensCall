@@ -1352,36 +1352,20 @@ function mod:LunaIncubusUpdate(entity)
 		sprite:Play("Shoot2", true)
 	end
 
-	--Movement
-	--[[if not data.idleTime then 
-		data.idleTime = mod:RandomInt(mod.LConst.idleTimeInterval.X, mod.LConst.idleTimeInterval.Y)
+	mod:FamiliarParentMovement(entity, 50, 0.1, 10)
 
-		if parent.Position:Distance(entity.Position) > 20 then
-			data.targetvelocity = (parent.Position - entity.Position):Normalized()
-		end
-	end
-	
-	--If run out of idle time
-	if data.idleTime and data.idleTime <= 0 then
-		data.idleTime = nil
-	else
-		data.idleTime = data.idleTime - 1
-	end
-	
-	--Do the actual movement
-	entity.Velocity = (data.targetvelocity * 0.3 + entity.Velocity * 0.7) * mod.LConst.speed
-	data.targetvelocity = data.targetvelocity * 0.8]]
+end
+function mod:FamiliarParentMovement(entity, distance, speed, stopness) --srsl... stopness??
+	local parent = entity.Parent
 
-	entity.Velocity = mod:Lerp(entity.Velocity, Vector.Zero, 0.1)
+	entity.Velocity = mod:Lerp(entity.Velocity, Vector.Zero, speed)
 
     local direction = parent.Position - entity.Position
 
-	if parent.Position:Distance(entity.Position) > 50 then
-		entity.Velocity = mod:Lerp(entity.Velocity, direction / 10, 0.1)
+	if parent.Position:Distance(entity.Position) > distance then
+		entity.Velocity = mod:Lerp(entity.Velocity, direction / stopness, speed)
 	end
-
 end
-
 
 
 --Fix Position
@@ -1748,20 +1732,26 @@ end
 function mod:LaserSwordSpin(entity)
 	local sprite = entity:GetSprite()
 
-	local distance = 50
-	local center = nil
+	local distance = 70
+	local center1 = Vector(0, distance)
+	local center2 = Vector(0, distance)
 
 	if sprite:IsEventTriggered("Hit1") then
-		center = entity.Position + Vector(-distance,distance)
+		center1 = entity.Position + center1:Rotated(0)
+		center2 = entity.Position + center2:Rotated(45)
 	elseif sprite:IsEventTriggered("Hit2") then
-		center = entity.Position + Vector(-distance,-distance)
+		center1 = entity.Position + center1:Rotated(90)
+		center2 = entity.Position + center2:Rotated(90+45)
 	elseif sprite:IsEventTriggered("Hit3") then
-		center = entity.Position + Vector(distance,-distance)
+		center1 = entity.Position + center1:Rotated(180)
+		center2 = entity.Position + center2:Rotated(180+45)
 	elseif sprite:IsEventTriggered("Hit4") then
-		center = entity.Position + Vector(distance,distance)
+		center1 = entity.Position + center1:Rotated(270)
+		center2 = entity.Position + center2:Rotated(270+45)
 	end
 
-	mod:LaserSwordDamage(entity,center)
+	mod:LaserSwordDamage(entity,center1)
+	mod:LaserSwordDamage(entity,center2)
 end
 function mod:LaserSwordAttack(entity)
 	local sprite = entity:GetSprite()
