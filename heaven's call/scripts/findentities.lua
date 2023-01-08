@@ -23,7 +23,7 @@ mod.Entity ={
     Eris = 12,
     Makemake = 13,
     Haumea = 14,
-    Herrant = 75,
+    Errant = 75,
     Interloper = 85,
 
     Sol = 15,
@@ -51,6 +51,15 @@ mod.Entity ={
     LunaIncubus = 80,
     AltHorsemen = 82,
     PlutoBone = 86,
+    MiniBranbleSeed = 89,
+    BrambleCord = 90,
+    BrambleSeed = 91,
+    BrambleSpike = 92,
+    Attlerock = 93,
+    WhiteHole = 94,
+    HollowsLantern = 95,
+    AshTwin = 96,
+    TwinChain = 97,
 
     ---------
 
@@ -130,11 +139,11 @@ mod.EntityInf[mod.Entity.Mars] =  {ID = Isaac.GetEntityTypeByName("Mars the Vain
 mod.EntityInf[mod.Entity.Luna] =  {ID = Isaac.GetEntityTypeByName("Luna the Tainted"), VAR = Isaac.GetEntityVariantByName("Luna the Tainted"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Pluto] =  {ID = Isaac.GetEntityTypeByName("Pluto the Frivolous"), VAR = Isaac.GetEntityVariantByName("Pluto the Frivolous"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Charon1] =  {ID = Isaac.GetEntityTypeByName("Charon the Benumbed Pre"), VAR = Isaac.GetEntityVariantByName("Charon the Benumbed Pre"), SUB = mod.DefaultEntitySub}
-mod.EntityInf[mod.Entity.Charon2] =  {ID = Isaac.GetEntityTypeByName("Charon the Benumbed"), VAR = Isaac.GetEntityVariantByName("Charon the Benumbed"), SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Charon2] =  {ID = Isaac.GetEntityTypeByName("Charon the Benumbed"), VAR = Isaac.GetEntityVariantByName("Charon the Benumbed"), SUB = 6}
 mod.EntityInf[mod.Entity.Eris] =  {ID = Isaac.GetEntityTypeByName("Eris the Vehement"), VAR = Isaac.GetEntityVariantByName("Eris the Vehement"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Makemake] =  {ID = Isaac.GetEntityTypeByName("Makemake the Phlegmatic"), VAR = Isaac.GetEntityVariantByName("Makemake the Phlegmatic"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Haumea] =  {ID = Isaac.GetEntityTypeByName("Haumea the Diffident"), VAR = Isaac.GetEntityVariantByName("Haumea the Diffident"), SUB = mod.DefaultEntitySub}
-mod.EntityInf[mod.Entity.Herrant] =  {ID = Isaac.GetEntityTypeByName("The Herrant"), VAR = Isaac.GetEntityVariantByName("The Herrant"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Errant] =  {ID = Isaac.GetEntityTypeByName("The Errant"), VAR = Isaac.GetEntityVariantByName("The Errant"), SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Interloper] =  {ID = Isaac.GetEntityTypeByName("The Interloper"), VAR = Isaac.GetEntityVariantByName("The Interloper"), SUB = mod.DefaultEntitySub}
 
 --ENEMIES-----------------------------------------------------------------------------------------------
@@ -142,14 +151,14 @@ mod.EntityInf[mod.Entity.Interloper] =  {ID = Isaac.GetEntityTypeByName("The Int
 mod.EntityInf[mod.Entity.IETDDATD] = {ID = Isaac.GetEntityTypeByName("Invisible entity that does damage and then dies"), VAR = Isaac.GetEntityVariantByName("Invisible entity that does damage and then dies"), SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.Hyperion] = {ID = EntityType.ENTITY_SUB_HORF, VAR = 1, SUB = mod.DefaultSub}
 
-mod.EntityInf[mod.Entity.IceTurd] = {ID = Isaac.GetEntityTypeByName("Ice Turd (HC)"), VAR = Isaac.GetEntityVariantByName("Ice Turd (HC)"), SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.Turd] = {ID = Isaac.GetEntityTypeByName("Tasty ice turd"), VAR = Isaac.GetEntityVariantByName("Tasty ice turd"), SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.IceTurd] = {ID = Isaac.GetEntityTypeByName("Ice Turd (HC)"), VAR = Isaac.GetEntityVariantByName("Ice Turd (HC)"), SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Turd] = {ID = Isaac.GetEntityTypeByName("Tasty ice turd"), VAR = Isaac.GetEntityVariantByName("Tasty ice turd"), SUB = mod.DefaultEntitySub}
 
 mod.EntityInf[mod.Entity.NeptuneFaker] = {ID = Isaac.GetEntityTypeByName("Neptune Faker (HC)"), VAR = Isaac.GetEntityVariantByName("Neptune Faker (HC)"),  SUB = mod.DefaultSub}
 
 mod.EntityInf[mod.Entity.MercuryBird] = {ID = Isaac.GetEntityTypeByName("Mercury Bird (HC)"), VAR = Isaac.GetEntityVariantByName("Mercury Bird (HC)"),  SUB = mod.DefaultEntitySub}
 
-mod.EntityInf[mod.Entity.Ulcers] = {ID = Isaac.GetEntityTypeByName("Ulcers"), VAR = Isaac.GetEntityVariantByName("Ulcers"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.Ulcers] = {ID = Isaac.GetEntityTypeByName("Ulcers"), VAR = Isaac.GetEntityVariantByName("Ulcers"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Candle] = {ID = Isaac.GetEntityTypeByName("Venus Candle"), VAR = Isaac.GetEntityVariantByName("Venus Candle"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.CandleGurdy] = {ID = Isaac.GetEntityTypeByName("Candle Gurdy"), VAR = Isaac.GetEntityVariantByName("Candle Gurdy"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.CandleSiren] = {ID = Isaac.GetEntityTypeByName("Candle Siren"), VAR = Isaac.GetEntityVariantByName("Candle Siren"),  SUB = mod.DefaultEntitySub}
@@ -165,12 +174,22 @@ mod.EntityInf[mod.Entity.TongueCord] = {ID = Isaac.GetEntityTypeByName("Tongue C
 mod.EntityInf[mod.Entity.Deimos] = {ID = Isaac.GetEntityTypeByName("Deimos the Tarnished"), VAR = Isaac.GetEntityVariantByName("Deimos the Tarnished"),  SUB = mod.DefaultEntitySub}
 mod.EntityInf[mod.Entity.Phobos] = {ID = Isaac.GetEntityTypeByName("Phobos the Tarnished"), VAR = Isaac.GetEntityVariantByName("Phobos the Tarnished"),  SUB = mod.DefaultEntitySub}
 
-mod.EntityInf[mod.Entity.LunaWisp] = {ID = Isaac.GetEntityTypeByName("Luna Wisp (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Wisp (HC)"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.LunaKnife] = {ID = Isaac.GetEntityTypeByName("Luna Knife (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Knife (HC)"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.LunaIncubus] = {ID = Isaac.GetEntityTypeByName("Luna Incubus (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Incubus (HC)"),  SUB = mod.DefaultSub}
-mod.EntityInf[mod.Entity.AltHorsemen] = {ID = Isaac.GetEntityTypeByName("Alt Horsemen (HC)"), VAR = Isaac.GetEntityVariantByName("Alt Horsemen (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.LunaWisp] = {ID = Isaac.GetEntityTypeByName("Luna Wisp (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Wisp (HC)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.LunaKnife] = {ID = Isaac.GetEntityTypeByName("Luna Knife (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Knife (HC)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.LunaIncubus] = {ID = Isaac.GetEntityTypeByName("Luna Incubus (HC)"), VAR = Isaac.GetEntityVariantByName("Luna Incubus (HC)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.AltHorsemen] = {ID = Isaac.GetEntityTypeByName("Alt Horsemen (HC)"), VAR = Isaac.GetEntityVariantByName("Alt Horsemen (HC)"),  SUB = mod.DefaultEntitySub}
 
-mod.EntityInf[mod.Entity.PlutoBone] = {ID = Isaac.GetEntityTypeByName("Pluto Bone (HC)"), VAR = Isaac.GetEntityVariantByName("Pluto Bone (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.PlutoBone] = {ID = Isaac.GetEntityTypeByName("Pluto Bone (HC)"), VAR = Isaac.GetEntityVariantByName("Pluto Bone (HC)"),  SUB = mod.DefaultEntitySub}
+
+mod.EntityInf[mod.Entity.BrambleSeed] = {ID = Isaac.GetEntityTypeByName("Bramble Seed (HC)"), VAR = Isaac.GetEntityVariantByName("Bramble Seed (HC)"),  SUB = mod.DefaultSub}
+mod.EntityInf[mod.Entity.MiniBranbleSeed] = {ID = Isaac.GetEntityTypeByName("Brample Mini-seed (HC)"), VAR = Isaac.GetEntityVariantByName("Brample Mini-seed (HC)"),  SUB = mod.DefaultSub+1}
+mod.EntityInf[mod.Entity.BrambleCord] = {ID = Isaac.GetEntityTypeByName("Bramble Cord (HC)"), VAR = Isaac.GetEntityVariantByName("Bramble Cord (HC)"),  SUB = 60+1}
+mod.EntityInf[mod.Entity.BrambleSpike] = {ID = Isaac.GetEntityTypeByName("Bramble Spike (HC)"), VAR = Isaac.GetEntityVariantByName("Bramble Spike (HC)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.WhiteHole] = {ID = Isaac.GetEntityTypeByName("The Errant (WH)"), VAR = Isaac.GetEntityVariantByName("The Errant (WH)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.Attlerock] = {ID = Isaac.GetEntityTypeByName("The Errant (AR)"), VAR = Isaac.GetEntityVariantByName("The Errant (AR)"),  SUB = mod.DefaultEntitySub+1}
+mod.EntityInf[mod.Entity.HollowsLantern] = {ID = Isaac.GetEntityTypeByName("The Errant (HL)"), VAR = Isaac.GetEntityVariantByName("The Errant (HL)"),  SUB = mod.DefaultEntitySub+2}
+mod.EntityInf[mod.Entity.AshTwin] = {ID = Isaac.GetEntityTypeByName("The Errant (AT)"), VAR = Isaac.GetEntityVariantByName("The Errant (AT)"),  SUB = mod.DefaultEntitySub}
+mod.EntityInf[mod.Entity.TwinChain] = {ID = Isaac.GetEntityTypeByName("Twin Chain (HC)"), VAR = Isaac.GetEntityVariantByName("Twin Chain (HC)"),  SUB = mod.DefaultEntitySub + 1}
 
 --EFFECTS-----------------------------------------------------------------------------------------------
 

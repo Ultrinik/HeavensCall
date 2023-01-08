@@ -1,4 +1,10 @@
 <entities anm2root="gfx\" version="5" deathanm2="gfx/death_enemies.anm2">
+	<!-- OTHERS -->
+	<entity name="Mercurius Tear (HC)" id="2" variant="370" subtype="0" anm2path="tear_Mercurius.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="8" collisionRadius="7" friction="1" numGridCollisionPoints="8" shadowSize="8" stageHP="0" >
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
+
+
 	<!-- Statue -->
 	<entity name="Astral Statue" id="699" variant="370" subtype="0" anm2path="entity_AstralStatue.anm2"  baseHP="99999" stageHP="0" boss="1" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none" tags="nodelirium">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
@@ -54,10 +60,10 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
-	<entity name="Ice Turd (HC)" id="721" variant="370" subtype="160" anm2path="entity_IceTurd.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" portrait="2" bestiary="false" gridCollision="none" shutdoors="false">
+	<entity name="Ice Turd (HC)" id="721" variant="370" subtype="0" anm2path="entity_IceTurd.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" portrait="2" bestiary="false" gridCollision="none" shutdoors="false">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Tasty ice turd" id="721" variant="371" subtype="160" anm2path="entity_IceTurd2.anm2" baseHP="20" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" portrait="20" bestiary="true" gridCollision="none" shutdoors="false">
+	<entity name="Tasty ice turd" id="721" variant="371" subtype="0" anm2path="entity_IceTurd2.anm2" baseHP="20" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="200" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" portrait="20" bestiary="true" gridCollision="none" shutdoors="false">
 		<bestiary transform="0,0,1" anim="Attack" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
@@ -141,7 +147,7 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
     </entity>
 	
-	<entity name="Ulcers" id="14" variant="370" subtype="160" anm2path="entity_Ulcers.anm2" baseHP="15" boss="0" champion="0" collisionDamage="1" collisionMass="3" collisionRadius="13" friction="1" gridCollision="walls" hasFloorAlts="false"  numGridCollisionPoints="12" portrait="12" shadowSize="9" stageHP="0" bestiary="true">
+	<entity name="Ulcers" id="14" variant="370" subtype="0" anm2path="entity_Ulcers.anm2" baseHP="15" boss="0" champion="0" collisionDamage="1" collisionMass="3" collisionRadius="13" friction="1" gridCollision="walls" hasFloorAlts="false"  numGridCollisionPoints="12" portrait="12" shadowSize="9" stageHP="0" bestiary="true">
         <bestiary anim="Fly" transform="0,0,1"/>
         <gibs amount="6" blood="1" bone="0" eye="1" gut="0" large="0" rock="0" dust="0"/>
     </entity>
@@ -276,13 +282,13 @@
 	<entity name="Card (HC)" id="1000" variant="384" subtype="160" anm2path="effect_CardShow.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
     </entity>
 	
-	<entity name="Luna Wisp (HC)" id="708" variant="371" subtype="160" anm2path="entity_LunaWisp.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="10" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+	<entity name="Luna Wisp (HC)" id="708" variant="371" subtype="0" anm2path="entity_LunaWisp.anm2" baseHP="40" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="10" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Luna Knife (HC)" id="708" variant="372" subtype="160" anm2path="008.000_moms knife.anm2" baseHP="350" stageHP="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+	<entity name="Luna Knife (HC)" id="708" variant="372" subtype="0" anm2path="008.000_moms knife.anm2" baseHP="350" stageHP="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-	<entity name="Luna Incubus (HC)" id="708" variant="373" subtype="160" anm2path="entity_LunaIncubus.anm2" baseHP="666" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="20" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
+	<entity name="Luna Incubus (HC)" id="708" variant="373" subtype="0" anm2path="entity_LunaIncubus.anm2" baseHP="666" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="20" friction="0.9" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none">
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	<entity name="Alt Horsemen (HC)" id="724" variant="371" subtype="0" anm2path="entity_AltHorsemen.anm2" baseHP="9999" stageHP="0" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="23" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="none" tags="nodelirium" portrait="9" shutdoors="false">
@@ -299,14 +305,13 @@
 		<gibs amount="5" blood="0" bone="1" eye="0" gut="0" large="0" />
 	</entity>
 	<entity name="Pluto Bone (HC)" id="709" variant="371" subtype="0" anm2path="entity_PlutoBone.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="1" numGridCollisionPoints="12" shadowSize="10" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1" shutdoors="false">
-		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="5" blood="0" bone="1" eye="0" gut="0" large="0" />
 	</entity>
 	
 	<entity name="Charon the Benumbed Pre" id="710" variant="370" subtype="0" anm2path="entity_Charon1.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.95" numGridCollisionPoints="12" shadowSize="17" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
 		<gibs amount="5" blood="0" bone="1" eye="0" gut="0" large="0" />
 	</entity>
-    <entity name="Charon the Benumbed" id="915" variant="1" subtype="160" anm2path="entity_Charon2.anm2" baseHP="9999" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="17" friction="1" numGridCollisionPoints="12" portrait="296" shadowSize="18" shutdoors="false" stageHP="0" tags="noreroll" bestiary="true">
+    <entity name="Charon the Benumbed" id="915" variant="1" subtype="6" anm2path="entity_Charon2.anm2" baseHP="9999" boss="1" champion="0" collisionDamage="1" collisionMass="50" collisionRadius="17" friction="1" numGridCollisionPoints="12" portrait="296" shadowSize="18" shutdoors="false" stageHP="0" tags="noreroll" bestiary="true" gridCollision="walls">
 		<bestiary transform="0,0,1" anim="RollVert" />
         <gibs amount="6" blood="0" bone="1" dust="1" eye="0" gut="0" large="0" rock="0"/>
     </entity>
@@ -331,15 +336,41 @@
 
 
 	<!-- ??? -->
-	<entity name="The Herrant" id="715" variant="370" subtype="0" anm2path="entity_Herrant.anm2" baseHP="1" stageHP="100" shieldStrength="25" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
+	<entity name="The Errant" id="715" variant="370" subtype="0" anm2path="entity_Errant.anm2" baseHP="1" stageHP="100" shieldStrength="25" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="30" friction="0.975" numGridCollisionPoints="12" shadowSize="30" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
-
-	<entity name="The Interloper" id="715" variant="371" subtype="0" anm2path="entity_Interloper.anm2" baseHP="90" stageHP="0" shieldStrength="40" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
-		<bestiary transform="0,0,1" anim="Idle" />
+	<entity name="The Errant (AT)" id="715" variant="371" subtype="0" anm2path="entity_ErrantAsh.anm2" baseHP="9999" stageHP="9999" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="30" friction="0.975" numGridCollisionPoints="12" shadowSize="30" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
+	<entity name="The Interloper" id="715" variant="372" subtype="0" anm2path="entity_Interloper.anm2" baseHP="425" stageHP="0" shieldStrength="40" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.9" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Bramble Seed (HC)" id="715" variant="373" subtype="0" anm2path="entity_BrambleSeed.anm2" baseHP="9999" stageHP="9999" shieldStrength="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Bramble Spike (HC)" id="715" variant="374" subtype="0" anm2path="entity_BrambleSpike.anm2" baseHP="9999" stageHP="9999" shieldStrength="0" boss="0" champion="0" collisionDamage="1" collisionMass="200" collisionRadius="12" friction="0.99" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none" tags="nodelirium" portrait="1">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="The Errant (WH)" id="715" variant="375" subtype="0" anm2path="entity_ErrantWhiteHole.anm2" baseHP="9999" stageHP="9999" shieldStrength="0" boss="1" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="15" friction="0.975" numGridCollisionPoints="12" shadowSize="25" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="The Errant (AR)" id="715" variant="375" subtype="1" anm2path="entity_ErrantAttlerock.anm2" baseHP="9999" stageHP="9999" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="1" numGridCollisionPoints="12" shadowSize="25" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="The Errant (HL)" id="715" variant="375" subtype="2" anm2path="entity_ErrantLantern.anm2" baseHP="9999" stageHP="9999" shieldStrength="0" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="0.975" numGridCollisionPoints="12" shadowSize="25" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	</entity>
+	<entity name="Twin Chain (HC)" id="709" variant="371" subtype="1" anm2path="entity_TwinChain.anm2" baseHP="9999" stageHP="0" shieldStrength="0" boss="0" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="15" friction="1" numGridCollisionPoints="12" shadowSize="10" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="1" shutdoors="false">
+		<gibs amount="5" blood="0" bone="1" eye="0" gut="0" large="0" />
+	</entity>
+	
+    <entity name="Brample Mini-seed (HC)" id="39" variant="22" subtype="161" anm2path="entity_BrambleMiniSeed.anm2" baseHP="9999" boss="0" champion="1" collisionDamage="2" collisionInterval="1" collisionMass="10" collisionRadius="13" friction="1" gridCollision="none" numGridCollisionPoints="12" portrait="35" shadowSize="15" stageHP="0">
+		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
+    <entity name="Bramble Cord (HC)" id="865" variant="10" subtype="61" anm2path="entity_BrambleCord.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="15" friction="1" numGridCollisionPoints="1" shadowSize="5" shutdoors="false" stageHP="0" tags="noreroll">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
+    </entity>
 	
 	<!-- SOL -->
 

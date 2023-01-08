@@ -51,6 +51,10 @@ mod.Colors = {
 	whiteish = Color(1,1,1,1,0.1,0.1,0.1),
 	redlight = Color(3,0.75,0.75,1),
 	parasite = Color(0.9, 0.3, 0.08, 1, 0, 0, 0),
+	hot = Color(1,0.6,0,1),
+	giant = Color(0.2,0.8,0.2,1),
+	ember = Color(0.6,0.1,0,1),
+	sand = Color(1,0.4,0.2,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -74,6 +78,8 @@ function mod:ColorizeColors()
 	mod.Colors.white:SetColorize(10, 10, 10, 1)
 	mod.Colors.whiteish:SetColorize(5, 5, 5, 1)
 	mod.Colors.redlight:SetColorize(4, 1, 1, 1)
+	mod.Colors.hot:SetColorize(4, 1, 0, 1)
+	mod.Colors.sand:SetColorize(4, 2.5, 1, 1)
 end
 mod:ColorizeColors()
 
@@ -127,6 +133,7 @@ mod.ModConstants = {
 }
 
 include("scripts.findentities")
+include("scripts.items")
 
 --Room and planet
 mod.RoomsPlanet = {
@@ -404,6 +411,16 @@ function mod:EqualSaves(save1, save2)
 	if save2.spawnchancemultiplier ~= nil then save1.spawnchancemultiplier = save2.spawnchancemultiplier end
 end
 
+--Reset data on new run
+function mod:ResetDataOnNewRun()
+	mod.savedata.planetNum = 0
+	mod.savedata.planetAlive = false
+	mod.savedata.planetKilled1 = false
+	mod.savedata.planetKilled2 = false
+	mod.savedata.planetHP = 1
+	mod.savedata.spawnchancemultiplier = 1
+end
+
 --Spawn entity from mod
 function mod:SpawnEntity(entityNum, position, velocity, origin)
 	local entity = Isaac.Spawn(mod.EntityInf[entityNum].ID, mod.EntityInf[entityNum].VAR, mod.EntityInf[entityNum].SUB, position, velocity, origin)
@@ -418,6 +435,8 @@ end
 
 --Spawn
 function mod:AppearPlanet(entity)
+	if not entity.Visible then return end
+
 	local sprite = entity:GetSprite()
 	local data = entity:GetData()
 	if data.SlowSpawn then
@@ -437,6 +456,14 @@ function mod:AppearPlanet(entity)
 
 		if entity.Type == mod.EntityInf[mod.Entity.Luna].ID then
 			trapdoor:GetSprite():Play("BigIdle", true)
+		elseif entity.Type == mod.EntityInf[mod.Entity.Pluto].ID or entity.Type == mod.EntityInf[mod.Entity.Eris].ID or entity.Type == mod.EntityInf[mod.Entity.Haumea].ID or entity.Type == mod.EntityInf[mod.Entity.Makemake].ID then
+			data.IsKuiper = true
+		elseif entity.Type == mod.EntityInf[mod.Entity.Saturn].ID then
+			--mod:RemoveCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.TimestuckShader)
+			--mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.TimestuckShader, "Timestuck")
+		elseif entity.Type == mod.EntityInf[mod.Entity.Venus].ID then
+			--mod:RemoveCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.VenusHeatShader)
+			--mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.VenusHeatShader, "VenusHeat")
 		end
 
 		if mod.ModFlags.glowingHourglass > 0 then
@@ -514,13 +541,8 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, iscontinued)
 
 	if not iscontinued then
 		rng:SetSeed(Game():GetSeeds():GetStartSeed(), 35)
-		--In new run do that
-		mod.savedata.spawnchancemultiplier = 1
-		mod.savedata.planetAlive = false
-		mod.savedata.planetKilled1 = false
-		mod.savedata.planetKilled2 = false
-		mod.savedata.planetNum = 0
-		mod.savedata.planetHP = 1
+
+		mod:ResetDataOnNewRun()
 
 		mod:EqualSaves(mod.savedataOld, mod.savedata)
 
@@ -1110,47 +1132,50 @@ end)
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------
-function mod:GetShaderParams(shaderName)
-	local room = game:GetRoom()
-    if shaderName == 'Timestuck' then
-		if not mod.ModFlags.globalTimestuck then
-			local params = {Time = 0}
-			return params;
-		end
-
+function mod:TimestuckShader()
+	if mod.ModFlags.globalTimestuck then
 		local params = {Time = 1}
-		return params;
+		return params
+	else
+		local params = {Time = 0}
+		return params
 	end
-	
-	if shaderName == 'VenusHeat' then
-		if not mod.ModFlags.venusHeat then
-			local params = { 
-				PlayerPos = { 2000, 2000 },
-				CenterPos = { 2000, 2000 },
-				Time = 0,
-				VenusTime = 0
-			}
-			return params;
-		end
-		
+end
+mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.TimestuckShader, "Timestuck")
+
+function mod:VenusHeatShader()
+	if mod.ModFlags.venusHeat then
+		local room = game:GetRoom()
 		local position1 = mod.ModFlags.venusPosition
 		position1 = room:WorldToScreenPosition (position1)
-
+	
 		local position2 = room:GetCenterPos()
 		position2 = room:WorldToScreenPosition (position2)
-
+	
 		local params = { 
 			PlayerPos = { position1.X,  position1.Y},
 			CenterPos = { position2.X,  position2.Y},
 			Time = Isaac.GetFrameCount(),
 			VenusTime = mod.ModFlags.venusCounter
 		}
-		return params;
-		
-    end
+		return params
+	else
+		local params = { 
+			PlayerPos = { 2000, 2000 },
+			CenterPos = { 2000, 2000 },
+			Time = 0,
+			VenusTime = 0
+		}
+		return params
+	end
 end
-mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.GetShaderParams)
+mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.VenusHeatShader, "VenusHeat")
 
+--OTHER MODS------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
 
 --ENHANCED BOSS BARS----------------------------------------------------------------------------------------------------------------
 if HPBars then
@@ -1172,6 +1197,10 @@ if HPBars then
 	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Horsemen].ID).."."..tostring(mod.EntityInf[mod.Entity.Horsemen].VAR+1)] = {truFunc}
 	HPBars.BossIgnoreList[tostring(EntityType.ENTITY_DOGMA)..".10"] = {truFunc}
 	HPBars.BossIgnoreList[tostring(EntityType.ENTITY_ADVERSARY)..".0"] = {function(entity) if entity:GetData().HeavensCall then return true end end}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.Attlerock].ID).."."..tostring(mod.EntityInf[mod.Entity.Attlerock].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.HollowsLantern].ID).."."..tostring(mod.EntityInf[mod.Entity.HollowsLantern].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.WhiteHole].ID).."."..tostring(mod.EntityInf[mod.Entity.WhiteHole].VAR)] = {truFunc}
+	HPBars.BossIgnoreList[tostring(mod.EntityInf[mod.Entity.AshTwin].ID).."."..tostring(mod.EntityInf[mod.Entity.AshTwin].VAR)] = {truFunc}
 
 	--Adding the bars
 	Jid = tostring(mod.EntityInf[mod.Entity.Jupiter].ID).."."..tostring(mod.EntityInf[mod.Entity.Jupiter].VAR)

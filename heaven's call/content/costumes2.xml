@@ -1,0 +1,3 @@
+<costumes anm2root="gfx/characters/">
+    <costume id="0" anm2path="costume_mercurius.anm2" type="passive" hasSkinAlt="true" priority="9999" isFlying="true" />
+</costumes>

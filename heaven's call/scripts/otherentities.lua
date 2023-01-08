@@ -452,8 +452,8 @@ function mod:CandleUpdate(entity)
 			sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
 
 			local entity2Transform = mod.CandleGirs[mod:RandomInt(1,#mod.CandleGirs)]
-			--Dont spawn Siren if theres a Lilith
-			if mod:IsThereLilith() then
+			--Dont spawn Siren if theres a Lilith or there are no familiars
+			if mod:IsThereLilith() or (#Isaac.FindByType(EntityType.ENTITY_FAMILIAR)==0) then
 				entity2Transform = mod.CandleGirs[mod:RandomInt(2,#mod.CandleGirs)]
 			end
 			
@@ -1078,7 +1078,7 @@ function mod:HorsemenUpdate(entity)
 						local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 2, entity.Position, Vector.Zero, entity)
 					end
 
-					if entity.I1 == 1 and entity.FrameCount % 5 == 0 then
+					if entity.I2 == 1 and entity.FrameCount % 5 == 0 then
 						for i=-1,1,2 do
 							local velocity = entity.Velocity:Rotated(i*90)/4
 							local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_NORMAL, 0, entity.Position, velocity, entity):ToProjectile()
@@ -1367,6 +1367,198 @@ function mod:FamiliarParentMovement(entity, distance, speed, stopness) --srsl...
 	end
 end
 
+--Mini Errants-----------------------------------------------------------------------------------------------------------------------
+function mod:MiniErrantsUpdate(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+
+	if entity.Variant == mod.EntityInf[mod.Entity.Attlerock].VAR and entity.SubType == mod.EntityInf[mod.Entity.Attlerock].SUB then
+		if not entity.Parent then
+			entity.Velocity = entity.Velocity:Normalized()*mod.QConst.attlerockSpeed
+
+			if entity:CollidesWithGrid() then
+				game:ShakeScreen(10)
+				game:SpawnParticles (entity.Position, EffectVariant.ROCK_PARTICLE, 6, 3)
+			end
+		end
+	elseif entity.Variant == mod.EntityInf[mod.Entity.WhiteHole].VAR and entity.SubType == mod.EntityInf[mod.Entity.WhiteHole].SUB then
+
+		if not data.Init then
+			data.Init = true
+			data.Queue = 0
+		end
+
+		if entity.Parent then
+			local direction = entity.Parent.Position - game:GetRoom():GetCenterPos()
+			entity.Position = game:GetRoom():GetCenterPos() - direction
+		else
+			entity:Remove()
+		end
+
+		if sprite:IsEventTriggered("Attack") then
+
+			for i=1, data.Queue do
+				local angle = rng:RandomFloat()*360
+				local velocity = 5 + rng:RandomFloat()*10
+
+				local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, Vector(1,0):Rotated(angle)*velocity, entity):ToProjectile()
+				rock:GetSprite().Color = mod.Colors.hot
+				rock:GetData().NoAbsorb = true
+				mod:TearFallAfter(rock, 15)
+			end
+			data.Queue = 0
+
+		elseif sprite:IsFinished("Attack") then
+			sprite:Play("Idle", true)
+		end
+
+		
+		for i=0, game:GetNumPlayers ()-1 do
+			local player = game:GetPlayer(i)
+			local dist = player.Position:Distance(entity.Position)
+			if dist < 75 then
+				local direction = (player.Position - entity.Position)
+				player.Velocity = player.Velocity + direction:Length()/75 * direction:Normalized()
+			end
+		end
+		
+		for _, t in ipairs(mod.QProjectiles) do
+			if t then
+				local dist = t.Position:Distance(entity.Position)
+				if not t:GetData().NoAbsorb and dist < 100 then
+					local direction = (t.Position - entity.Position)
+					t.Velocity = t.Velocity + direction:Length()/100 * direction:Normalized()*2
+				end
+			end
+		end
+		for _, t in ipairs(mod.QTears) do
+			if t then
+				local dist = t.Position:Distance(entity.Position)
+				if dist < 100 then
+					local direction = (t.Position - entity.Position)
+					t.Velocity = t.Velocity + direction:Length()/100 * direction:Normalized()*2
+				end
+			end
+		end
+
+	elseif entity.Variant == mod.EntityInf[mod.Entity.HollowsLantern].VAR and entity.SubType == mod.EntityInf[mod.Entity.HollowsLantern].SUB then
+		if sprite:IsFinished("Idle") then
+			sprite:Play("Attack", true)
+		elseif sprite:IsFinished("Attack") then
+				sprite:Play("Idle", true)
+
+		elseif sprite:IsEventTriggered("Attack") then
+			local n = mod:RandomInt(2,5)
+			for i=1, n do
+				local angle = rng:RandomFloat()*360
+				local velocity = 1 + rng:RandomFloat()*2
+	
+				local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, Vector(1,0):Rotated(angle)*velocity, entity):ToProjectile()
+				rock:GetSprite().Color = mod.Colors.hot
+				mod:TearFallAfter(rock, 300)
+			end
+		end
+	end
+end
+
+--Brable Seed-----------------------------------------------------------------------------------------------------------------------
+function mod:BrambleSeedUpdate(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+
+	if not data.Init then
+		data.Init = true
+		entity:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE)
+	end
+	if data.Stop then
+		entity.Velocity = Vector.Zero
+	end
+
+	if sprite:IsFinished("Appear") then
+		data.Stop = true
+		sprite:Play("Spikes", true)
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+		sprite.Rotation = 360*rng:RandomFloat()
+	elseif sprite:IsFinished("Spikes") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+		sprite:Play("Death", true)
+	elseif sprite:IsFinished("Death") then
+		entity:Remove()
+		
+	elseif sprite:IsEventTriggered("Attack") then
+		local offset = sprite.Rotation
+		for i=1, 5 do
+			local angle = offset + i*360/5
+			local velocity = Vector(40,0):Rotated(angle)
+			
+			--Better vanilla monsters was of help here
+			local worm = mod:SpawnEntity(mod.Entity.MiniBranbleSeed, entity.Position, velocity, entity)
+			worm.Parent = entity
+			worm.DepthOffset = entity.DepthOffset - 50
+			worm.Mass = 0
+			worm:AddEntityFlags(EntityFlag.FLAG_NO_PHYSICS_KNOCKBACK | EntityFlag.FLAG_NO_TARGET | EntityFlag.FLAG_NO_STATUS_EFFECTS | EntityFlag.FLAG_NO_DEATH_TRIGGER)
+			worm:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			worm.MaxHitPoints = 0
+
+			local cord = mod:SpawnEntity(mod.Entity.BrambleCord, entity.Position, Vector.Zero, entity)
+			cord.Parent = worm
+			cord.Target = entity
+			cord.DepthOffset = worm.DepthOffset - 125
+			data.Tonguecord = cord
+			cord:AddEntityFlags(EntityFlag.FLAG_NO_DEATH_TRIGGER | EntityFlag.FLAG_NO_BLOOD_SPLASH)
+
+		end
+	else
+
+	end
+end
+
+--Brable Spike-----------------------------------------------------------------------------------------------------------------------
+function mod:BrambleSpikeUpdate(entity)
+	local data = entity:GetData()
+	local sprite = entity:GetSprite()
+
+	if not data.PosX then
+		data.PosX = entity.Position.X 
+		data.PosY = entity.Position.Y
+	end
+
+	if math.abs(entity.Position.Y - data.PosY) > 175 then
+		data.Stop = true
+	end
+	if data.Stop then
+		entity.Velocity = Vector.Zero
+	else
+		entity.Velocity = Vector(0, entity.Velocity.Y)
+		entity.Position = Vector(data.PosX, entity.Position.Y)
+	end
+
+	if not data.Init then
+		data.Init = true
+		entity:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE)
+		entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+
+		sprite:Play("Idle"..tostring(mod:RandomInt(1,3)))
+	end
+
+	if sprite:IsFinished("Idle1") or sprite:IsFinished("Idle2") or sprite:IsFinished("Idle3") then
+		entity:Remove()
+		
+	elseif sprite:IsEventTriggered("Ready") then
+		entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+	elseif sprite:IsEventTriggered("Push") then
+		local direction = 1
+		if sprite.FlipY then
+			direction = -1
+		end
+		entity.Velocity = Vector(0, direction * 40)
+
+	elseif sprite:IsEventTriggered("End") then
+		entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+	end
+end
+
 
 --Fix Position
 function mod:FixPosition(entity)
@@ -1435,11 +1627,22 @@ function mod:UpdateEntity(entity, data)
 		mod:LunaIncubusUpdate(entity)
 	elseif id == EntityType.ENTITY_ATTACKFLY then
 		sprite.Color = mod.Colors.red
-	elseif id == EntityType.ENTITY_CLUTCH and variant == 1 then
-		mod:OrbitParent(entity)
+	elseif id == mod.EntityInf[mod.Entity.Errant].ID then
+		if variant == mod.EntityInf[mod.Entity.BrambleSeed].VAR then
+			mod:BrambleSeedUpdate(entity)
+		elseif variant == mod.EntityInf[mod.Entity.BrambleSpike].VAR then
+			mod:BrambleSpikeUpdate(entity)
+		else
+			mod:MiniErrantsUpdate(entity)
+		end
 	end
 
 	--other
+	if (id == EntityType.ENTITY_CLUTCH and variant == 1)
+	or (id == mod.EntityInf[mod.Entity.Attlerock].ID and variant == mod.EntityInf[mod.Entity.Attlerock].VAR and subType == mod.EntityInf[mod.Entity.Attlerock].SUB) 
+	or (id == mod.EntityInf[mod.Entity.HollowsLantern].ID and variant == mod.EntityInf[mod.Entity.HollowsLantern].VAR and subType == mod.EntityInf[mod.Entity.HollowsLantern].SUB) then
+		mod:OrbitParent(entity)
+	end
 	if data.FixPosition then
 		mod:FixPosition(entity)
 	end
@@ -1506,6 +1709,7 @@ function mod:TornadoUpdate(entity)
 		if data.OriginalPos == nil then data.OriginalPos = entity.Position end
 		if data.Frame == nil then data.Frame = 0 end
 		if data.FlagForSpawn == nil then data.FlagForSpawn = false end
+		if data.Velocity == nil then data.Velocity = Vector.Zero end
 
 		if not data.Init then
 			data.Init = true
@@ -1523,9 +1727,11 @@ function mod:TornadoUpdate(entity)
 			if not data.Duped and data.Height > 0 then
 				data.Duped = true
 				local tornado = mod:SpawnEntity(mod.Entity.Tornado, data.OriginalPos+Vector(0,-32*data.Scale), Vector.Zero, entity)
+				tornado:GetSprite().Color = sprite.Color
 				tornado:GetData().Lifespan = data.Lifespan
 				tornado:GetData().Height = data.Height - 1
 				tornado:GetData().Scale = data.Scale * 1.3
+				tornado:GetData().Velocity = data.Velocity
 				tornado.DepthOffset = entity.DepthOffset + 44
 			end
 		end
@@ -1550,7 +1756,28 @@ function mod:TornadoUpdate(entity)
 		--Waving
 		local angle = data.Frame/(data.Scale)
 		entity.Position = data.OriginalPos + Vector(10*data.Scale,0)*math.sin(angle)
+		data.OriginalPos = data.OriginalPos + data.Velocity/2
 		data.Frame = data.Frame + 1
+
+		--Rain
+		if data.Rain and entity.FrameCount%3==0 then
+			for i=0, mod.QConst.nRainDrop/5 do
+				local angle = 360*rng:RandomFloat()
+				local position = entity.Position + Vector(math.sqrt(mod:RandomInt(0,mod.QConst.rainDropRadius^2)),0):Rotated(angle)
+				--Rain projectiles:
+				local dropParams = ProjectileParams()
+				dropParams.Scale = mod:RandomInt(1,100)/100
+				dropParams.FallingAccelModifier = 2
+				dropParams.ChangeTimeout = 3
+				dropParams.HeightModifier = -mod:RandomInt(380,1200)
+				dropParams.Variant = ProjectileVariant.PROJECTILE_TEAR
+				dropParams.Color = sprite.Color
+				
+				if entity.Parent then
+					entity.Parent:ToNPC():FireProjectiles(position, Vector.Zero, 0, dropParams)
+				end
+			end
+		end
 	end
 end
 
@@ -1622,6 +1849,7 @@ function mod:MeteorUpdate(entity)
 		--Explosion:
 		local explosion = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BOMB_EXPLOSION, 0, entity.Position, Vector.Zero, nil):ToEffect()
 		explosion:GetSprite().Scale = Vector.One*1.5
+		explosion:GetSprite().Color = mod.Colors.hot
 		--Explosion damage
 		for i, entity_ in ipairs(Isaac.FindInRadius(entity.Position, mod.TConst.meteorExplosionRadius)) do
 			if entity_.Type ~= EntityType.ENTITY_PLAYER and entity_.Type ~= mod.EntityInf[mod.Entity.Terra1].ID then
@@ -1635,6 +1863,7 @@ function mod:MeteorUpdate(entity)
 			local velocity = Vector.FromAngle(i*360/4)*mod.TConst.debbriesSpeed
 			local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, velocity, entity.Parent):ToProjectile()
 			rock.FallingSpeed = 2
+			rock:GetSprite().Color = mod.Colors.hot
 		end
 
 		mod:SpawnGlassFracture(entity, 0.5)
@@ -1779,15 +2008,25 @@ function mod:LaserSwordUpdate(entity)
 		mod:LaserSwordAttack(entity)
 	end
 
+	if not entity.Parent then
+		entity:Remove()
+	end
+
 end
 
 function mod:LaserSwordDamage(entity,center)
 	if center then
 		--Damage
 		for i, e in ipairs(Isaac.FindInRadius(center, mod.MConst.laserSwordRadius)) do
-			--print(e.Type)
 			if e.Type ~= EntityType.ENTITY_PLAYER and not e:GetData().IsMartian then
-				e:TakeDamage(50, 0, EntityRef(entity.Parent), 0)
+				--print(1)
+				if e:GetData().IsKuiper then
+					e:TakeDamage(10, 0, EntityRef(entity.Parent), 0)
+				elseif e.Type == mod.EntityInf[mod.Entity.Charon2].ID then
+					e.Velocity = (e.Position - entity.Position):Normalized()*15
+				else
+					e:TakeDamage(50, 0, EntityRef(entity.Parent), 0)
+				end
 			elseif e.Type == EntityType.ENTITY_PLAYER then
 				e:TakeDamage(1, 0, EntityRef(entity.Parent), 0)
 			end
@@ -2015,19 +2254,29 @@ function mod:LunaDoorUpdate(entity)
 
 	elseif doorType == mod.DoorType.PLANETARIUM then
 
-		if data.Frame == 30 then
+		if data.Frame == 1 then
 			local random = mod:RandomInt(1,4)
 
-			sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+			local boss
 			if random == 1 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_MONSTRO, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+				boss = mod:SpawnEntity(mod.Entity.Pluto, entity.Position + Vector(0,1), Vector.Zero, nil)
 			elseif random == 2 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_DUKE, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+				boss = mod:SpawnEntity(mod.Entity.Eris, entity.Position + Vector(0,1), Vector.Zero, nil)
 			elseif random == 3 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_GEMINI, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+				boss = mod:SpawnEntity(mod.Entity.Haumea, entity.Position + Vector(0,1), Vector.Zero, nil)
 			elseif random == 4 then
-				local boss = Isaac.Spawn(EntityType.ENTITY_LARRYJR, 0, 0, entity.Position + Vector(0,1), Vector.Zero, nil)
+				boss = mod:SpawnEntity(mod.Entity.Makemake, entity.Position + Vector(0,1), Vector.Zero, nil)
 			end
+			boss.Visible = false
+
+			mod:scheduleForUpdate(function()
+				if boss then
+					sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
+					boss.Visible = true
+					local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
+					poof.DepthOffset = 100
+				end
+			end,30)
 
 		elseif data.Frame == 45 then
 			sprite:Play("Close", true)
@@ -2462,6 +2711,7 @@ function mod:RevelationTrapUpdate(entity)
 	
 end
 
+--Luna red fart-----------------------------------------------------------------------------------------------------------------------
 function mod:RedFartUpdate(entity)
 	local data = entity:GetData()
 	if data.IsActive_HC and entity:GetSprite():GetFrame() == 3 then
@@ -2491,6 +2741,47 @@ function mod:RedFartUpdate(entity)
 		data.IsActive_HC = false
 	end
 end
+
+--Electric Glow-----------------------------------------------------------------------------------------------------------------------
+function mod:ElectricGlowUpdate(entity)
+	local data = entity:GetData()
+	if data.IsActive_HC and entity.Timeout == mod.QConst.electricityTimeout/2 then
+		local position = entity.Position + data.Direction * mod.QConst.electricityDist
+		data.NextPosition = position
+		if not mod:IsOutsideRoom(position, game:GetRoom()) then
+			local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.GROUND_GLOW, 0, position, Vector.Zero, entity):ToEffect()
+            glow:GetSprite().Color = mod.Colors.red
+            glow.Parent = entity.Parent
+            glow.Timeout = mod.QConst.electricityTimeout
+			glow.SpriteScale = Vector.One*0.5
+
+            local glowData = glow:GetData()
+            glowData.Direction = data.Direction:Rotated(mod.QConst.electricityAngle * (2 * rng:RandomFloat() - 1))
+            glowData.IsActive_HC = true
+            glowData.HeavensCall = true
+
+		end
+	elseif data.IsActive_HC and entity.Timeout == 1 and data.NextPosition then
+		data.IsActive_HC = false
+		--Laser
+		local angle = (data.NextPosition - entity.Position):GetAngleDegrees()
+		local laser = EntityLaser.ShootAngle(LaserVariant.THIN_RED, entity.Position, angle, 10, Vector.Zero, entity.Parent)
+		laser:SetMaxDistance((data.NextPosition - entity.Position):Length())
+		laser.DisableFollowParent = true
+		laser:GetSprite().Color = mod.Colors.jupiterLaser2
+	end
+end
+
+--SandPillar-----------------------------------------------------------------------------------------------------------------------
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_INIT, function(_, entity)
+	if entity.SpawnerEntity and entity.SpawnerEntity.Type == mod.EntityInf[mod.Entity.AshTwin].ID then
+		mod:scheduleForUpdate(function()
+			if entity then
+				entity:GetSprite().Color = mod.Colors.sand
+			end
+		end, 2)
+	end
+end, EffectVariant.CREEP_SLIPPERY_BROWN)
 
 --Effects updates
 function mod:UpdateEffect(effect, data)
@@ -2551,6 +2842,10 @@ function mod:UpdateEffect(effect, data)
 		mod:LunaSpikeUpdate(effect)
 	elseif variant == mod.EntityInf[mod.Entity.TrapTile].VAR then
 		mod:RevelationTrapUpdate(effect)
+	elseif variant == EffectVariant.GROUND_GLOW then
+		mod:ElectricGlowUpdate(effect)
+	elseif variant == EffectVariant.HUSH_LASER then
+		mod:FamiliarParentMovement2(effect, 2, 1.5, 15)
 	end
 	
 	--others
@@ -2846,8 +3141,8 @@ function mod:MissileUpdate(tear, collided)
 		data.OldAngle = sprite.Rotation
 	end
 
-	sprite.Rotation = (tear.Velocity:GetAngleDegrees() + data.OldAngle) / 2
-	--sprite.Rotation = (tear.Velocity:GetAngleDegrees() * data.OldAngle) ^ 0.5
+	sprite.Rotation = mod:AngleLerp(sprite.Rotation, tear.Velocity:GetAngleDegrees(), 0.1)
+
 	data.OldAngle = sprite.Rotation
 	data.Counter = data.Counter + 1
 

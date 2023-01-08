@@ -237,14 +237,14 @@ end
 
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Planet Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.IDLE] =           {0.000, 0.150, 0.440, 0.000, 0.050, 0.050, 0.030, 0.040, 0.030, 0.030, 0.000, 0.040, 0.030, 0.040, 0.030, 0.040},
-    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
-    [mod.LMSState.ATTACK] =         {0.000, 0.100, 0.500, 0.000, 0.000, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
+    [mod.LMSState.IDLE] =           {0.000, 0.150, 0.480, 0.000, 0.050, 0.020, 0.030, 0.040, 0.030, 0.030, 0.000, 0.030, 0.030, 0.040, 0.030, 0.040},
+    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
+    [mod.LMSState.ATTACK] =         {0.000, 0.095, 0.500, 0.000, 0.000, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.ITEM] =           {0.000, 0.100, 0.600, 0.000, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
+    [mod.LMSState.ITEM] =           {0.000, 0.095, 0.700, 0.000, 0.000, 0.250, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.BOSSROOM] =       {0.000, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.300, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.MEGASATAN] =      {0.000, 0.100, 0.000, 0.000, 0.000, 0.300, 0.000, 0.000, 0.300, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
+    [mod.LMSState.MEGASATAN] =      {0.000, 0.100, 0.000, 0.000, 0.000, 0.400, 0.000, 0.000, 0.300, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CURSE] =          {0.000, 0.750, 0.250, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.ARCADE] =         {0.000, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.300, 0.000, 0.300, 0.100, 0.000},
     [mod.LMSState.BEDROOM] =        {0.000, 0.700, 0.300, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -316,6 +316,7 @@ mod.LConst = {--Some constant variables of Luna
     wave2Flip = 16,
     wave3Flip = 12,
     waveFlipSpeed = 12,
+    maxAngels = 5,
 
 }
 
@@ -493,7 +494,20 @@ function mod:LunaAttack(entity, data, sprite, target, room)
     elseif sprite:IsEventTriggered("Aim") then
         data.TargetAim = target.Position
         
-        if data.SecondaryP == mod.LSecondaryPassives.CONTINUUM and (data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS) then
+        if data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART and (data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS) then
+            local direction = (data.TargetAim - entity.Position)
+            local angulo = direction:GetAngleDegrees()
+            angulo = mod:Takeclosest({0,90,180,-180,-90}, angulo)
+
+            local tracer = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.GENERIC_TRACER, 0, entity.Position, Vector.Zero, entity):ToEffect()
+
+            tracer:FollowParent(entity)
+            tracer.LifeSpan = 25
+            tracer.Timeout = tracer.LifeSpan
+            tracer.TargetPosition = Vector(1, 0):Rotated(angulo)
+
+            
+        elseif data.SecondaryP == mod.LSecondaryPassives.CONTINUUM and (data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS) then
             mod:LunaTraceLaser(entity, data, sprite, target, room, false)
         end
     elseif sprite:IsFinished("NormalAttack") or sprite:IsFinished("NormalLaser") or sprite:IsFinished("LongLaser") then
@@ -577,6 +591,10 @@ function mod:LunaTeleport(entity, data, sprite, target, room)
 		local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, position, Vector.Zero, entity)
         trapdoor:GetSprite():Play("BigIdle", true)
 
+        for _, r in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER, LaserVariant.THICK_RED, LaserSubType.LASER_SUBTYPE_RING_FOLLOW_PARENT)) do
+            r:Remove()
+        end
+
     end
 
 end
@@ -591,9 +609,10 @@ function mod:LunaItem(entity, data, sprite, target, room)
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("PickUp") then
         
-        mod:GiveItemLuna(entity, data.LastItem)
-
-        mod:LunaChangeState(entity)
+        local special = mod:GiveItemLuna(entity, data.LastItem)
+        if not special then
+            mod:LunaChangeState(entity)
+        end
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("PickUp",true)
 
@@ -844,7 +863,7 @@ function mod:LunaSacrifice(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("SummonDoor",true)
     elseif sprite:IsFinished("Jump") then
-        mod:LunaChangeState(entity, fixState)
+        mod:LunaChangeState(entity)
     elseif sprite:IsFinished("SummonDoor") then
         sprite:Play("Jump",true)
 
@@ -1171,7 +1190,10 @@ function mod:LunaFlipUpdate(entity)
                 local offset = 360*rng:RandomFloat()
                 for i=1,2 do
                     local position = entity.Position + Vector(50, 0):Rotated(i*360/2+offset)
-                    local angel = Isaac.Spawn(EntityType.ENTITY_DOGMA, 10, 0, position, Vector.Zero, entity)
+
+                    if #Isaac.FindByType(EntityType.ENTITY_DOGMA, 10, 0) < mod.LConst.maxAngels then
+                        local angel = Isaac.Spawn(EntityType.ENTITY_DOGMA, 10, 0, position, Vector.Zero, entity)
+                    end
                 end
             end
 
@@ -1262,7 +1284,7 @@ function mod:LunaSynergy(entity, data, sprite, target, room, incubus)
     end
 
     --mainP = mod.LMainPassive.BRIMSTONE
-    --secondaryP = mod.LSecondaryPassives.CONTINUUM
+    --secondaryP = mod.LSecondaryPassives.SACRED_HEART
     --scale = 3
 
     if mainP == 0 then
@@ -2238,7 +2260,7 @@ function mod:LunaChangeState(entity, fixState)
     --print(fixState)
     --print(entity:GetSprite():GetAnimation())
 
-    if data.MawTime >= mod.LConst.mawFrames and not fixState then
+    if data.MawTime >= mod.LConst.mawFrames and (fixState==nil) then
         data.State = mod.LMSState.MAW
         data.StateFrame = 0
         return
@@ -2451,10 +2473,19 @@ function mod:LunaChooseItem(itemList, itemOld, dice, entity)
         itemNum = mod:LunaPick(itemList, itemOld)
     end
 
-    local incombatible = ((not mod:IsGlassRoom(game:GetLevel():GetCurrentRoomDesc()) ) and itemNum == mod.LSpecials.MEGA_MUSH) or
-    (((itemNum == mod.LMainPassive.MUTANT_SPIDER or itemNum == mod.LMainPassive.SPIDER_FREAK) and data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD) or (itemNum == mod.LSecondaryPassives.GOD_HEAD and (data.MainP == mod.LMainPassive.MUTANT_SPIDER or data.MainP == mod.LMainPassive.SPIDER_FREAK)))
+    local function IncombatibleItem()
+        local incombatible = ((not mod:IsGlassRoom(game:GetLevel():GetCurrentRoomDesc()) ) and itemNum == mod.LSpecials.MEGA_MUSH) or
+        (((itemNum == mod.LMainPassive.MUTANT_SPIDER or itemNum == mod.LMainPassive.SPIDER_FREAK) and data.SecondaryP == mod.LSecondaryPassives.GOD_HEAD) or (itemNum == mod.LSecondaryPassives.GOD_HEAD and (data.MainP == mod.LMainPassive.MUTANT_SPIDER or data.MainP == mod.LMainPassive.SPIDER_FREAK))) or
+        (((itemNum == mod.LMainPassive.BRIMSTONE or itemNum == mod.LMainPassive.REVELATIONS) and data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM) or (itemNum == mod.LSecondaryPassives.CLASSIC_WORM and (data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS))) or
+        ((itemNum == mod.LMainPassive.DR_FETUS and data.SecondaryP == mod.LSecondaryPassives.CONTINUUM) or (itemNum == mod.LSecondaryPassives.CONTINUUM and data.MainP == mod.LMainPassive.DR_FETUS)) or
+        ((itemNum == mod.LMainPassive.C_SECTION and data.SecondaryP == mod.LSecondaryPassives.CONTINUUM) or (itemNum == mod.LSecondaryPassives.CONTINUUM and data.MainP == mod.LMainPassive.C_SECTION)) or
+        (((itemNum == mod.LMainPassive.MUTANT_SPIDER or itemNum == mod.LMainPassive.SPIDER_FREAK) and data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART) or (itemNum == mod.LSecondaryPassives.SACRED_HEART and (data.MainP == mod.LMainPassive.MUTANT_SPIDER or data.MainP == mod.LMainPassive.SPIDER_FREAK)))
+        
+        return incombatible
+    end
 
-    while incombatible do
+    
+    while IncombatibleItem() do
         itemNum = mod:LunaPick(itemList, itemOld)
     end
 
@@ -2476,18 +2507,18 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         tipo = data.LastItemType
     end
 
-    --tipo = mod.LItemType.SECONDARY
-    --itemNum = mod.LMainPassive.CONTINUUM
+    --tipo = mod.LItemType.SPECIAL
+    --itemNum = mod.LMainPassive.MOMS_SHOVEL
     --mod:LunaUseActive(entity, mod.LActives.BOOK_BELIAL)
 
     if tipo == mod.LItemType.ACTIVE then
         mod:LunaUseActive(entity, itemNum)
     elseif tipo == mod.LItemType.MAIN then
-        --itemNum = mod.LMainPassive.REVELATIONS
+        --itemNum = mod.LMainPassive.BRIMSTONE
 
         data.MainP = itemNum
     elseif tipo == mod.LItemType.SECONDARY then
-        --itemNum = mod.LSecondaryPassives.GOD_HEAD
+        --itemNum = mod.LSecondaryPassives.SACRED_HEART
         
         data.SecondaryP = itemNum
     elseif tipo == mod.LItemType.ASSIST then
@@ -2530,8 +2561,10 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         elseif itemNum == mod.LSpecials.FLIP then
             mod:LunaChangeState(entity, mod.LMSState.FLIP)
         end
+
+        return true
     end
-    
+    return false
 end
 
 function mod:LunaUseActive(entity, itemNum)
@@ -2539,8 +2572,16 @@ function mod:LunaUseActive(entity, itemNum)
 
     --itemNum = mod.LActives.BIBLE
 
+
     if itemNum == mod.LActives.ABYSS then
-        for i=1, mod.LConst.nLocust do
+        local nLocust = 0
+        for _, f in ipairs(Isaac.FindByType(EntityType.ENTITY_ATTACKFLY, 0, 0)) do
+            if f:GetData().HeavensCall then
+                nLocust = nLocust + 1
+            end
+        end
+
+        for i=1+nLocust, mod.LConst.nLocust do
             local position = entity.Position + Vector(20,0):Rotated(i/mod.LConst.nLocust*360)
             local locust = Isaac.Spawn(EntityType.ENTITY_ATTACKFLY, 0, 0, position, Vector.Zero, entity)
             locust:GetSprite().Color = mod.Colors.red
@@ -2571,7 +2612,7 @@ function mod:LunaUseActive(entity, itemNum)
             wispData.orbitSpin = 1
             wispData.orbitSpeed = 4
 
-            wispData.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+            wisp.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
         end
 
     elseif itemNum == mod.LActives.BIBLE then
@@ -2720,13 +2761,21 @@ function mod:TearFallAfter(projectile, frames)
 
 end
 --Get vertial up/down wall postion
-function mod:RandomUpDown()
-    local direction = mod.RoomWalls.UP
+function mod:RandomUpDown(direction)
+
     local rotation = 0
-    if rng:RandomFloat() < 0.5 then
-        rotation = 180
-        direction = mod.RoomWalls.DOWN
+    if not direction then
+        direction = mod.RoomWalls.UP
+        if rng:RandomFloat() < 0.5 then
+            rotation = 180
+            direction = mod.RoomWalls.DOWN
+        end
+    else
+        if direction == mod.RoomWalls.DOWN then
+            rotation = 180
+        end
     end
+
     local room = game:GetRoom()
     local shape = room:GetRoomShape()
     local vertical = mod.BorderRoom[direction][shape]
@@ -2734,13 +2783,16 @@ function mod:RandomUpDown()
     return position, rotation
 end
 --Get random post
-function mod:GetRandomPosition(originalPos, range)
+function mod:GetRandomPosition(originalPos, range, targetPos)
+    if not targetPos then
+        targetPos = originalPos
+    end
     local room = game:GetRoom()
 
     local position = room:GetRandomPosition(0)
     if originalPos and range then
         for i=1, 100 do
-            if position:Distance(originalPos) > range then break end
+            if position:Distance(originalPos) > range and position:Distance(targetPos) > range then break end
             position = room:GetRandomPosition(0)
         end
     end
@@ -3220,6 +3272,10 @@ function mod:PlutoUpdate(entity)
 			elseif sprite:IsFinished("Idle") then
 				data.State = mod:MarkovTransition(data.State, mod.chainP)
 				data.StateFrame = 0
+
+                if rng:RandomFloat() < 0.3 then
+                    data.ObjectivePosition = room:GetRandomPosition(0)
+                end
 				
 			else
 				mod:PlutoMove(entity, data, room, target)
@@ -3327,53 +3383,59 @@ function mod:PlutoMove(entity, data, room, target)
 	data.targetvelocity = data.targetvelocity * 0.99
 end
 
+--Tail
+function mod:TailUpdate(entity)--This is such a convoluted way to create a chain
+    if entity.Parent then
+        local sprite = entity:GetSprite()
+
+        if sprite:GetAnimation() == "Spike" then
+            local data = entity:GetData()
+
+            sprite.Rotation = ( - entity.Parent.Position + entity.Position):GetAngleDegrees()
+
+            if data.Launch then
+                sprite.Rotation = entity.Velocity:GetAngleDegrees()
+
+                if entity:CollidesWithGrid() then
+                    data.Launch = false
+                    entity.CollisionDamage = 0
+                    entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+                end 
+
+                return
+            end
+        end
+
+        mod:FamiliarParentMovement(entity, 2, 1.5, 15)
+
+        local child = entity.Child
+        if child then
+
+            local spike = child
+            for i=entity.I1+1,mod.PConst.nBones-1 do
+                spike = spike.Child
+            end
+
+            if spike and spike:GetData().Launch then
+
+                local parent = entity.Parent
+                entity.Parent = child
+                mod:FamiliarParentMovement(entity, 10, 2, 10)
+                entity.Parent = parent
+
+            end
+        end
+    else
+        entity:Remove()
+    end
+end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.PlutoUpdate, mod.EntityInf[mod.Entity.Pluto].ID)
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
-    if entity.Variant == mod.EntityInf[mod.Entity.PlutoBone].VAR then
-        if entity.Parent then
-            local sprite = entity:GetSprite()
-
-            if sprite:GetAnimation() == "Spike" then
-                local data = entity:GetData()
-
-                sprite.Rotation = ( - entity.Parent.Position + entity.Position):GetAngleDegrees()
-
-                if data.Launch then
-                    sprite.Rotation = entity.Velocity:GetAngleDegrees()
-
-                    if entity:CollidesWithGrid() then
-                        data.Launch = false
-                        entity.CollisionDamage = 0
-                        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-                    end 
-
-                    return
-                end
-            end
-
-            mod:FamiliarParentMovement(entity, 2, 1.5, 15)
-
-            local child = entity.Child
-            if child then
-
-                local spike = child
-                for i=entity.I1+1,mod.PConst.nBones-1 do
-                    spike = spike.Child
-                end
-
-                if spike:GetData().Launch then
-
-                    local parent = entity.Parent
-                    entity.Parent = child
-                    mod:FamiliarParentMovement(entity, 10, 2, 10)
-                    entity.Parent = parent
-
-                end
-            end
-        end
+    if entity.Variant == mod.EntityInf[mod.Entity.PlutoBone].VAR and entity.SubType == mod.EntityInf[mod.Entity.PlutoBone].SUB then
+        mod:TailUpdate(entity)
     end
-end, mod.EntityInf[mod.Entity.PlutoBone].ID)--This is such a convoluted way to create a chain
+end, mod.EntityInf[mod.Entity.PlutoBone].ID)
 --CHARON--------------------------------------------------------------------------------------------------
 --[[
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -3768,7 +3830,7 @@ function mod:MakemakeUpdate(entity)
 end
 
 function mod:MakemakeMove(entity, data, room)
-    entity.Velocity = data.Direction * 5
+    entity.Velocity = data.Direction * 3.5
 
     if entity:CollidesWithGrid() then
         mod:scheduleForUpdate(function()
@@ -3820,7 +3882,7 @@ mod.HMSState = {
 }
 mod.chainH = {
 	[mod.HMSState.APPEAR] = 	{0,   1,   0},
-	[mod.HMSState.IDLE] = 	    {0,   0.6, 0.4},
+	[mod.HMSState.IDLE] = 	    {0,   0.75, 0.25},
 	--[mod.HMSState.IDLE] = 	{0,   0,   1},
 	[mod.HMSState.JUMP] = 	    {0,   1,   0},
 	
@@ -3939,3 +4001,916 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.HaumeaUpdate, mod.EntityInf[mod.
 @@@@@@@@@@@@@@@@@@@@@@@@&&%%%###(#####(((((((########%%%%%%#&@@%@@%@@@@@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@ @@(@@@@@@&&&&&&%(%%&&&&&&&&&&&&&&&&&@@@@@@@@@@@@@ @@@@@@@@@@
 ]]--
+mod.QMSState = {
+	APPEAR = 0,
+	IDLE = 1,
+    ATTACK1 = 2,
+    ATTACK2= 3,
+}
+
+mod.QForms = {
+    THE_EYE = 0,
+    EMBER_TWIN = 1,
+    ASH_TWIN = 2,
+    TIMBER_HEART = 3,
+    BRITTLE_HOLLOW = 4,
+    DEEPS_GIANT = 5,
+    DARK_BRAMBLE = 6,
+}
+
+mod.chainTransformQ = {
+    [mod.QForms.THE_EYE] =          {0,   0.2, 0,   0.2, 0.2, 0.2, 0.2},
+    [mod.QForms.EMBER_TWIN] =       {0,   0,   0,   0.25,0.25,0.25,0.25},
+    [mod.QForms.ASH_TWIN] =         {1,   0,   0,   0,   0,   0,   0},
+    [mod.QForms.TIMBER_HEART] =     {0,   0.25,0,   0,   0.25,0.25,0.25},
+    [mod.QForms.BRITTLE_HOLLOW] =   {0,   0.25,0,   0.25,0,   0.25,0.25},
+    [mod.QForms.DEEPS_GIANT] =      {0,   0.25,0,   0.25,0.25,0,   0.25},
+    [mod.QForms.DARK_BRAMBLE] =     {0,   0.25,0,   0.25,0.25,0.25,0},
+}
+
+mod.QConst = {
+    speed = 1.3,--1.3
+    idleTimeInterval = Vector(10,20),
+
+    attlerockSpeed = 13,
+    moonOrbitDistance = 14,
+
+    absorbSpeed = 15,
+    
+	nRainDrop = 6,
+	rainDropRadius = 80,
+
+    nElectricities = 9,
+    electricityDist = 60,
+    electricityAngle = 90,
+    electricityTimeout = 30,--Even
+
+    nSpikes = 16,
+
+    nChains = 7,
+
+    rockSpeed = 6,
+    nRock1 = 15,
+    nRock2 = 12,
+    nRock3 = 8,
+    rockAngle = 30,
+
+}
+
+mod.QProjectiles = {}
+mod.QTears = {}
+mod.QEntities = {}
+mod.QFamiliars = {}
+
+function mod:ErrantUpdate(entity)
+	if entity.Variant == mod.EntityInf[mod.Entity.Errant].VAR and entity.SubType == mod.EntityInf[mod.Entity.Errant].SUB then
+		local data = entity:GetData()
+		local sprite = entity:GetSprite()
+		local target = entity:GetPlayerTarget()
+		local room = game:GetRoom()
+		
+		--Custom data:
+		if data.State == nil then 
+			data.State = 0
+			data.StateFrame = 0
+            data.StateAttack = 1
+            data.Form = mod.QForms.THE_EYE
+            data.ForceTransform = true
+            data.EmberLaunched = false
+            data.AttleLaunched = false
+
+            sprite:SetOverlayRenderPriority(true)
+		end
+
+		--Frame
+		data.StateFrame = data.StateFrame + 1
+		
+		if data.State == mod.QMSState.APPEAR then
+			if data.StateFrame == 1 then
+				mod:AppearPlanet(entity)
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
+				data.State = mod.QMSState.IDLE
+				data.StateFrame = 0
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+			end
+			
+		elseif data.State == mod.QMSState.IDLE then
+			if data.StateFrame == 1 then
+                if data.EmberLaunched then
+                    sprite:Play("Idle1",true)
+                else
+                    sprite:Play("Idle",true)
+                end
+			elseif sprite:IsFinished("Idle") or sprite:IsFinished("Idle1") then
+				if data.ForceTransform then
+                    mod:ChangeForm(entity, sprite, data)
+                else
+                    if rng:RandomFloat() < 0.5 then
+                        data.State = mod.QMSState.IDLE
+                    else
+                        if rng:RandomFloat() < 0.5 then
+                            data.State = mod.QMSState.ATTACK1
+                        else
+                            data.State = mod.QMSState.ATTACK2
+                        end
+                    end
+                end
+				data.StateFrame = 0
+			end
+            mod:ErrantMove(entity, data, room, target)
+			
+		elseif data.Form == mod.QForms.EMBER_TWIN  and (data.State == mod.QMSState.ATTACK1 or data.State == mod.QMSState.ATTACK2) then
+            if not data.EmberLaunched then
+                mod:EmberLaunch(entity, data, sprite, target, room)
+            else
+                mod:EmberBlast(entity, data, sprite, target, room)
+            end
+
+        elseif data.Form == mod.QForms.TIMBER_HEART then
+            if data.State == mod.QMSState.ATTACK1 then
+                mod:TimberWater(entity, data, sprite, target, room)
+            else
+                if data.AttleLaunched then
+                    mod:TimberWater(entity, data, sprite, target, room)
+                else
+                    mod:TimberAttleThrow(entity, data, sprite, target, room)
+                end
+            end
+
+		elseif data.State == mod.QMSState.ATTACK1 then    
+        
+            if data.Form == mod.QForms.BRITTLE_HOLLOW then
+                mod:BrittleTeleport(entity, data, sprite, target, room)
+            elseif data.Form == mod.QForms.DEEPS_GIANT then
+                mod:GiantTornado(entity, data, sprite, target, room)
+            elseif data.Form == mod.QForms.DARK_BRAMBLE then
+                mod:BrambleBite(entity, data, sprite, target, room)
+            end
+
+		elseif data.State == mod.QMSState.ATTACK2 then    
+        
+            if data.Form == mod.QForms.BRITTLE_HOLLOW then
+                mod:BrittleAbsorb(entity, data, sprite, target, room)
+            elseif data.Form == mod.QForms.DEEPS_GIANT then
+                mod:GiantElectricity(entity, data, sprite, target, room)
+            elseif data.Form == mod.QForms.DARK_BRAMBLE then
+                mod:BrambleSeed(entity, data, sprite, target, room)
+            end
+
+		end
+
+        if data.Form == mod.QForms.BRITTLE_HOLLOW then
+
+            for i=0, game:GetNumPlayers ()-1 do
+                local player = game:GetPlayer(i)
+                local dist = player.Position:Distance(entity.Position)
+                if dist < 75 then
+                    local direction = (player.Position - entity.Position)
+                    player.Velocity = player.Velocity - direction:Length()/75 * direction:Normalized() / 2
+                end
+            end
+            for _, t in ipairs(mod.QProjectiles) do
+                if t then
+                    local dist = t.Position:Distance(entity.Position)
+                    if t:GetData().NoAbsorb and dist < 100 then
+                        local direction = (t.Position - entity.Position)
+                        t.Velocity = t.Velocity - direction:Length()/100 * direction:Normalized()/2
+                    end
+                end
+            end
+            for _, t in ipairs(mod.QTears) do
+                if t then
+                    local dist = t.Position:Distance(entity.Position)
+                    if dist < 100 then
+                        local direction = (t.Position - entity.Position)
+                        t.Velocity = t.Velocity - direction:Length()/100 * direction:Normalized()*2
+                    end
+                end
+            end
+
+            if entity.FrameCount % 2 == 0 then
+                mod.QProjectiles = Isaac.FindByType(EntityType.ENTITY_PROJECTILE)
+                mod.QTears = Isaac.FindByType(EntityType.ENTITY_TEAR)
+            end
+
+        elseif data.Form == mod.QForms.EMBER_TWIN then
+            local ash = entity.Parent
+            if ash then
+                local ashData = ash:GetData()
+                local ashSprite = ash:GetSprite()
+
+                if not ashData.StateFrame then
+                    ashData.State = mod.QMSState.IDLE
+                    ashData.StateFrame = 0
+                    ashData.StateAttack = 1
+                end
+
+                ashData.StateFrame = ashData.StateFrame + 1
+
+                if ashData.State == mod.QMSState.IDLE then
+                    mod:ErrantMove(ash, ashData, room, target)
+                elseif ashData.State == mod.QMSState.ATTACK1 then
+                    mod:AshTime(entity, ash, ashData, ashSprite, target, room)
+                elseif ashData.State == mod.QMSState.ATTACK2 then
+                    mod:AshColumn(entity, ash, ashData, ashSprite, target, room)
+                end
+            end
+
+        end
+	end
+end
+--Ember twin
+function mod:EmberLaunch(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Launch",true)
+    elseif sprite:IsFinished("Launch") then
+        mod:ErrantEndAttack(entity, data, sprite)
+        data.StateAttack = 1
+        data.EmberLaunched = true
+        --[[sprite:Play("Idle",true)
+    elseif sprite:IsFinished("Idle") then
+        sprite:Play("Idle",true)]]
+
+    elseif sprite:IsEventTriggered("Launch") then
+        
+        --Ash spawn
+        local parent = entity
+        for i=1,mod.QConst.nChains do
+            local chain = mod:SpawnEntity(mod.Entity.TwinChain, entity.Position, Vector.Zero, entity):ToNPC()
+            chain:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+            chain:GetSprite():Play("Normal", true)
+            chain.CollisionDamage = 0
+            chain.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+            parent.Child = chain
+            chain.Parent = parent
+            chain.I1 = i
+            
+            parent = chain
+        end
+        local ash = mod:SpawnEntity(mod.Entity.AshTwin, entity.Position, Vector.Zero, entity):ToNPC()
+        ash:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+        ash:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        ash:GetSprite():Play("Idle", true)
+        ash.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+        parent.Child = ash
+        ash.Parent = parent
+        ash.I1 = mod.QConst.nChains+1
+
+        entity.Parent = ash
+
+        ash.Velocity = (target.Position - entity.Position):Normalized()*15
+
+    end
+        
+end
+function mod:EmberBlast(entity, data, sprite, target, room)
+    entity.Velocity = Vector.Zero
+    local n
+    if data.StateFrame == 1 then
+        sprite:Play("Rocks",true)
+
+        local ash = entity.Parent
+        if ash then
+            local ashData = ash:GetData()
+            local ashSprite = ash:GetSprite()
+
+            if not ashSprite:IsPlaying("Time") then
+                ashData.StateFrame = 0
+                if ashData.StateAttack == 1 then
+                    ashData.StateAttack = 2
+                    ashData.State = mod.QMSState.ATTACK1
+                else
+                    ashData.State = mod.QMSState.ATTACK2
+                end
+            end
+        end
+    elseif sprite:IsFinished("Rocks") then
+        mod:ErrantEndAttack(entity, data, sprite)
+        
+    elseif sprite:IsEventTriggered("Attack1") then
+        n = mod.QConst.nRock1
+        local direction = (target.Position - entity.Position):Normalized()
+        data.TargetDirection = direction
+    elseif sprite:IsEventTriggered("Attack2") then
+        n = mod.QConst.nRock2
+    elseif sprite:IsEventTriggered("Attack3") then
+        n = mod.QConst.nRock3
+    end
+
+    if sprite:IsEventTriggered("Attack1") or sprite:IsEventTriggered("Attack2") or sprite:IsEventTriggered("Attack3") then
+        local a = -(n-1)*mod.QConst.rockAngle/2
+        local b = (n-1)*mod.QConst.rockAngle/2
+        for angle = a, b, mod.QConst.rockAngle do
+            local velocity = data.TargetDirection:Rotated(angle)*mod.QConst.rockSpeed
+            local rock = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0, entity.Position, velocity, entity):ToProjectile()
+            rock:AddProjectileFlags(ProjectileFlags.NO_WALL_COLLIDE)
+            mod:TearFallAfter(rock, 30*10)
+            rock:GetSprite().Color = mod.Colors.ember
+        end
+    end
+        
+end
+--AshTwin twin
+function mod:AshTime(ember, ash, data, sprite, target, room)
+    --print(sprite:GetFrame())
+    if data.StateFrame == 1 then
+        sprite:Play("Time",true)
+    elseif sprite:IsFinished("Time") then
+        data.State = mod.QMSState.IDLE
+        data.StateFrame = 0
+        sprite:Play("Idle",true)
+
+    elseif sprite:IsEventTriggered("TimeSave") then
+
+        local count = 1
+        for i, f in ipairs(Isaac.FindByType(EntityType.ENTITY_FAMILIAR)) do
+            mod.QFamiliars[count] = f
+            mod.QFamiliars[count+1] = f.Position
+            mod.QFamiliars[count+2] = f.Velocity
+            mod.QFamiliars[count+3] = f:GetSprite():GetAnimation()
+            mod.QFamiliars[count+4] = f:GetSprite():GetFrame()
+
+            count = count + 5
+        end
+        local count = 1
+        for i, p in ipairs(Isaac.FindByType(EntityType.ENTITY_PROJECTILE)) do
+            p = p:ToProjectile()
+            mod.QProjectiles[count] = p
+            mod.QProjectiles[count+1] = p.Position
+            mod.QProjectiles[count+2] = p.Velocity
+            mod.QProjectiles[count+3] = p.Height
+
+            p:GetData().Saved = true
+
+            count = count + 4
+        end
+        local count = 1
+        for i, t in ipairs(Isaac.FindByType(EntityType.ENTITY_TEAR)) do
+            t = t:ToTear()
+            mod.QTears[count] = t
+            mod.QTears[count+1] = t.Position
+            mod.QTears[count+2] = t.Velocity
+            mod.QTears[count+3] = t.Height
+            
+            t:GetData().Saved = true
+
+            count = count + 4
+        end
+
+        local count = 1
+        for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.Errant].ID)) do
+            mod.QEntities[count] = e
+            mod.QEntities[count+1] = e.Position
+            mod.QEntities[count+2] = e.Velocity
+            mod.QEntities[count+3] = e.HitPoints
+            mod.QEntities[count+4] = e:GetSprite():GetAnimation()
+            mod.QEntities[count+5] = e:GetSprite():GetFrame()
+
+            count = count + 6
+        end
+        for _, e in ipairs(Isaac.FindByType(mod.EntityInf[mod.Entity.TwinChain].ID, mod.EntityInf[mod.Entity.TwinChain].VAR, mod.EntityInf[mod.Entity.TwinChain].SUB)) do
+            mod.QEntities[count] = e
+            mod.QEntities[count+1] = e.Position
+            mod.QEntities[count+2] = e.Velocity
+            mod.QEntities[count+3] = e.HitPoints
+            mod.QEntities[count+4] = e:GetSprite():GetAnimation()
+            mod.QEntities[count+5] = e:GetSprite():GetFrame()
+
+            count = count + 6
+        end
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_PLAYER)) do
+            mod.QEntities[count] = e
+            mod.QEntities[count+1] = e.Position
+            mod.QEntities[count+2] = e.Velocity
+            mod.QEntities[count+3] = e.HitPoints
+            mod.QEntities[count+4] = e:GetSprite():GetAnimation()
+            mod.QEntities[count+5] = e:GetSprite():GetFrame()
+
+            count = count + 6
+        end
+
+    elseif sprite:IsEventTriggered("TimeLoad") then
+
+        --for i=1, #mod.QEntities do
+            --print(mod.QEntities[i])
+        --end
+
+        for i=1, #mod.QFamiliars, 5 do
+            if mod.QFamiliars[i] then
+                local entity = mod.QFamiliars[i]
+                entity.Position = mod.QFamiliars[i+1]
+                entity.Velocity = mod.QFamiliars[i+2]
+                entity:GetSprite():Play(mod.QFamiliars[i+3], true)
+                entity:GetSprite():SetFrame(mod.QFamiliars[i+4])
+            end
+        end
+        for i=1, #mod.QProjectiles, 4 do
+            if mod.QProjectiles[i] then
+                local entity = mod.QProjectiles[i]
+                entity = entity:ToProjectile()
+                entity.Position = mod.QProjectiles[i+1]
+                entity.Velocity = mod.QProjectiles[i+2]
+                entity.Height = mod.QProjectiles[i+3]
+
+                if entity.ChangeTimeout and entity.ChangeTimeout > 0 then
+                    entity.ChangeTimeout = 30*10
+                end
+            end
+        end
+        for i=1, #mod.QTears, 4 do
+            if mod.QTears[i] then
+                local entity = mod.QTears[i]
+                entity = entity:ToTear()
+
+                entity.Position = mod.QTears[i+1]
+                entity.Velocity = mod.QTears[i+2]
+                entity.Height = mod.QTears[i+3]
+            end
+        end
+        for i=1, #mod.QEntities, 6 do
+            if mod.QEntities[i] then
+                local entity = mod.QEntities[i]
+
+                entity.Position = mod.QEntities[i+1]
+                entity.Velocity = mod.QEntities[i+2]
+                entity.HitPoints = mod.QEntities[i+3]
+
+                if not (entity.Type == mod.EntityInf[mod.Entity.Errant].ID or entity.Type == EntityType.ENTITY_PLAYER) then
+                    entity:GetSprite():Play(mod.QEntities[i+4], true)
+                    entity:GetSprite():SetFrame(mod.QEntities[i+5])
+                end
+            end
+        end
+
+        --Destroy new
+        mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_PROJECTILE))
+        mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_TEAR))
+
+    end
+        
+end
+function mod:AshColumn(ember, ash, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Sand",true)
+    elseif sprite:IsFinished("Sand") then
+        data.State = mod.QMSState.IDLE
+        data.StateFrame = 0
+        sprite:Play("Idle",true)
+
+    elseif sprite:IsEventTriggered("Summon") then
+        local pillar = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.HUSH_LASER, 0, ash.Position, Vector.Zero, ash):ToEffect()
+        pillar.Parent = ash
+        pillar.Timeout = 60
+        pillar:GetData().HeavensCall = true
+    end
+        
+end
+--Timber Heart
+function mod:TimberAttleThrow(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Throw",true)
+        local attlerock = entity.Child
+        if attlerock then
+            attlerock:GetData().orbitSpeed = attlerock:GetData().orbitSpeed*2
+        end
+    elseif sprite:IsFinished("Throw") then
+        data.AttleLaunched = true
+        mod:ErrantEndAttack(entity, data, sprite)
+    elseif sprite:IsEventTriggered("Attack") then
+        
+        local attlerock = entity.Child
+        if attlerock then
+            entity.Child = nil
+            attlerock.Parent = nil
+            attlerock.Velocity = (target.Position - attlerock.Position):Normalized()*mod.QConst.attlerockSpeed
+            attlerock:GetSprite():Play("Spin", true)
+        end
+    end 
+end
+function mod:TimberWater(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Water",true)
+    elseif sprite:IsFinished("Water") then
+        data.Geyser = false
+        mod:ErrantEndAttack(entity, data, sprite)
+    elseif sprite:IsEventTriggered("Attack") then
+        data.Geyser = true
+
+        local waterParams = ProjectileParams()
+		waterParams.Variant = ProjectileVariant.PROJECTILE_TEAR
+		waterParams.FallingAccelModifier = 0.5
+		local angle = 180
+        if sprite.FlipX then
+            angle = 0
+        end
+		entity:FireBossProjectiles (7, entity.Position + Vector(5,0):Rotated(angle), 0, waterParams)
+
+        local n = mod:RandomInt(1,4)
+        for i=1, 4 do
+            local bubble = mod:SpawnEntity(mod.Entity.Bubble, entity.Position, Vector(10,0):Rotated(angle), entity)
+            bubble:GetData().IsBubble_HC = true
+        end
+
+        entity.Velocity = Vector(20,0):Rotated(180-angle)
+
+    end
+
+    if data.Geyser then
+        if entity:CollidesWithGrid() then
+            game:ShakeScreen(30)
+            game:SpawnParticles (entity.Position, EffectVariant.ROCK_PARTICLE, 10, 5)
+        end
+    end
+end
+--Brittle Hollow
+function mod:BrittleTeleport(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Out",true)
+    elseif sprite:IsFinished("Out") then
+        entity.Position = mod:GetRandomPosition(entity.Position, 200, target.Position)
+        sprite:Play("In",true)
+    elseif sprite:IsFinished("In") then
+        local lantern = entity.Child
+        if lantern then
+            lantern:GetData().orbitDistance = mod.QConst.moonOrbitDistance
+            lantern.SpriteScale = Vector.One
+        end
+        mod:ErrantEndAttack(entity, data, sprite)
+
+    elseif sprite:IsPlaying("In") then
+        local lantern = entity.Child
+        if lantern then
+            lantern:GetData().orbitDistance = math.min(mod.QConst.moonOrbitDistance, lantern:GetData().orbitDistance + 0.5) 
+            lantern.SpriteScale = lantern.SpriteScale*2
+        end
+    elseif sprite:IsPlaying("Out") then
+        local lantern = entity.Child
+        if lantern then
+            lantern:GetData().orbitDistance = math.max(0, lantern:GetData().orbitDistance - 0.5) 
+            lantern.SpriteScale = lantern.SpriteScale*0.5
+        end
+
+    end 
+end
+function mod:BrittleAbsorb(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Absorb",true)
+        entity.Parent:GetData().Queue = 0
+    elseif sprite:IsFinished("Absorb") then
+        mod:ErrantEndAttack(entity, data, sprite)
+    elseif sprite:WasEventTriggered("Attack") then
+        
+        for _,r in ipairs(Isaac.FindByType(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_ROCK, 0)) do
+            if not r:GetData().NoAbsorb then
+                r.Velocity = (-r.Position + entity.Position):Normalized() * mod.QConst.absorbSpeed
+            end
+            if r.Position:Distance(entity.Position) < 250 and not r:GetData().Marked then
+                r:GetData().Marked = true
+                entity.Parent:GetData().Queue = entity.Parent:GetData().Queue + 1
+                
+                if not entity.Parent:GetSprite():IsPlaying("Attack") then
+                    entity.Parent:GetSprite():Play("Attack", true)
+                end
+
+            elseif r.Position:Distance(entity.Position) < 10 then
+                r:Remove()
+            end
+        end
+    end
+end
+--Giant's Deep
+function mod:GiantElectricity(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Jump",true)
+    elseif sprite:IsFinished("Jump") then
+        mod:ErrantEndAttack(entity, data, sprite)
+    elseif sprite:IsEventTriggered("Jump") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+    elseif sprite:IsEventTriggered("Land") then
+        entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+
+        for i=1, mod.QConst.nElectricities do
+            local angle = i*360/mod.QConst.nElectricities
+            local position = entity.Position + Vector(20,0):Rotated(angle)
+
+            local glow = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.GROUND_GLOW, 0, position, Vector.Zero, entity):ToEffect()
+            glow:GetSprite().Color = mod.Colors.red
+            glow.Parent = entity
+            glow.Timeout = mod.QConst.electricityTimeout
+			glow.SpriteScale = Vector.One*0.5
+
+            local glowData = glow:GetData()
+            glowData.HeavensCall = true
+            glowData.Direction = Vector(1,0):Rotated(angle)
+            glowData.IsActive_HC = true
+        end
+    end
+        
+end
+function mod:GiantTornado(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Tornado",true)
+    elseif sprite:IsFinished("Tornado") then
+        mod:ErrantEndAttack(entity, data, sprite)
+    elseif sprite:IsEventTriggered("Attack") then
+        
+        local velocity = (target.Position - entity.Position):Normalized()*3
+
+		local tornado = mod:SpawnEntity(mod.Entity.Tornado, entity.Position+Vector(0,1), Vector.Zero, entity)
+        tornado.Parent = entity
+        tornado:GetSprite().Color = mod.Colors.giant
+		tornado:GetData().Lifespan = 8
+		tornado:GetData().Height = 6
+		tornado:GetData().Scale = 0.75
+		tornado:GetData().FastSpawn = true
+		tornado:GetData().Velocity = velocity
+		tornado:GetData().Rain = true
+    end
+end
+--Dark Bramble
+function mod:BrambleBite(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Bite",true)
+    elseif sprite:IsFinished("Bite") then
+        mod:ErrantEndAttack(entity, data, sprite)
+
+    elseif sprite:IsEventTriggered("Spawn") then
+        local spikes = {}
+        for i=1, mod.QConst.nSpikes do
+            local direction = mod.RoomWalls.UP
+            if i<mod.QConst.nSpikes/2 then
+                direction = mod.RoomWalls.DOWN
+            end
+            
+            local position, rotation = mod:RandomUpDown(direction)
+            local spike = mod:SpawnEntity(mod.Entity.BrambleSpike, position, Vector.Zero, entity)
+            spike.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+
+            if direction == mod.RoomWalls.DOWN then
+                spike:GetSprite().FlipY = true
+            end
+
+            spikes[i] = spike
+
+            for j, s in ipairs(spikes) do
+                if j~=i and s.Position:Distance(spike.Position) < 25 then
+                    i = i - 1
+                    spike:Remove()
+                end
+            end
+        end
+    elseif sprite:IsEventTriggered("Attack") then
+
+    end 
+end
+function mod:BrambleSeed(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("Seed",true)
+    elseif sprite:IsFinished("Seed") then
+        mod:ErrantEndAttack(entity, data, sprite)
+    elseif sprite:IsEventTriggered("Attack") then
+        local velocity = (target.Position-entity.Position):Normalized()*20
+        local seed = mod:SpawnEntity(mod.Entity.BrambleSeed, entity.Position, velocity, entity)
+        seed:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+        seed:GetSprite():Play("Appear", true)
+        seed.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+    end
+end
+
+--Move
+function mod:ErrantMove(entity, data, room, target)
+    if not (data.Form == mod.QForms.DARK_BRAMBLE or data.Form == mod.QForms.BRITTLE_HOLLOW) then
+        mod:FaceTarget(entity, target)
+    else
+        entity:GetSprite().FlipX = false
+    end
+    --idle move taken from 'Alt Death' by hippocrunchy
+	--idleTime == frames moving in the same direction
+	if not data.idleTime then 
+		data.idleTime = mod:RandomInt(mod.QConst.idleTimeInterval.X, mod.QConst.idleTimeInterval.Y)
+		--V distance of Jupiter from the center of the room
+		local distance = room:GetCenterPos():Distance(entity.Position)
+		
+		--If its too far away, return to the center
+		if distance > 100 then
+			data.targetvelocity = ((room:GetCenterPos() - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-10, 10))
+		--Else, get closer to the player
+		else
+			data.targetvelocity = ((target.Position - entity.Position):Normalized()*2):Rotated(mod:RandomInt(-50, 50))
+		end
+	end
+    
+    --If run out of idle time
+    if data.idleTime <= 0 and data.idleTime ~= nil then
+        data.idleTime = nil
+    else
+        data.idleTime = data.idleTime - 1
+    end
+    
+    --Do the actual movement
+    entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.QConst.speed
+    data.targetvelocity = data.targetvelocity * 0.99
+end
+
+--State switch things
+function mod:ErrantEndAttack(entity, data, sprite)
+    if data.StateAttack == 1 then
+        data.StateAttack = 2
+    elseif data.StateAttack == 2 then
+        data.StateAttack = 1
+        data.ForceTransform = true
+    end
+    data.State = mod.QMSState.IDLE
+    data.StateFrame = 0
+end
+function mod:ChangeForm(entity, sprite, data)
+
+    --Datas
+    data.StateAttack = 1
+    data.ForceTransform = false
+    data.EmberLaunched = false
+    data.AttleLaunched = false
+    data.Form = mod:MarkovTransition(data.Form, mod.chainTransformQ)
+    
+    mod.QProjectiles = {}
+    mod.QTears = {}
+    mod.QEntities = {}
+    mod.QFamiliars = {}
+    --data.Form = mod.QForms.EMBER_TWIN
+    sfx:Play(SoundEffect.SOUND_EDEN_GLITCH,1)
+
+    --Sprites
+    sprite:PlayOverlay("", true)
+
+    if data.Form == mod.QForms.EMBER_TWIN then
+        sprite:Load("gfx/entity_ErrantEmber.anm2", true)
+
+    elseif data.Form == mod.QForms.TIMBER_HEART then
+        sprite:Load("gfx/entity_ErrantTimber.anm2", true)
+        
+    elseif data.Form == mod.QForms.BRITTLE_HOLLOW then
+        sprite:Load("gfx/entity_ErrantBrittle.anm2", true)
+        
+    elseif data.Form == mod.QForms.DEEPS_GIANT then
+        sprite:Load("gfx/entity_ErrantGiant.anm2", true)
+        
+    elseif data.Form == mod.QForms.DARK_BRAMBLE then
+        sprite:Load("gfx/entity_ErrantBramble.anm2", true)
+
+        sprite:PlayOverlay("Brambles", true)
+
+    end
+    sprite:LoadGraphics()
+    sprite:Play("Idle", true)
+
+    --Entities
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.Attlerock))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.WhiteHole))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.HollowsLantern))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.AshTwin))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.TwinChain))
+    mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_PROJECTILE), true)
+
+    
+    if data.Form == mod.QForms.TIMBER_HEART then
+        local orbitDistance = mod.QConst.moonOrbitDistance
+        local position = entity.Position + Vector(orbitDistance,0)
+        local attlerock = mod:SpawnEntity(mod.Entity.Attlerock, position, Vector.Zero, entity)
+        attlerock:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        attlerock:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+        attlerock:GetSprite():Play("Idle", true)
+        attlerock.Parent = entity
+        entity.Child = attlerock
+        
+        local arData = attlerock:GetData()
+        arData.orbitIndex = 1
+        arData.orbitTotal = 1
+        arData.orbitDistance = orbitDistance
+        arData.orbitSpin = 1
+        arData.orbitSpeed = 4
+
+        attlerock.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+    elseif data.Form == mod.QForms.BRITTLE_HOLLOW then
+        local orbitDistance = mod.QConst.moonOrbitDistance
+        local position = entity.Position + Vector(orbitDistance,0)
+        local lantern = mod:SpawnEntity(mod.Entity.HollowsLantern, position, Vector.Zero, entity)
+        lantern:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        lantern:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+        lantern:GetSprite():Play("Idle", true)
+        lantern.Parent = entity
+        entity.Child = lantern
+        
+        local lanternData = lantern:GetData()
+        lanternData.orbitIndex = 1
+        lanternData.orbitTotal = 1
+        lanternData.orbitDistance = orbitDistance
+        lanternData.orbitSpin = 1
+        lanternData.orbitSpeed = 4
+
+        lantern.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+        
+        local whitehole = mod:SpawnEntity(mod.Entity.WhiteHole, position, Vector.Zero, entity)
+        whitehole:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        whitehole:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+        whitehole:GetSprite():Play("Idle", true)
+        whitehole.Parent = entity
+        whitehole.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+        entity.Parent = whitehole
+
+    end
+
+end
+function mod:DeleteEntities(list, forced)
+    for i=1, #list do
+        local v = list[i]
+
+        if (not v:GetData().Saved) or forced then
+            v:Remove()
+        end
+    end
+end
+
+
+function mod:FamiliarParentMovement2(entity, distance, speed, stopness) --srsl... stopness??
+    if not entity.Parent then
+        entity:Remove()
+    else
+        local parent = entity.Parent
+        local originalVel = entity.Velocity
+    
+        entity.Velocity = mod:Lerp(entity.Velocity, Vector.Zero, speed)
+    
+        local direction = parent.Position - entity.Position
+    
+        if parent.Position:Distance(entity.Position) > distance then
+            entity.Velocity = mod:Lerp(entity.Velocity, direction / stopness, speed)
+        end
+    
+        local newVel = entity.Velocity
+    
+        entity.Velocity = originalVel
+        return newVel
+    end
+
+end
+function mod:ChainUpdate(entity)
+    if entity.Parent then
+        local parent = entity.Parent
+        local sprite = entity:GetSprite()
+
+        local v1 = mod:FamiliarParentMovement2(entity, 2, 1.5, 15)
+        local v2 = Vector.Zero
+
+        local child = entity.Child
+        entity.Parent = child
+        v2 = mod:FamiliarParentMovement2(entity, 2, 1.5, 15)
+        entity.Parent = parent
+
+       --[[if v1:Length() > v2:Length() then
+            entity.Velocity = v1
+        else
+            entity.Velocity = v2
+        end]]
+        entity.Velocity = (v1+v2)*1.65
+
+    else
+        entity:Remove()
+    end
+end
+
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.ErrantUpdate, mod.EntityInf[mod.Entity.Errant].ID)
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
+
+    if entity:GetData().Form == mod.QForms.BRITTLE_HOLLOW then
+		--game:MakeShockwave(entity.Position + Vector(0,-45), -0.25, 0.01, 2)
+		--game:MakeShockwave(entity.Position + Vector(0,-45), 0.175, 0.005, 2)
+        game:MakeShockwave(entity.Position + Vector(0,-45), -0.05, 0.00000001, 60)
+    elseif entity.Variant == mod.EntityInf[mod.Entity.WhiteHole].VAR and entity.SubType == mod.EntityInf[mod.Entity.WhiteHole].SUB then
+		--game:MakeShockwave(entity.Position + Vector(0,-15), -0.25, 0.01, 2)
+		--game:MakeShockwave(entity.Position + Vector(0,-15), 0.175, 0.005, 2)
+        game:MakeShockwave(entity.Position + Vector(0,-15), -0.05, 0.00000001, 60)
+    end
+end, mod.EntityInf[mod.Entity.Errant].ID)
+
+mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.TwinChain].VAR and entity.SubType == mod.EntityInf[mod.Entity.TwinChain].SUB then
+        mod:ChainUpdate(entity)
+    end
+end, mod.EntityInf[mod.Entity.TwinChain].ID)
+
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount, flags, source, frames)
+    if entity.Variant == mod.EntityInf[mod.Entity.AshTwin].VAR and entity.SubType == mod.EntityInf[mod.Entity.AshTwin].SUB then
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.Errant)) do
+            e:TakeDamage(amount, flags, source, frames)
+        end
+        if not entity.Parent then
+            entity:Remove()
+        end
+    end
+end, mod.EntityInf[mod.Entity.AshTwin].ID)

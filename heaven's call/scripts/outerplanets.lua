@@ -2352,6 +2352,7 @@ function mod:NeptuneUpdate(entity)
 				if data.Blood then
 					sprite:ReplaceSpritesheet (0, "gfx/bosses/neptune_shiny.png")
 					sprite:ReplaceSpritesheet (3, "gfx/bosses/neptune_shiny.png")
+					sprite:ReplaceSpritesheet (4, "gfx/bosses/neptune_shiny_eyes.png")
 					sprite:LoadGraphics()
 				end
 
@@ -2643,7 +2644,7 @@ function mod:NeptuneAmbush(entity, data, sprite, target, room)
 			faker:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
 		end
 		
-		game:Darken(3, 60)
+		game:Darken(1,60)
 
 	elseif sprite:IsFinished("Up") then
 		sprite:Play("Waiter",true)

@@ -1,0 +1,18 @@
+<items gfxroot="gfx/items/" version="1" deathanm2="gfx/death_items.anm2">
+
+
+	<passive name="Mercurius?" id="0" description="Your very own army" cache="flying" quality="3" craftquality="3" gfx="collectibles_109_mercurius.png" tags="stars offensive summonable"/>
+	<familiar name="Venus?" id="1" description="Wax friends!" quality="2" craftquality="3" gfx="collectibles_109_venus.png" tags="stars offensive summonable monstermanual"/>
+	<passive name="Terra?" id="2" description="The forbidden fruit" quality="3" craftquality="3" gfx="collectibles_109_terra.png" tags="stars offensive summonable"/>
+	<active name="Mars?" id="3" description="Born to kill" quality="3" craftquality="3" gfx="collectibles_109_mars.png" tags="stars offensive" chargetype="timed" maxcharges="3600"/>
+	<passive name="Jupiter?" id="4" description="High voltage" quality="2" craftquality="3" gfx="collectibles_109_jupiter.png" tags="stars offensive summonable"/>
+	<active name="Saturnus?" id="5" description="Pocket chronostasis" quality="3" craftquality="3" gfx="collectibles_109_saturnus.png" tags="stars" chargetype="timed" maxcharges="1350"/>
+	<passive name="Uranus?" id="6" description="Fecal feast" quality="2" craftquality="3" gfx="collectibles_109_uranus.png" tags="stars offensive poop summonable"/>
+	<familiar name="Neptunus?" id="7" description="The abyss stares back" quality="2" craftquality="3" gfx="collectibles_109_neptunus.png" tags="stars offensive summonable monstermanual" />
+	
+	<familiar name="La Luna" id="9" description="With you, not yours" quality="4" craftquality="-1" gfx="collectibles_109_luna.png" tags="stars uniquefamiliar noeden quest" special="true" hidden="true" />
+
+	<trinket name="Quantum Shard" id="0" description="Everywhere at all times" gfx="quantum_shard.png" />
+	<trinket name="Sputnik" id="1" description="Fellow traveler" gfx="sputnik.png" />
+	<trinket name="Faded flag" id="2" description="Into the unknown" gfx="faded_flag.png" />
+</items>

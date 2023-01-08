@@ -876,12 +876,12 @@ mod.VConst = {--Some constant variables of Venus
 
     nBlazesFast = 2,
     blazeAngleFast = 20,
-    blazeSpeedFast = 7.5,
+    blazeSpeedFast = 10.5,
     nBlazesSlow = 2,
     blazeAngleSlow = 25,
-    blazeSpeedSlow = 6.5,
+    blazeSpeedSlow = 7.5,
 
-    flameAngle = 27,
+    flameAngle = 20,
     flameAngleStart = 80,
     flameSpeed = 6,
 
@@ -1628,7 +1628,7 @@ mod.TConst = {
 
     meteorTimeout = 50,
     meteorExplosionRadius = 40,
-    debbriesSpeed = 10,
+    debbriesSpeed = 15,
 
     nTears = 8,
     tearSpeed = 12,
@@ -1637,6 +1637,8 @@ mod.TConst = {
     famineShotSpeed = 12,
     famineShotAngle = 20,
     pestilenceGasTime = 100,
+
+    edenColors = {Color(1, 0.75, 0.75), Color(1, 1, 0.75), Color(0.75, 1, 0.75), Color(0.75, 1, 1), Color(0.75, 0.75, 1), Color(1, 0.75, 1)},
 }
 
 mod.T1MSState = {
@@ -2024,6 +2026,7 @@ function mod:Terra3Update(entity)
             data.StateFrame = 0
 
             data.TearFlag = 0
+            data.TearCount = 0
 
         end
         
@@ -2052,6 +2055,20 @@ function mod:Terra3Update(entity)
                 sprite:Play("Idle",true)
             elseif sprite:IsFinished("Idle") then
                 mod:ChanceEdenTerraState(data, entity.Parent)
+
+                if rng:RandomFloat() < 0.5 then
+                    
+                    local color = mod.TConst.edenColors[mod:RandomInt(1,#mod.TConst.edenColors)]
+                    for i=1, 8 do
+                        local angle = i*360/8
+                        local velocity = Vector(4,0):Rotated(angle)
+                        local tear = Isaac.Spawn(EntityType.ENTITY_PROJECTILE, ProjectileVariant.PROJECTILE_HUSH, 0, entity.Position, velocity, entity):ToProjectile()
+                        tear.Scale = 1.5
+                        tear:GetSprite().Color = color
+                    end
+
+                    sfx:Play(SoundEffect.SOUND_THUMBS_DOWN, 1, 2, false, 1.2)
+                end
             else
                 mod:Terra3Move(entity, data, room, target)
             end
@@ -2145,12 +2162,14 @@ function mod:Terra3Bullets(entity, data, sprite, target,room)
     if data.TearFlag == 1 and game:GetFrameCount() % 4 == 0 then --Pretty circle
 
         local params = ProjectileParams()
-        params.Variant = ProjectileVariant.PROJECTILE_TEAR
+        params.Variant = ProjectileVariant.PROJECTILE_HUSH
         params.FallingSpeedModifier = 0
 
         params.BulletFlags = ProjectileFlags.CURVE_LEFT | ProjectileFlags.NO_WALL_COLLIDE
         params.CurvingStrength = 0.014
         params.FallingAccelModifier = -0.16
+        params.Color = mod.TConst.edenColors[data.TearCount%(#mod.TConst.edenColors)+1]
+        data.TearCount = data.TearCount + 1
 
         for i=1, mod.TConst.nTears do
             local angle = i*360/mod.TConst.nTears
@@ -2161,7 +2180,7 @@ function mod:Terra3Bullets(entity, data, sprite, target,room)
     elseif data.TearFlag == 2 and game:GetFrameCount() % 5 == 0 then
 
         local params = ProjectileParams()
-        params.Variant = ProjectileVariant.PROJECTILE_TEAR
+        params.Variant = ProjectileVariant.PROJECTILE_HUSH
         params.FallingSpeedModifier = 0
 
         params.BulletFlags = 1 << (18 + entity.FrameCount % 2) | ProjectileFlags.NO_WALL_COLLIDE | ProjectileFlags.CHANGE_FLAGS_AFTER_TIMEOUT | ProjectileFlags.ACCELERATE
@@ -2170,6 +2189,8 @@ function mod:Terra3Bullets(entity, data, sprite, target,room)
         params.FallingAccelModifier = -0.165
         params.ChangeTimeout = 60
         params.ChangeFlags = 0
+        params.Color = mod.TConst.edenColors[data.TearCount%(#mod.TConst.edenColors)+1]
+        data.TearCount = data.TearCount + 1
 
         for i=1, mod.TConst.nTears do
             local angle = i*360/mod.TConst.nTears
@@ -2203,11 +2224,12 @@ function mod:Terra3Laser(entity, data, sprite, target,room)
         local spin = 1 - mod:RandomInt(0,1)*2
         for i=1, 4 do
             local angle = i*360/4
-		    local laser = EntityLaser.ShootAngle(5, entity.Position, angle, 45, Vector.Zero, entity)
+		    local laser = EntityLaser.ShootAngle(5, entity.Position + Vector(30,0):Rotated(angle), angle, 45, Vector(0,-60), entity)
             laser:SetActiveRotation(0, 99999, spin * mod.TConst.laserSpinSpeed)
             laser.IsActiveRotating = false
             laser:GetData().FromEden_HC = true
             laser:GetData().Countdown_HC = mod.TConst.laserCountdown
+            laser:GetSprite().Color = mod.Colors.ghost
         end
     end
 end
