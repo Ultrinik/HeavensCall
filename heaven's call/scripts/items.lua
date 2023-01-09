@@ -161,7 +161,7 @@ mod:AddCallback(ModCallbacks.MC_PRE_TEAR_COLLISION, mod.MercuriusTearCollision)
 function mod:MercuriusKnifeCollision(knife, collider)
 	if collider and collider:IsActiveEnemy() then
 		local player = knife.SpawnerEntity
-		if player then
+		if player and (player:ToPlayer() or (player:ToFamiliar() and player:ToFamiliar().Player:ToPlayer())) then
 			player = player:ToPlayer() or player:ToFamiliar().Player:ToPlayer()
 			local letal = player.Damage >= collider.HitPoints
 			if player:HasCollectible(mod.Items.Mercurius) and letal and mod:LuckRoll(player.Luck, 6, 0.45) then
@@ -177,7 +177,7 @@ function mod:MercuriusLaserHit(enemy, amount, flags, sourceRef)
 
 	if enemy and enemy:IsActiveEnemy() and letal and (flags&DamageFlag.DAMAGE_LASER == DamageFlag.DAMAGE_LASER) then
 		local player = sourceRef.Entity
-		if player and player:ToPlayer() then
+		if player and (player:ToPlayer() or (player:ToFamiliar() and player:ToFamiliar().Player:ToPlayer())) then
 			player = player:ToPlayer() or player:ToFamiliar().Player:ToPlayer()
 			if player:HasCollectible(mod.Items.Mercurius) and mod:LuckRoll(player.Luck, 6, 0.5) then
 				mod:SpawnMiniIsaacMercury(player, enemy.Position)
@@ -193,8 +193,8 @@ function mod:MercuriusBombHit(enemy, amount, flags, sourceRef)
 	if enemy and enemy:IsActiveEnemy() and letal and (flags&DamageFlag.DAMAGE_EXPLOSION == DamageFlag.DAMAGE_EXPLOSION) then
 		local bomb = sourceRef.Entity
 
-		if bomb and bomb.SpawnerEntity then
-			player = bomb.SpawnerEntity:ToPlayer() or bomb.SpawnerEntity:ToFamiliar().Player:ToPlayer()
+		if bomb and bomb.SpawnerEntity and (bomb.SpawnerEntity:ToPlayer() or (bomb.SpawnerEntity:ToFamiliar() and bomb.SpawnerEntity:ToFamiliar().Player)) then
+			local player = bomb.SpawnerEntity:ToPlayer() or bomb.SpawnerEntity:ToFamiliar().Player:ToPlayer()
 			if player:HasCollectible(mod.Items.Mercurius) and mod:LuckRoll(player.Luck, 6, 0.5) then
 				mod:SpawnMiniIsaacMercury(player, enemy.Position)
 			end

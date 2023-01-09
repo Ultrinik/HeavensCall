@@ -271,5 +271,11 @@ mod.PlanetName = {
     [mod.Entity.Mars] = "Mars the Vainglorious",
     
     [mod.Entity.Luna] = "Luna the Tainted",
-
+    [mod.Entity.Pluto] = "Pluto the Frivolous",
+    [mod.Entity.Charon1] = "Charon the Benumbed",
+    [mod.Entity.Eris] = "Eris the Vehement",
+    [mod.Entity.Makemake] = "Makemake the Phlegmatic",
+    [mod.Entity.Haumea] = "Haumea the Diffident",
+    [mod.Entity.Errant] = "The Errant",
+    
 }

@@ -2275,6 +2275,10 @@ function mod:LunaDoorUpdate(entity)
 					boss.Visible = true
 					local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
 					poof.DepthOffset = 100
+					boss.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+
+					boss.HitPoints = 120
+					boss.MaxHitPoints = 120
 				end
 			end,30)
 

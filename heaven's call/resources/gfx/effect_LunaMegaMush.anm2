@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="trtv" CreatedOn="27-12-2022 15:53:00" Version="9" Fps="30"/>
+	<Info CreatedBy="trtv" CreatedOn="08-01-2023 21:27:17" Version="10" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="bosses\luna\luna_specials.png" Id="0"/>
@@ -51,12 +51,13 @@
 			<NullAnimations/>
 			<Triggers/>
 		</Animation>
-		<Animation Name="In1" FrameNum="75" Loop="false">
+		<Animation Name="In1" FrameNum="105" Loop="false">
 			<RootAnimation>
 				<Frame XPosition="0" YPosition="0" XScale="150" YScale="150" Delay="1" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="false"/>
 			</RootAnimation>
 			<LayerAnimations>
 				<LayerAnimation LayerId="0" Visible="true">
+					<Frame XPosition="0" YPosition="0" XPivot="135" YPivot="135" XCrop="270" YCrop="270" Width="270" Height="270" XScale="0" YScale="0" Delay="30" Visible="false" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="false"/>
 					<Frame XPosition="0" YPosition="0" XPivot="135" YPivot="135" XCrop="270" YCrop="270" Width="270" Height="270" XScale="0" YScale="0" Delay="11" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
 					<Frame XPosition="0" YPosition="0" XPivot="135" YPivot="135" XCrop="270" YCrop="270" Width="270" Height="270" XScale="6" YScale="6" Delay="10" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>
 					<Frame XPosition="0" YPosition="0" XPivot="135" YPivot="135" XCrop="270" YCrop="270" Width="270" Height="270" XScale="17" YScale="17" Delay="9" Visible="true" RedTint="255" GreenTint="255" BlueTint="255" AlphaTint="255" RedOffset="0" GreenOffset="0" BlueOffset="0" Rotation="0" Interpolated="true"/>

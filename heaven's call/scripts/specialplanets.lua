@@ -384,6 +384,22 @@ function mod:LunaUpdate(entity)
                     mod:LunaChangeState(entity)
                 elseif sprite:IsEventTriggered("EndAppear") then
                     entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
+                elseif sprite:GetFrame()==30 and sprite:IsPlaying("AppearSlow") then--Turn black
+                elseif sprite:GetFrame()==40 and sprite:IsPlaying("AppearSlow") then--Turn no black
+                elseif sprite:GetFrame()==35 and sprite:IsPlaying("AppearSlow") then--Red
+                    for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0)) do
+                        e:Remove()
+                    end
+                    mod:UltrRedSetup(room, true)
+
+                    --Re-close doors
+                    for i = 0, DoorSlot.NUM_DOOR_SLOTS do
+                        local door = room:GetDoor(i)
+                        if door then
+                            door:Close()
+                            door:GetSprite():Play("Closed")
+                        end
+                    end
                 end
                 
             elseif data.State == mod.LMSState.IDLE then
@@ -631,16 +647,16 @@ function mod:LunaItem(entity, data, sprite, target, room)
             itemNum = mod:LunaChooseItem(mod.LActives, nil, false, entity)
         elseif random <= 5 then
             itemType = mod.LItemType.MAIN
-            itemNum = mod:LunaChooseItem(mod.LMainPassive, data.MainP, false, entity)
             oldItem = data.MainP
+            itemNum = mod:LunaChooseItem(mod.LMainPassive, data.MainP, false, entity)
         elseif random <= 8 then
             itemType = mod.LItemType.SECONDARY
-            itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP, false, entity)
             oldItem = data.SecondaryP
+            itemNum = mod:LunaChooseItem(mod.LSecondaryPassives, data.SecondaryP, false, entity)
         elseif random <= 11 then
             itemType = mod.LItemType.ASSIST
-            itemNum = mod:LunaChooseItem(mod.LAssistPassives, data.AssistP, false, entity)
             oldItem = data.AssistP
+            itemNum = mod:LunaChooseItem(mod.LAssistPassives, data.AssistP, false, entity)
         else
             itemType = mod.LItemType.SPECIAL
             itemNum = mod:LunaChooseItem(mod.LSpecials, nil, false, entity)
@@ -2404,6 +2420,46 @@ function mod:LunaFlipMove(entity, data, room)
     entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * 1.2
     data.targetvelocity = data.targetvelocity * 0.99
 end
+--ded
+function mod:LunaDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Luna].VAR then
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.LunaIncubus)) do
+            e:Remove()
+        end
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.LunaKnife)) do
+            e:Remove()
+        end
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.LunaWisp)) do
+            e:Remove()
+        end
+        for _, e in ipairs(mod:FindByTypeMod(mod.Entity.AltHorsemen)) do
+            e:Remove()
+        end
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_CLUTCH, 1)) do
+            e:Remove()
+        end
+
+        mod:NormalDeath(entity, true, true)
+    end
+end
+--deding
+function mod:LunaDying(entity)
+    
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        
+        if data.deathFrame == 1 then
+            local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position, Vector.Zero, entity)
+            trapdoor:GetSprite():Play("BigIdle", true)
+        end
+	end
+
+end
 
 --Teleport Luna
 function mod:LunaTeleportTo(entity, position)
@@ -3046,6 +3102,7 @@ end
 --Callbacks
 --Luna updates
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.LunaUpdate, mod.EntityInf[mod.Entity.Luna].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.LunaDeath, mod.EntityInf[mod.Entity.Luna].ID)
 --Luna flip update
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.LunaFlipUpdate, EntityType.ENTITY_DOGMA)
 
@@ -3230,6 +3287,10 @@ function mod:PlutoUpdate(entity)
             data.FlagEris = false
             data.FlagMakemake = false
             data.FlagHaumea = false
+
+            --data.FlagEris = true
+            --data.FlagMakemake = true
+            --data.FlagHaumea = true
 		end
 		
 		--Frame
@@ -3238,13 +3299,15 @@ function mod:PlutoUpdate(entity)
 		if data.State == mod.PMSState.APPEAR then
 			if data.StateFrame == 1 then
 				mod:AppearPlanet(entity)
+                if mod.savedata.planetAlive then
+                    mod.savedata.planetAlive1 = true
+                    mod.savedata.planetKilled11 = false
+                end
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 				entity:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
 			elseif sprite:IsFinished("Appear") or sprite:IsFinished("AppearSlow") then
 				data.State = mod:MarkovTransition(data.State, mod.chainP)
 				data.StateFrame = 0
-			elseif sprite:IsEventTriggered("EndAppear") then
-				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 
                 --Tail spawn
                 local parent = entity
@@ -3264,6 +3327,8 @@ function mod:PlutoUpdate(entity)
                         bone:GetSprite():Play("Spike", true)
                     end
                 end
+			elseif sprite:IsEventTriggered("EndAppear") then
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 			end
 			
 		elseif data.State == mod.PMSState.IDLE then
@@ -3288,6 +3353,60 @@ function mod:PlutoUpdate(entity)
 			mod:PlutoSnap(entity, data, sprite, target, room)
 		
 		end
+
+
+        if mod.savedata.planetAlive and (entity.FrameCount + 5) % 10 == 0 then
+            if not data.FlagCharon and mod:KuiperHealtFraction() < 0.9 and (#mod:FindByTypeMod(mod.Entity.Charon1) + #mod:FindByTypeMod(mod.Entity.Charon2)) == 0 then
+				local position = mod:GetRandomPosition(Isaac.GetPlayer(0).Position, 200)
+				local planet = mod:SpawnEntity(mod.Entity.Charon1, position, Vector.Zero, nil)
+                data.FlagCharon = true
+                planet:GetSprite():Play("AppearSlow", true)
+
+
+            elseif not data.FlagEris and not mod.savedata.planetKilled12 and mod:KuiperHealtFraction() < 0.8 and #mod:FindByTypeMod(mod.Entity.Eris) == 0 then
+				local position = mod:GetRandomPosition(Isaac.GetPlayer(0).Position, 200)
+				local planet = mod:SpawnEntity(mod.Entity.Eris, position, Vector.Zero, nil)
+                data.FlagEris = true
+                mod.savedata.planetHP2 = planet.HitPoints
+                planet:GetSprite():Play("AppearSlow", true)
+
+                mod.savedata.planetAlive2 = true
+
+            elseif not data.FlagMakemake and not mod.savedata.planetKilled13 and mod:KuiperHealtFraction() < 0.8 and #mod:FindByTypeMod(mod.Entity.Makemake) == 0 then
+				local position = mod:GetRandomPosition(Isaac.GetPlayer(0).Position, 200)
+				local planet = mod:SpawnEntity(mod.Entity.Makemake, position, Vector.Zero, nil)
+                data.FlagMakemake = true
+                mod.savedata.planetHP3 = planet.HitPoints
+                planet:GetSprite():Play("AppearSlow", true)
+                
+                mod.savedata.planetAlive3 = true
+
+            elseif not data.FlagHaumea and not mod.savedata.planetKilled14 and mod:KuiperHealtFraction() < 0.8 and #mod:FindByTypeMod(mod.Entity.Haumea) == 0 then
+				local position = mod:GetRandomPosition(Isaac.GetPlayer(0).Position, 200)
+				local planet = mod:SpawnEntity(mod.Entity.Haumea, position, Vector.Zero, nil)
+                data.FlagHaumea = true
+                mod.savedata.planetHP4 = planet.HitPoints
+                planet:GetSprite():Play("AppearSlow", true)
+                
+                mod.savedata.planetAlive4 = true
+
+            end
+
+            if not data.FlagCharon and (#mod:FindByTypeMod(mod.Entity.Charon1) + #mod:FindByTypeMod(mod.Entity.Charon2)) > 0 then
+                data.FlagCharon = true
+
+            elseif not data.FlagEris and #mod:FindByTypeMod(mod.Entity.Eris) > 0 then
+                data.FlagEris = true
+
+            elseif not data.FlagMakemake and #mod:FindByTypeMod(mod.Entity.Makemake) > 0 then
+                data.FlagMakemake = true
+
+            elseif not data.FlagHaumea and #mod:FindByTypeMod(mod.Entity.Haumea) > 0 then
+                data.FlagHaumea = true
+
+            end
+
+        end
 
 	end
 end
@@ -3382,6 +3501,39 @@ function mod:PlutoMove(entity, data, room, target)
 	entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.PConst.speed
 	data.targetvelocity = data.targetvelocity * 0.99
 end
+--ded
+function mod:PlutoDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Pluto].VAR then
+
+        mod.savedata.planetAlive1 = false
+        mod.savedata.planetKilled11 = true
+        local allDead = (mod.savedata.planetKilled11 and mod.savedata.planetKilled12 and mod.savedata.planetKilled13 and mod.savedata.planetKilled14)
+        if allDead then
+            mod:NormalDeath(entity, false, false)
+        else
+            mod:SpawnGlassFracture(entity, 1.5)
+            game:BombExplosionEffects (entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+            sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
+            game:ShakeScreen(60)
+        end
+
+    end
+end
+--deding
+function mod:PlutoDying(entity)
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        if data.deathFrame == 1 then
+
+        end
+	end
+
+end
 
 --Tail
 function mod:TailUpdate(entity)--This is such a convoluted way to create a chain
@@ -3430,7 +3582,42 @@ function mod:TailUpdate(entity)--This is such a convoluted way to create a chain
     end
 end
 
+--Kuiper health
+function mod:KuiperHealtFraction()
+    local p = mod:FindByTypeMod(mod.Entity.Pluto)
+    local e = mod:FindByTypeMod(mod.Entity.Eris)
+    local m = mod:FindByTypeMod(mod.Entity.Makemake)
+    local h = mod:FindByTypeMod(mod.Entity.Haumea)
+
+    local maxHp = 0
+    local currentHp = 0
+
+    for _, entity in ipairs(p) do
+        maxHp = maxHp + entity.MaxHitPoints
+        currentHp = currentHp + entity.HitPoints
+    end
+    for _, entity in ipairs(e) do
+        maxHp = maxHp + entity.MaxHitPoints
+        currentHp = currentHp + entity.HitPoints
+    end
+    for _, entity in ipairs(m) do
+        maxHp = maxHp + entity.MaxHitPoints
+        currentHp = currentHp + entity.HitPoints
+    end
+    for _, entity in ipairs(h) do
+        maxHp = maxHp + entity.MaxHitPoints
+        currentHp = currentHp + entity.HitPoints
+    end
+
+    if currentHp == 0 then
+        return 0
+    end
+
+    return currentHp / maxHp
+end
+
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.PlutoUpdate, mod.EntityInf[mod.Entity.Pluto].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.PlutoDeath, mod.EntityInf[mod.Entity.Pluto].ID)
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
     if entity.Variant == mod.EntityInf[mod.Entity.PlutoBone].VAR and entity.SubType == mod.EntityInf[mod.Entity.PlutoBone].SUB then
         mod:TailUpdate(entity)
@@ -3739,6 +3926,42 @@ function mod:ErisMove(entity, data, room, target)
     entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.EConst.speed
     data.targetvelocity = data.targetvelocity * 0.99
 end
+--ded
+function mod:ErisDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Eris].VAR then
+        
+		--Particles
+		game:SpawnParticles (entity.Position, EffectVariant.ROCK_PARTICLE, 10, 6, Color(0,0,0.8,1))
+        
+        mod.savedata.planetAlive2 = false
+        mod.savedata.planetKilled12 = true
+        local allDead = (mod.savedata.planetKilled11 and mod.savedata.planetKilled12 and mod.savedata.planetKilled13 and mod.savedata.planetKilled14)
+        if allDead then
+            mod:NormalDeath(entity, false, false)
+        else
+            mod:SpawnGlassFracture(entity, 1.5)
+            game:BombExplosionEffects (entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+            sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
+            game:ShakeScreen(60)
+        end
+
+    end
+end
+--deding
+function mod:ErisDying(entity)
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        if data.deathFrame == 1 then
+
+        end
+	end
+
+end
 
 --Angle lerp
 function mod:AngleLerp(angle1, angle2, amount)
@@ -3749,6 +3972,7 @@ function mod:AngleLerp(angle1, angle2, amount)
 end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.ErisUpdate, mod.EntityInf[mod.Entity.Eris].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.ErisDeath, mod.EntityInf[mod.Entity.Eris].ID)
 
 --MAKEMAKE--------------------------------------------------------------------------------------------------
 --[[
@@ -3838,8 +4062,45 @@ function mod:MakemakeMove(entity, data, room)
         end, 2)
     end
 end
+--ded
+function mod:MakemakeDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Makemake].VAR then
+        
+		--Particles
+		game:SpawnParticles (entity.Position, EffectVariant.ROCK_PARTICLE, 10, 6)
+
+        mod.savedata.planetAlive3 = false
+        mod.savedata.planetKilled13 = true
+        local allDead = (mod.savedata.planetKilled11 and mod.savedata.planetKilled12 and mod.savedata.planetKilled13 and mod.savedata.planetKilled14)
+        if allDead then
+            mod:NormalDeath(entity, false, false)
+        else
+            mod:SpawnGlassFracture(entity, 1.5)
+            game:BombExplosionEffects (entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+            sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
+            game:ShakeScreen(60)
+        end
+
+    end
+end
+--deding
+function mod:MakemakeDying(entity)
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        if data.deathFrame == 1 then
+
+        end
+	end
+
+end
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.MakemakeUpdate, mod.EntityInf[mod.Entity.Makemake].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.MakemakeDeath, mod.EntityInf[mod.Entity.Makemake].ID)
 
 --HAUMEA--------------------------------------------------------------------------------------------------
 --[[
@@ -3963,8 +4224,47 @@ function mod:HaumeaJump(entity, data, sprite, target, room)
     end
 end
 
+--ded
+function mod:HaumeaDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Haumea].VAR then
+        
+		--Particles
+		game:SpawnParticles (entity.Position, EffectVariant.BLOOD_PARTICLE, 10, 6)
+		local bloody = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.LARGE_BLOOD_EXPLOSION, 0, entity.Position, Vector.Zero, entity)
+        
+        mod.savedata.planetAlive4 = false
+        mod.savedata.planetKilled14 = true
+        local allDead = (mod.savedata.planetKilled11 and mod.savedata.planetKilled12 and mod.savedata.planetKilled13 and mod.savedata.planetKilled14)
+        if allDead then
+            mod:NormalDeath(entity, false, false)
+        else
+            mod:SpawnGlassFracture(entity, 1.5)
+            game:BombExplosionEffects (entity.Position, 100, TearFlags.TEAR_NORMAL, Color.Default, nil, 1.45, true, false, DamageFlag.DAMAGE_EXPLOSION )
+            sfx:Play(Isaac.GetSoundIdByName("SuperExplosion"),0.6)
+            game:ShakeScreen(60)
+        end
+
+    end
+end
+--deding
+function mod:HaumeaDying(entity)
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        if data.deathFrame == 1 then
+
+        end
+	end
+
+end
+
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.HaumeaUpdate, mod.EntityInf[mod.Entity.Haumea].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.HaumeaDeath, mod.EntityInf[mod.Entity.Haumea].ID)
 
 --HERRANT--------------------------------------------------------------------------------------------------
 --[[
@@ -4714,6 +5014,31 @@ function mod:ErrantMove(entity, data, room, target)
     entity.Velocity = ((data.targetvelocity * 0.3) + (entity.Velocity * 0.7)) * mod.QConst.speed
     data.targetvelocity = data.targetvelocity * 0.99
 end
+--ded
+function mod:ErrantDeath(entity)
+    if entity.Variant == mod.EntityInf[mod.Entity.Errant].VAR then
+        mod:NormalDeath(entity, true, true)
+    end
+end
+--deding
+function mod:ErrantDying(entity)
+    local sprite = entity:GetSprite()
+    local data = entity:GetData()
+
+    if data.deathFrame == nil then data.deathFrame = 0 end
+
+    if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
+		data.deathFrame = data.deathFrame + 1
+        if data.deathFrame == 1 then
+
+            sprite:Load("gfx/entity_Errant.anm2", true)
+            sprite:PlayOverlay("", true)
+            sprite:LoadGraphics()
+            sprite:Play("Death", true)
+        end
+	end
+
+end
 
 --State switch things
 function mod:ErrantEndAttack(entity, data, sprite)
@@ -4885,6 +5210,7 @@ end
 
 
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, mod.ErrantUpdate, mod.EntityInf[mod.Entity.Errant].ID)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.ErrantDeath, mod.EntityInf[mod.Entity.Errant].ID)
 mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_, entity)
 
     if entity:GetData().Form == mod.QForms.BRITTLE_HOLLOW then

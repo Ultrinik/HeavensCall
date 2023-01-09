@@ -1,5 +1,5 @@
 <AnimatedActor>
-	<Info CreatedBy="Unknown" CreatedOn="30-12-2022 23:56:05" Version="233" Fps="30"/>
+	<Info CreatedBy="Unknown" CreatedOn="09-01-2023 1:31:02" Version="237" Fps="30"/>
 	<Content>
 		<Spritesheets>
 			<Spritesheet Path="bosses\luna\luna_vanilla.png" Id="0"/>
@@ -24,11 +24,10 @@
 			<Event Name="Jump" Id="7"/>
 			<Event Name="Land" Id="8"/>
 			<Event Name="Preland" Id="9"/>
-			<Event Name="Incubus1" Id="10"/>
-			<Event Name="Incubus2" Id="11"/>
-			<Event Name="Incubus3" Id="12"/>
-			<Event Name="Aim" Id="13"/>
-			<Event Name="Incubus4" Id="14"/>
+			<Event Name="Incubus2" Id="10"/>
+			<Event Name="Incubus3" Id="11"/>
+			<Event Name="Aim" Id="12"/>
+			<Event Name="Incubus4" Id="13"/>
 		</Events>
 	</Content>
 	<Animations DefaultAnimation="Appear">
@@ -325,9 +324,9 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
-				<Trigger EventId="12" AtFrame="10"/>
+				<Trigger EventId="11" AtFrame="10"/>
 				<Trigger EventId="6" AtFrame="12"/>
-				<Trigger EventId="11" AtFrame="14"/>
+				<Trigger EventId="10" AtFrame="14"/>
 			</Triggers>
 		</Animation>
 		<Animation Name="GoToSleep" FrameNum="22" Loop="false">
@@ -595,7 +594,7 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
-				<Trigger EventId="13" AtFrame="7"/>
+				<Trigger EventId="12" AtFrame="7"/>
 				<Trigger EventId="6" AtFrame="17"/>
 			</Triggers>
 		</Animation>
@@ -621,7 +620,7 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
-				<Trigger EventId="13" AtFrame="7"/>
+				<Trigger EventId="12" AtFrame="7"/>
 				<Trigger EventId="6" AtFrame="17"/>
 			</Triggers>
 		</Animation>
@@ -789,11 +788,11 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
-				<Trigger EventId="12" AtFrame="4"/>
-				<Trigger EventId="13" AtFrame="5"/>
+				<Trigger EventId="11" AtFrame="4"/>
+				<Trigger EventId="12" AtFrame="5"/>
 				<Trigger EventId="6" AtFrame="22"/>
-				<Trigger EventId="14" AtFrame="23"/>
-				<Trigger EventId="11" AtFrame="30"/>
+				<Trigger EventId="13" AtFrame="23"/>
+				<Trigger EventId="10" AtFrame="30"/>
 			</Triggers>
 		</Animation>
 		<Animation Name="LongLaser" FrameNum="60" Loop="false">
@@ -820,11 +819,11 @@
 				</NullAnimation>
 			</NullAnimations>
 			<Triggers>
-				<Trigger EventId="12" AtFrame="4"/>
-				<Trigger EventId="13" AtFrame="7"/>
+				<Trigger EventId="11" AtFrame="4"/>
+				<Trigger EventId="12" AtFrame="7"/>
 				<Trigger EventId="6" AtFrame="22"/>
-				<Trigger EventId="14" AtFrame="23"/>
-				<Trigger EventId="11" AtFrame="30"/>
+				<Trigger EventId="13" AtFrame="23"/>
+				<Trigger EventId="10" AtFrame="30"/>
 			</Triggers>
 		</Animation>
 	</Animations>
