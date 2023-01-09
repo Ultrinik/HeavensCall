@@ -67,15 +67,27 @@ function mod:OnTearUpdate(tear)
 
 		if data.MercuriusTearFlag then
 			local anim = sprite:GetAnimation()
-			tear:ChangeVariant(Isaac.GetEntityVariantByName("Mercurius Tear (HC)"))
-			sprite:Load("gfx/tear_Mercurius.anm2", true)
-			sprite:Play(anim, true)
+			local valid = string.sub(anim,1,11)=="RegularTear" or string.sub(anim,1,11)=="BloodTear"
+			if valid then
+				tear:ChangeVariant(Isaac.GetEntityVariantByName("Mercurius Tear (HC)"))
+				sprite:Load("gfx/tear_Mercurius.anm2", true)
+				sprite:Play(anim, true)
+			elseif string.sub(anim,1,5)=="Stone" then
+				tear:ChangeVariant(Isaac.GetEntityVariantByName("Mercurius Tear (HC)"))
+				sprite:Load("gfx/tear_Mercurius_stone.anm2", true)
+				sprite:Play(anim, true)
+			elseif string.sub(anim,1,6)=="Rotate" and sprite:GetDefaultAnimation()=="Rotate0" then
+				tear:ChangeVariant(Isaac.GetEntityVariantByName("Mercurius Tear (HC)"))
+				sprite:Load("gfx/tear_Mercurius_rotate.anm2", true)
+				sprite:Play(anim, true)
+			end
 		end
 	else
 		
 		if data.MercuriusTearFlag then
 			if tear:IsDead() then
 				local splat = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BLOOD_EXPLOSION, 0, tear.Position, Vector.Zero, nil)
+				game:SpawnParticles (tear.Position, EffectVariant.DIAMOND_PARTICLE, 5, 3, mod.Colors.mercury)
 				splat:GetSprite().Color = mod.Colors.mercury
 				sfx:Play(Isaac.GetSoundIdByName("BismuthBreak"), 1, 2, false, 1)
 			end

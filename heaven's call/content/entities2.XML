@@ -204,7 +204,7 @@
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 
-	<entity name="Tar Bomb (HC)" id="725" variant="370" subtype="160" anm2path="entity_Tarbomb.anm2" baseHP="9999" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.99" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="8">
+	<entity name="Tar Bomb (HC)" id="725" variant="370" subtype="160" anm2path="entity_Tarbomb.anm2" baseHP="9999" stageHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="75" collisionRadius="23" friction="0.95" numGridCollisionPoints="12" shadowSize="20" bestiary="false" gridCollision="walls" tags="nodelirium" portrait="8">
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>
 	
@@ -336,7 +336,7 @@
 
 
 	<!-- ??? -->
-	<entity name="The Errant" id="715" variant="370" subtype="0" anm2path="entity_Errant.anm2" baseHP="1" stageHP="100" shieldStrength="25" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="30" friction="0.975" numGridCollisionPoints="12" shadowSize="30" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
+	<entity name="The Errant" id="715" variant="370" subtype="0" anm2path="entity_Errant.anm2" baseHP="1" stageHP="125" shieldStrength="25" boss="1" champion="0" collisionDamage="1" collisionMass="75" collisionRadius="30" friction="0.975" numGridCollisionPoints="12" shadowSize="30" bestiary="true" gridCollision="walls" tags="nodelirium" portrait="1">
 		<bestiary transform="0,0,1" anim="Idle" />
 		<gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
 	</entity>

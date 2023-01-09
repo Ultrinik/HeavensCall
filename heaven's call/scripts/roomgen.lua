@@ -126,7 +126,7 @@ function mod:GenerateRoomFromDataset(dataset, onnewlevel)
 		local roomidx = entry.roomidx
 		local visitcount = entry.visitcount
 		local roomdesc = level:GetRoomByIdx(roomidx)
-		if roomdesc.Data and level:GetRoomByIdx(roomdesc.GridIndex).GridIndex ~= -1 and mod:GetOppositeDoorSlot(deadendslot) and data.Doors & (1 << mod:GetOppositeDoorSlot(deadendslot)) > 0 then
+		if roomdesc.Data and level:GetRoomByIdx(roomdesc.GridIndex).GridIndex ~= -1 and mod:GetOppositeDoorSlot(deadendslot) and data and data.Doors & (1 << mod:GetOppositeDoorSlot(deadendslot)) > 0 then
 			if level:MakeRedRoomDoor(roomidx, deadendslot) then
 				local newroomdesc = level:GetRoomByIdx(deadendidx, 0)
 				newroomdesc.Data = data
@@ -165,11 +165,9 @@ function mod:InitializeRoomData(roomtype, minvariant, maxvariant, dataset)
 		mod.applyingcurseofmaze = true
 	end
 	
-	for i = minvariant, maxvariant, 1 do
-		if i ~= 8504 then
-			Isaac.ExecuteCommand("goto s."..roomtype.."."..i)
-			dataset[i] = level:GetRoomByIdx(-3,0).Data
-		end
+	for i = minvariant, maxvariant+1 do
+		Isaac.ExecuteCommand("goto s."..roomtype.."."..i)
+		dataset[i] = level:GetRoomByIdx(-3,0).Data
 	end
 	game:StartRoomTransition(currentroomidx, 0, RoomTransitionAnim.FADE)
 	

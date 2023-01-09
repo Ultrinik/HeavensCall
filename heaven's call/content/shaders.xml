@@ -1,7 +1,7 @@
 <shaders>
     <shader name="Timestuck">
         <parameters>
-            <param name="Time" type="float"/>
+            <param name="Enabled" type="float"/>
         </parameters>
         <vertex><![CDATA[
             attribute vec3 Position;
@@ -9,18 +9,18 @@
             attribute vec2 TexCoord;
             attribute vec4 RenderData;
             attribute float Scale;
-            attribute float Time;
+            attribute float Enabled;
             varying vec4 Color0;
             varying vec2 TexCoord0;
             varying vec4 RenderDataOut;
             varying float ScaleOut;
-            varying float TimeOut;
+            varying float EnabledOut;
             uniform mat4 Transform;
             void main(void)
             {
                 RenderDataOut = RenderData;
                 ScaleOut = Scale;           // Passing data to fragment shader
-                TimeOut = Time;             // Passing data to fragment shader
+                EnabledOut = Enabled;             // Passing data to fragment shader
                 Color0 = Color;
                 TexCoord0 = TexCoord;
                 gl_Position = Transform * vec4(Position.xyz, 1.0);
@@ -32,12 +32,12 @@
             varying mediump vec2 TexCoord0;
             varying lowp vec4 RenderDataOut;
             varying lowp float ScaleOut;
-            varying lowp float TimeOut;
+            varying lowp float EnabledOut;
             uniform sampler2D Texture0;
             void main(void)
             {
                 vec4 Color = Color0 * texture2D(Texture0, TexCoord0);
-                Color.r += TimeOut * 0.2;
+                Color.r += EnabledOut * 0.2;
                 gl_FragColor = Color;
             }
         ]]></fragment>
@@ -142,5 +142,51 @@
             }
         ]]></fragment>
 
+    </shader>
+
+    <shader name="PitchBlack">
+        <parameters>
+            <param name="Enabled" type="float"/>
+        </parameters>
+        <vertex><![CDATA[
+            attribute vec3 Position;
+            attribute vec4 Color;
+            attribute vec2 TexCoord;
+            attribute vec4 RenderData;
+            attribute float Scale;
+            attribute float Enabled;
+            varying vec4 Color0;
+            varying vec2 TexCoord0;
+            varying vec4 RenderDataOut;
+            varying float ScaleOut;
+            varying float EnabledOut;
+            uniform mat4 Transform;
+            void main(void)
+            {
+                RenderDataOut = RenderData;
+                ScaleOut = Scale;           // Passing data to fragment shader
+                EnabledOut = Enabled;             // Passing data to fragment shader
+                Color0 = Color;
+                TexCoord0 = TexCoord;
+                gl_Position = Transform * vec4(Position.xyz, 1.0);
+            }
+        ]]></vertex>
+
+        <fragment><![CDATA[
+            varying lowp vec4 Color0;
+            varying mediump vec2 TexCoord0;
+            varying lowp vec4 RenderDataOut;
+            varying lowp float ScaleOut;
+            varying lowp float EnabledOut;
+            uniform sampler2D Texture0;
+            void main(void)
+            {
+                vec4 Color = Color0 * texture2D(Texture0, TexCoord0);
+                Color.r -= EnabledOut * Color.r;
+                Color.g -= EnabledOut * Color.g;
+                Color.b -= EnabledOut * Color.b;
+                gl_FragColor = Color;
+            }
+        ]]></fragment>
     </shader>
 </shaders>

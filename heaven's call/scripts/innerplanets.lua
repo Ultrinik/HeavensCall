@@ -774,6 +774,7 @@ function mod:SpawnGlassFracture(entity, size, n)
 		local sprite = fracture:GetSprite()
 		sprite:Load("gfx/effect_GlassFracture.anm2", true)
 		sprite:LoadGraphics()
+        fracture.DepthOffset = entity.DepthOffset - 5
         if mod:RandomInt(0,1) == 0 then
             sprite:Play("Idle1", true)
         else
@@ -3222,9 +3223,19 @@ end
 function mod:OrbitParent(entity)
 	local data = entity:GetData()
 	if (not data.orbitAngle) then
-	  data.orbitAngle = data.orbitIndex*360/data.orbitTotal
+        data.ColClass = entity.EntityCollisionClass
+	    data.orbitAngle = data.orbitIndex*360/data.orbitTotal
 	end
 	if entity.Parent then
+        if not entity.Parent.Visible then
+            entity.Visible = false
+            entity:AddEntityFlags(EntityFlag.FLAG_FREEZE)
+            entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+        else
+            entity.Visible = true
+            entity:ClearEntityFlags(EntityFlag.FLAG_FREEZE)
+            entity.EntityCollisionClass = data.ColClass or EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+        end
 		entity.Position  = entity.Parent.Position + Vector.FromAngle(data.orbitAngle):Resized(data.orbitDistance*3)
 		data.orbitAngle = (data.orbitAngle + data.orbitSpin*data.orbitSpeed) % 360
 	end

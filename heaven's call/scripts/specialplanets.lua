@@ -124,7 +124,7 @@ mod.LItemDoor = {
     [mod.LActives.ANARCHIST] = mod.DoorType.LIBRARY,
     [mod.LActives.BOOK_DEAD] = mod.DoorType.LIBRARY,
     
-    [mod.LSpecials.FLIP] = mod.DoorType.DEVIL,
+    [mod.LSpecials.FLIP] = mod.DoorType.SECRET,
     [mod.LSpecials.MEGA_MUSH] = mod.DoorType.SECRET,
     [mod.LSpecials.MOMS_SHOVEL] = mod.DoorType.SECRET,
     
@@ -238,7 +238,7 @@ end
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Planet Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.IDLE] =           {0.000, 0.150, 0.480, 0.000, 0.050, 0.020, 0.030, 0.040, 0.030, 0.030, 0.000, 0.030, 0.030, 0.040, 0.030, 0.040},
-    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
+    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.095, 0.500, 0.000, 0.000, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -362,6 +362,7 @@ function mod:LunaUpdate(entity)
         
         --print(data.State)
         --print(data.StateFrame)
+        --print(mod.ModFlags.LunaTriggered)
 
         --Frame
         --data.StateFrame = 0
@@ -384,13 +385,17 @@ function mod:LunaUpdate(entity)
                     mod:LunaChangeState(entity)
                 elseif sprite:IsEventTriggered("EndAppear") then
                     entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
-                elseif sprite:GetFrame()==30 and sprite:IsPlaying("AppearSlow") then--Turn black
-                elseif sprite:GetFrame()==40 and sprite:IsPlaying("AppearSlow") then--Turn no black
-                elseif sprite:GetFrame()==35 and sprite:IsPlaying("AppearSlow") then--Red
+                elseif sprite:GetFrame()==40 and sprite:IsPlaying("AppearSlow") then--Turn black
+                    mod.ModFlags.pitchBlack = true
+                elseif sprite:GetFrame()==75 and sprite:IsPlaying("AppearSlow") then--Turn no black
+                    mod.ModFlags.pitchBlack = false
+                elseif sprite:GetFrame()==60 and sprite:IsPlaying("AppearSlow") then--Red
                     for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0)) do
                         e:Remove()
                     end
-                    mod:UltrRedSetup(room, true)
+                    mod:UltraRedSetup(room, true)
+
+                    mod.ModFlags.LunaTriggered = true
 
                     --Re-close doors
                     for i = 0, DoorSlot.NUM_DOOR_SLOTS do
@@ -661,6 +666,9 @@ function mod:LunaItem(entity, data, sprite, target, room)
             itemType = mod.LItemType.SPECIAL
             itemNum = mod:LunaChooseItem(mod.LSpecials, nil, false, entity)
         end
+
+        --itemNum = mod.LSpecials.FLIP
+        --itemType = mod.LItemType.SPECIAL
 
         data.LastItem = itemNum
         data.LastItemType = itemType
@@ -1095,6 +1103,23 @@ function mod:LunaFlip(entity, data, sprite, target, room)
         
         sprite:Play("Idle",true)
         sprite:Stop()
+
+        
+        --Room
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0)) do
+            e.Visible = false
+        end
+        for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WORMWOOD_HOLE, 0)) do
+            e.Visible = false
+        end
+        HPBars.BossDefinitions[tostring(mod.EntityInf[mod.Entity.Luna].ID).."."..tostring(mod.EntityInf[mod.Entity.Luna].VAR)] = {
+            sprite = "gfx/bosses/icon_lunaflip.png",
+            barStyle = "Dogma"
+        }
+		--Change background, but not the actual background but the floor and walls, but there are no walls. Was it clear? good
+		game:ShowHallucination (1,BackdropType.DOGMA)
+		sfx:Stop (SoundEffect.SOUND_DEATH_CARD)--Silence the ShowHallucination sfx
+
     end
 
     if data.FlipFlag then
@@ -1174,6 +1199,22 @@ function mod:LunaFlipUpdate(entity)
             entity.Parent.Visible = true
             entity.Parent:GetSprite():Play("Idle",true)
             entity:Remove()
+
+            --Room
+            for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0)) do
+                e.Visible = true
+            end
+            for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WORMWOOD_HOLE, 0)) do
+                e.Visible = true
+            end
+            HPBars.BossDefinitions[tostring(mod.EntityInf[mod.Entity.Luna].ID).."."..tostring(mod.EntityInf[mod.Entity.Luna].VAR)] = {
+                sprite = "gfx/bosses/icon_luna.png",
+                barStyle = "LunarHC"
+            }
+            --Change background, but not the actual background but the floor and walls, but there are no walls. Was it clear? good
+            game:ShowHallucination (1,BackdropType.PLANETARIUM)
+            sfx:Stop (SoundEffect.SOUND_DEATH_CARD)--Silence the ShowHallucination sfx
+
         elseif sprite:IsFinished("Attack1") or sprite:IsFinished("Attack2") or sprite:IsFinished("Attack3") then
             data.Dir1 = nil
             data.Dir2 = nil
@@ -3027,6 +3068,7 @@ function mod:LunaBombs(bomb)
                 local vector = bomb.Velocity:Normalized():Rotated(90*(2*i-1))*10
                 local bomb2 = Isaac.Spawn(EntityType.ENTITY_BOMB, BombVariant.BOMB_SMALL, 0, bomb.Position+5*vector, Vector.Zero, entity):ToBomb()
                 bomb2:SetExplosionCountdown(10)
+                bomb2.ExplosionDamage = 20
             end
         end
     end
@@ -3355,7 +3397,8 @@ function mod:PlutoUpdate(entity)
 		end
 
 
-        if mod.savedata.planetAlive and (entity.FrameCount + 5) % 10 == 0 then
+        local yourBattle = mod.savedata.planetNum == mod.Entity.Pluto
+        if yourBattle and mod.savedata.planetAlive and (entity.FrameCount + 5) % 10 == 0 then
             if not data.FlagCharon and mod:KuiperHealtFraction() < 0.9 and (#mod:FindByTypeMod(mod.Entity.Charon1) + #mod:FindByTypeMod(mod.Entity.Charon2)) == 0 then
 				local position = mod:GetRandomPosition(Isaac.GetPlayer(0).Position, 200)
 				local planet = mod:SpawnEntity(mod.Entity.Charon1, position, Vector.Zero, nil)
@@ -4395,7 +4438,27 @@ function mod:ErrantUpdate(entity)
 				data.StateFrame = 0
 			elseif sprite:IsEventTriggered("EndAppear") then
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
-			end
+			elseif sprite:GetFrame()==40 and sprite:IsPlaying("AppearSlow") then--Turn black
+                mod.ModFlags.pitchBlack = true
+            elseif sprite:GetFrame()==75 and sprite:IsPlaying("AppearSlow") then--Turn no black
+                mod.ModFlags.pitchBlack = false
+            elseif sprite:GetFrame()==60 and sprite:IsPlaying("AppearSlow") then--Red
+                for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WOMB_TELEPORT, 0)) do
+                    e:Remove()
+                end
+                mod:QuantumSetup(room)
+
+                mod.ModFlags.ErrantTriggered = true
+
+                --Re-close doors
+                for i = 0, DoorSlot.NUM_DOOR_SLOTS do
+                    local door = room:GetDoor(i)
+                    if door then
+                        door:Close()
+                        door:GetSprite():Play("Closed")
+                    end
+                end
+            end
 			
 		elseif data.State == mod.QMSState.IDLE then
 			if data.StateFrame == 1 then
@@ -4540,6 +4603,7 @@ function mod:EmberLaunch(entity, data, sprite, target, room)
         local parent = entity
         for i=1,mod.QConst.nChains do
             local chain = mod:SpawnEntity(mod.Entity.TwinChain, entity.Position, Vector.Zero, entity):ToNPC()
+            chain:AddEntityFlags(EntityFlag.FLAG_PERSISTENT)
             chain:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
             chain:GetSprite():Play("Normal", true)
             chain.CollisionDamage = 0
@@ -4552,7 +4616,7 @@ function mod:EmberLaunch(entity, data, sprite, target, room)
         end
         local ash = mod:SpawnEntity(mod.Entity.AshTwin, entity.Position, Vector.Zero, entity):ToNPC()
         ash:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
-        ash:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        ash:AddEntityFlags(EntityFlag.FLAG_DONT_COUNT_BOSS_HP | EntityFlag.FLAG_PERSISTENT)
         ash:GetSprite():Play("Idle", true)
         ash.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
         parent.Child = ash
@@ -4858,7 +4922,9 @@ end
 function mod:BrittleAbsorb(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
         sprite:Play("Absorb",true)
-        entity.Parent:GetData().Queue = 0
+        if entity.Parent then
+            entity.Parent:GetData().Queue = 0
+        end
     elseif sprite:IsFinished("Absorb") then
         mod:ErrantEndAttack(entity, data, sprite)
     elseif sprite:WasEventTriggered("Attack") then
@@ -5017,7 +5083,18 @@ end
 --ded
 function mod:ErrantDeath(entity)
     if entity.Variant == mod.EntityInf[mod.Entity.Errant].VAR then
-        mod:NormalDeath(entity, true, true)
+        mod.savedata.errantKilled = true
+        mod.savedata.errantAlive = false
+        
+        mod:ClearEntities()
+
+        mod:PausePool()
+        local reward = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE,  2^32-2, entity.Position, Vector.Zero, nil)
+        reward:AddEntityFlags(EntityFlag.FLAG_GLITCH)
+
+        if game:GetLevel():GetCurrentRoomDesc().Data.Type == RoomType.ROOM_ERROR then
+            local trapdoor = Isaac.GridSpawn(GridEntityType.GRID_TRAPDOOR, 1, game:GetRoom():GetCenterPos(), true)
+        end
     end
 end
 --deding
@@ -5030,7 +5107,7 @@ function mod:ErrantDying(entity)
     if sprite:GetFrame() == data.deathFrame and sprite:IsPlaying("Death") then
 		data.deathFrame = data.deathFrame + 1
         if data.deathFrame == 1 then
-
+            mod:ClearEntities()
             sprite:Load("gfx/entity_Errant.anm2", true)
             sprite:PlayOverlay("", true)
             sprite:LoadGraphics()
@@ -5092,19 +5169,13 @@ function mod:ChangeForm(entity, sprite, data)
     sprite:Play("Idle", true)
 
     --Entities
-    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.Attlerock))
-    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.WhiteHole))
-    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.HollowsLantern))
-    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.AshTwin))
-    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.TwinChain))
-    mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_PROJECTILE), true)
-
+    mod:ClearEntities()
     
     if data.Form == mod.QForms.TIMBER_HEART then
         local orbitDistance = mod.QConst.moonOrbitDistance
         local position = entity.Position + Vector(orbitDistance,0)
         local attlerock = mod:SpawnEntity(mod.Entity.Attlerock, position, Vector.Zero, entity)
-        attlerock:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        attlerock:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP | EntityFlag.FLAG_PERSISTENT)
         attlerock:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
         attlerock:GetSprite():Play("Idle", true)
         attlerock.Parent = entity
@@ -5123,7 +5194,7 @@ function mod:ChangeForm(entity, sprite, data)
         local orbitDistance = mod.QConst.moonOrbitDistance
         local position = entity.Position + Vector(orbitDistance,0)
         local lantern = mod:SpawnEntity(mod.Entity.HollowsLantern, position, Vector.Zero, entity)
-        lantern:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        lantern:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP | EntityFlag.FLAG_PERSISTENT)
         lantern:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
         lantern:GetSprite():Play("Idle", true)
         lantern.Parent = entity
@@ -5140,7 +5211,7 @@ function mod:ChangeForm(entity, sprite, data)
 
         
         local whitehole = mod:SpawnEntity(mod.Entity.WhiteHole, position, Vector.Zero, entity)
-        whitehole:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP)
+        whitehole:AddEntityFlags(EntityFlag.FLAG_NO_FLASH_ON_DAMAGE | EntityFlag.FLAG_DONT_COUNT_BOSS_HP | EntityFlag.FLAG_PERSISTENT)
         whitehole:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
         whitehole:GetSprite():Play("Idle", true)
         whitehole.Parent = entity
@@ -5149,6 +5220,14 @@ function mod:ChangeForm(entity, sprite, data)
 
     end
 
+end
+function mod:ClearEntities()
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.Attlerock))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.WhiteHole))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.HollowsLantern))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.AshTwin))
+    mod:DeleteEntities(mod:FindByTypeMod(mod.Entity.TwinChain))
+    mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_PROJECTILE), true)
 end
 function mod:DeleteEntities(list, forced)
     for i=1, #list do

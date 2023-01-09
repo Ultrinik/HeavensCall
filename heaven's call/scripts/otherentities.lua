@@ -104,13 +104,13 @@ function mod:StatueDie(entity)
 	local roomdesc = level:GetCurrentRoomDesc()
 
 	if mod:IsRoomDescAstralChallenge(roomdesc) and mod.savedata.planetNum and #(mod:FindByTypeMod(mod.savedata.planetNum))==0 then
-
-		mod.savedata.planetAlive = true --Yes, I know about FLAG_PERSISTENT
+		
 		mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.Dyings)
 
 		local planet = mod:SpawnEntity(mod.savedata.planetNum, entity.Position, Vector.Zero, entity)
 		planet:GetData().SlowSpawn = true
 
+		mod.savedata.planetAlive = true --Yes, I know about FLAG_PERSISTENT
 		mod.savedata.planetHP = planet.HitPoints
 
 		--Close door
@@ -124,8 +124,27 @@ function mod:StatueDie(entity)
 		--Make room uncleared
 		room:SetClear( false )
 
-	else
-		--LOL LMAO
+	elseif mod:IsRoomErrant(roomdesc) and #(mod:FindByTypeMod(mod.Entity.Errant))==0 then
+		mod:AddCallback(ModCallbacks.MC_POST_NPC_RENDER, mod.Dyings)
+
+		local planet = mod:SpawnEntity(mod.Entity.Errant, entity.Position, Vector.Zero, entity)
+		planet:GetData().SlowSpawn = true
+
+		planet:AddEntityFlags(EntityFlag.FLAG_PERSISTENT)
+		mod.savedata.errantAlive = true
+		mod.savedata.errantKilled = false
+		mod.savedata.errantHP = planet.HitPoints
+
+		--Close door
+		for i = 0, DoorSlot.NUM_DOOR_SLOTS do
+			local door = room:GetDoor(i)
+			if door then
+				door:Close()
+			end
+		end
+		sfx:Play(SoundEffect.SOUND_CASTLEPORTCULLIS,1)
+		--Make room uncleared
+		room:SetClear( false )
 	end
 end
 
@@ -1301,6 +1320,22 @@ function mod:LunaKnifeUpdate(entity)
 	local parent = entity.Parent:ToNPC()
 	local target = parent:GetPlayerTarget()
 
+	local data = entity:GetData()
+
+	if not data.Init then
+		data.Init = true
+		data.ColClass = entity.EntityCollisionClass
+	end
+	if not parent.Visible then
+		entity.Visible = false
+		entity:AddEntityFlags(EntityFlag.FLAG_FREEZE)
+		entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+	else
+		entity.Visible = true
+		entity:ClearEntityFlags(EntityFlag.FLAG_FREEZE)
+		entity.EntityCollisionClass = data.ColClass or EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
+	end
+
 	local vector = (target.Position - parent.Position):Normalized()
 	local distance = mod.LConst.knifeRange * (1 + math.sin(entity.FrameCount/12))
 
@@ -1331,6 +1366,16 @@ function mod:LunaIncubusUpdate(entity)
 		sprite:Play("Float", true)
 		data.targetvelocity = Vector.Zero
 		data.Init = true
+		data.ColClass = entity.EntityCollisionClass
+	end
+	if not parent.Visible then
+		entity.Visible = false
+		entity:AddEntityFlags(EntityFlag.FLAG_FREEZE)
+		entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+	else
+		entity.Visible = true
+		entity:ClearEntityFlags(EntityFlag.FLAG_FREEZE)
+		entity.EntityCollisionClass = data.ColClass or EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 	end
 
 	if (parentSprite:IsPlaying("NormalAttack") or parentSprite:IsPlaying("NormalLaser") or parentSprite:IsPlaying("LongLaser")) and parentSprite:IsEventTriggered("Attack") then
@@ -2268,6 +2313,7 @@ function mod:LunaDoorUpdate(entity)
 				boss = mod:SpawnEntity(mod.Entity.Makemake, entity.Position + Vector(0,1), Vector.Zero, nil)
 			end
 			boss.Visible = false
+			boss.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 
 			mod:scheduleForUpdate(function()
 				if boss then
@@ -2277,6 +2323,7 @@ function mod:LunaDoorUpdate(entity)
 					poof.DepthOffset = 100
 					boss.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
 
+					boss.Position = entity.Position
 					boss.HitPoints = 120
 					boss.MaxHitPoints = 120
 				end
@@ -2303,6 +2350,17 @@ function mod:LunaDoorUpdate(entity)
 end
 
 function mod:SpawnLunaDoor(entity, doorType, position)
+	if not position then
+		position = entity.Position + Vector(50, 0):Rotated(rng:RandomFloat()*360)
+		for i=0, 100 do
+			if (not mod:IsOutsideRoom(position, game:GetRoom())) then break end
+			position = entity.Position + Vector(50, 0):Rotated(rng:RandomFloat()*360)
+		end
+	end
+
+	local door = mod:SpawnEntity(mod.Entity.LunaDoor, position, Vector.Zero, entity):ToEffect()
+	local sprite = door:GetSprite()
+
 	local dir = "gfx/grid/door_00_reddoor.png"
 
 	if doorType == mod.DoorType.NORMAL then
@@ -2312,9 +2370,11 @@ function mod:SpawnLunaDoor(entity, doorType, position)
 	elseif doorType == mod.DoorType.SHOP then
 		dir = "gfx/grid/door_00_shopdoor.png"
 	elseif doorType == mod.DoorType.DEVIL then
-		dir = "gfx/grid/door_07_devilroomdoor.png"
+		sprite:Load("gfx/grid/door_07_devilroomdoor.anm2")
+		dir = nil
 	elseif doorType == mod.DoorType.ANGEL then
-		dir = "gfx/grid/door_07_holyroomdoor.png"
+		sprite:Load("gfx/grid/door_07_holyroomdoor.anm2")
+		dir = nil
 	elseif doorType == mod.DoorType.TAINTED then
 		dir = "gfx/grid/taintedtreasureroomdoor.png"
 	elseif doorType == mod.DoorType.GLACIAR then
@@ -2326,7 +2386,8 @@ function mod:SpawnLunaDoor(entity, doorType, position)
 	elseif doorType == mod.DoorType.SECRET then
 		dir = "gfx/grid/secreroomdoor.png"
 	elseif doorType == mod.DoorType.BOSS then
-		dir = "gfx/grid/bossroomdoor.png"
+		sprite:Load("gfx/grid/door_10_bossroomdoor.anm2")
+		dir = nil
 	elseif doorType == mod.DoorType.CURSE then
 		dir = "gfx/grid/door_04_selfsacrificeroomdoor.png"
 	elseif doorType == mod.DoorType.ARCADE then
@@ -2343,19 +2404,10 @@ function mod:SpawnLunaDoor(entity, doorType, position)
 		dir = "gfx/grid/door_00_sacrificeroomdoor.png"
 	end
 
-	if not position then
-		position = entity.Position + Vector(50, 0):Rotated(rng:RandomFloat()*360)
-		for i=0, 100 do
-			if (not mod:IsOutsideRoom(position, game:GetRoom())) then break end
-			position = entity.Position + Vector(50, 0):Rotated(rng:RandomFloat()*360)
+	if dir then
+		for i=0,3 do
+			sprite:ReplaceSpritesheet (i, dir)
 		end
-	end
-
-	local door = mod:SpawnEntity(mod.Entity.LunaDoor, position, Vector.Zero, entity):ToEffect()
-
-	local sprite = door:GetSprite()
-	for i=0,3 do
-		sprite:ReplaceSpritesheet (i, dir)
 	end
 	sprite:LoadGraphics()
 
@@ -2365,6 +2417,7 @@ function mod:SpawnLunaDoor(entity, doorType, position)
 
 	sfx:Play(SoundEffect.SOUND_UNLOCK00,1)
 
+	sprite:Play("Open", true)
 	return door
 
 end
@@ -3145,7 +3198,7 @@ function mod:MissileUpdate(tear, collided)
 		data.OldAngle = sprite.Rotation
 	end
 
-	sprite.Rotation = mod:AngleLerp(sprite.Rotation, tear.Velocity:GetAngleDegrees(), 0.1)
+	sprite.Rotation = mod:AngleLerp(sprite.Rotation, tear.Velocity:GetAngleDegrees(), 0.5)
 
 	data.OldAngle = sprite.Rotation
 	data.Counter = data.Counter + 1
