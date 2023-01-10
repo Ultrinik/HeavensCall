@@ -66,9 +66,10 @@ mod.LMSState = {
     MOMS_SHOVEL = 99,
     FLIP = 98,
     MAW = 97,
+    REVELATION = 96,
 }
 
---TOTAL ITEMS = 40 [0-39]
+--TOTAL ITEMS = 43 [0-42]
 mod.LActives = {
     ABYSS = 0,
     BOOK_VIRTUDES = 1,
@@ -77,6 +78,7 @@ mod.LActives = {
     BOOK_SHADOWS = 4,
     ANARCHIST = 5,
     BOOK_DEAD = 6,
+    KIDNYE_BEAN = 41,
 }
 mod.LSpecials = {
     FLIP = 7,
@@ -93,7 +95,8 @@ mod.LAssistPassives = {
     MAW_VOID = 16,
     --PARASITOID = 17,
     BOWL_TEARS = 18, --COMMUNITY REMIX
-    STOPWATCH = 39,
+    STOPWATCH = 40,
+    REVELATIONS = 42,
 }
 mod.LMainPassive = {
     C_SECTION = 19,
@@ -102,7 +105,7 @@ mod.LMainPassive = {
     HEMOLACRYA = 22,
     BRIMSTONE = 23,
     --EPIC_FETUS = 24,
-    REVELATIONS = 25,
+    --REVELATIONS = 25,
     MUTANT_SPIDER = 39,
 }
 mod.LSecondaryPassives = {
@@ -123,6 +126,7 @@ mod.LItemDoor = {
     [mod.LActives.BOOK_SHADOWS] = mod.DoorType.LIBRARY,
     [mod.LActives.ANARCHIST] = mod.DoorType.LIBRARY,
     [mod.LActives.BOOK_DEAD] = mod.DoorType.LIBRARY,
+    [mod.LActives.KIDNYE_BEAN] = mod.DoorType.TREASURE,
     
     [mod.LSpecials.FLIP] = mod.DoorType.SECRET,
     [mod.LSpecials.MEGA_MUSH] = mod.DoorType.SECRET,
@@ -138,6 +142,7 @@ mod.LItemDoor = {
     --[mod.LAssistPassives.PARASITOID] = mod.DoorType.TREASURE,
     [mod.LAssistPassives.BOWL_TEARS] = mod.DoorType.TREASURE,
     [mod.LAssistPassives.STOPWATCH] = mod.DoorType.SHOP,
+    [mod.LAssistPassives.REVELATIONS] = mod.DoorType.ANGEL,
     
     [mod.LMainPassive.C_SECTION] = mod.DoorType.TREASURE,
     [mod.LMainPassive.DR_FETUS] = mod.DoorType.TREASURE,
@@ -145,7 +150,7 @@ mod.LItemDoor = {
     [mod.LMainPassive.HEMOLACRYA] = mod.DoorType.TREASURE,
     [mod.LMainPassive.BRIMSTONE] = mod.DoorType.DEVIL,
     --[mod.LMainPassive.EPIC_FETUS] = mod.DoorType.SECRET,
-    [mod.LMainPassive.REVELATIONS] = mod.DoorType.ANGEL,
+    --[mod.LMainPassive.REVELATIONS] = mod.DoorType.ANGEL,
     [mod.LMainPassive.MUTANT_SPIDER] = mod.DoorType.TREASURE,
     
     [mod.LSecondaryPassives.IPECAC] = mod.DoorType.TREASURE,
@@ -164,6 +169,7 @@ mod.LItemPath = {
     [mod.LActives.BOOK_SHADOWS] = "gfx/items/collectibles/collectibles_058_bookofshadows.png",
     [mod.LActives.ANARCHIST] = "gfx/items/collectibles/collectibles_065_anarchistcookbook.png",
     [mod.LActives.BOOK_DEAD] = "gfx/items/collectibles/collectibles_545_bookofthedead.png",
+    [mod.LActives.KIDNYE_BEAN] = "gfx/items/collectibles/collectibles_421_kidneybean.png",
     
     [mod.LSpecials.FLIP] = "gfx/items/collectibles/collectibles_711_flip.png",
     [mod.LSpecials.MEGA_MUSH] = "gfx/items/collectibles/collectibles_625_megamush.png",
@@ -179,6 +185,7 @@ mod.LItemPath = {
     --[mod.LAssistPassives.PARASITOID] = "gfx/items/collectibles/collectibles_461_parasitoid.png",
     [mod.LAssistPassives.BOWL_TEARS] = "gfx/items/collectibles/collectibles_109_bowloftears.png",--REMIX
     [mod.LAssistPassives.STOPWATCH] = "gfx/items/collectibles/collectibles_232_stopwatch.png",
+    [mod.LAssistPassives.REVELATIONS] = "gfx/items/collectibles/collectibles_643_revelation.png",
     
     [mod.LMainPassive.C_SECTION] = "gfx/items/collectibles/collectibles_678_csection.png",
     [mod.LMainPassive.DR_FETUS] = "gfx/items/collectibles/collectibles_052_drfetus.png",
@@ -186,7 +193,7 @@ mod.LItemPath = {
     [mod.LMainPassive.HEMOLACRYA] = "gfx/items/collectibles/collectibles_531_haemolacria.png",
     [mod.LMainPassive.BRIMSTONE] = "gfx/items/collectibles/collectibles_118_brimstone.png",
     --[mod.LMainPassive.EPIC_FETUS] = "gfx/items/collectibles/collectibles_168_epicfetus.png",
-    [mod.LMainPassive.REVELATIONS] = "gfx/items/collectibles/collectibles_643_revelation.png",
+    --[mod.LMainPassive.REVELATIONS] = "gfx/items/collectibles/collectibles_643_revelation.png",
     [mod.LMainPassive.MUTANT_SPIDER] = "gfx/items/collectibles/collectibles_153_mutantspider.png",
     
     [mod.LSecondaryPassives.IPECAC] = "gfx/items/collectibles/collectibles_149_ipecac.png",
@@ -237,8 +244,8 @@ end
 
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Planet Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    [mod.LMSState.IDLE] =           {0.000, 0.150, 0.480, 0.000, 0.050, 0.020, 0.030, 0.040, 0.030, 0.030, 0.000, 0.030, 0.030, 0.040, 0.030, 0.040},
-    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000},
+    --[mod.LMSState.IDLE] =           {0.000, 0.150, 0.480, 0.000, 0.050, 0.020, 0.030, 0.040, 0.030, 0.030, 0.000, 0.030, 0.030, 0.040, 0.030, 0.040},
+    [mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.095, 0.500, 0.000, 0.000, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -299,6 +306,8 @@ mod.LConst = {--Some constant variables of Luna
     mawFrames = 30*5,
     mawTimeout = 100,
     mawRadius = 45,
+    
+    revelationFrames = 30*3 + 15*1,
 
     incubusScale = 0.65,
 
@@ -341,10 +350,14 @@ function mod:LunaUpdate(entity)
             data.ShieldTime = 0
             data.StrengthTime = 0
             data.HasMantle = false
+
             data.HasMaw = false
             data.MawTime = 0
-
             data.MawColor = Color.Default
+
+            data.HasRevelation = false
+            data.RevelationTime = 0
+            data.RevelationColor = Color.Default
 
             data.TargetAim = Vector.Zero
 
@@ -453,6 +466,8 @@ function mod:LunaUpdate(entity)
                 mod:LunaFlip(entity, data, sprite, target,room)
             elseif data.State == mod.LMSState.MAW then
                 mod:LunaMaw(entity, data, sprite, target,room)
+            elseif data.State == mod.LMSState.REVELATION then
+                mod:LunaRevelation(entity, data, sprite, target,room)
             end
         end
 
@@ -486,15 +501,22 @@ function mod:LunaUpdate(entity)
             shieldSprite:LoadGraphics()
         end
         
-        if data.HasMaw then
+        if data.HasMaw and not data.State == mod.LMSState.FLIP then
             data.MawTime = data.MawTime + 1
 
             data.MawColor = Color.Lerp(data.MawColor, mod.Colors.maw, 0.01)
             sprite.Color = data.MawColor
+
+        elseif data.HasRevelation and not data.State == mod.LMSState.FLIP then
+            data.RevelationTime = data.RevelationTime + 1
+
+            data.RevelationColor = Color.Lerp(data.RevelationColor, mod.Colors.revelation, 0.01)
+            sprite.Color = data.RevelationColor
+
         end
 
         
-       --[[ if entity.FrameCount % 200 == 0 then
+       --[[if entity.FrameCount % 200 == 0 then
             mod:LunaUseActive(entity, nil)
         end
         data.StateFrame = 0]]
@@ -805,7 +827,7 @@ function mod:LunaDice(entity, data, sprite, target, room)
 end
 function mod:LunaPlanetarium(entity, data, sprite, target, room)
     if data.StateFrame == 1 then
-        if mod:LunaBossCount() <= 0 then
+        if mod:KuiperHealtFraction() <= 0 then
             sprite:Play("SummonDoor",true)
         else
             mod:LunaChangeState(entity)
@@ -1155,6 +1177,25 @@ function mod:LunaMaw(entity, data, sprite, target, room)
         ring:GetData().LunaMaw = true
     end
 end
+function mod:LunaRevelation(entity, data, sprite, target, room)
+    if data.StateFrame == 1 then
+        sprite:Play("RevelationLaser",true)
+    elseif sprite:IsFinished("RevelationLaser") then
+        mod:LunaChangeState(entity, mod.LMSState.IDLE)
+
+    elseif sprite:IsEventTriggered("Aim") then
+        data.TargetAim = target.Position
+
+    elseif sprite:IsEventTriggered("Attack") then
+        sprite.Color = Color.Default
+        data.RevelationColor = Color.Default
+        data.RevelationTime = -30
+        
+        local direction = (data.TargetAim - entity.Position):Normalized()
+        local laser = EntityLaser.ShootAngle(LaserVariant.LIGHT_BEAM, entity.Position, direction:GetAngleDegrees(), 15, Vector.Zero, entity):ToLaser()
+
+    end
+end
 
 function mod:LunaFlipUpdate(entity)
     if entity.Variant == 10 and entity.SubType == 160 then
@@ -1224,10 +1265,13 @@ function mod:LunaFlipUpdate(entity)
         elseif sprite:IsPlaying("Attack1") then
             local n
             if sprite:IsEventTriggered("Attack1") then
+                entity:SetColor(mod.Colors.glitch, 10, 1, true, false)
                 n = mod.LConst.wave1Flip
             elseif sprite:IsEventTriggered("Attack2") then
+                entity:SetColor(mod.Colors.glitch, 10, 1, true, false)
                 n = mod.LConst.wave2Flip
             elseif sprite:IsEventTriggered("Attack3") then
+                entity:SetColor(mod.Colors.glitch, 10, 1, true, false)
                 n = mod.LConst.wave3Flip
             end
 
@@ -1244,6 +1288,7 @@ function mod:LunaFlipUpdate(entity)
 
         elseif sprite:IsPlaying("Attack2") then
             if sprite:IsEventTriggered("Attack1") then
+
                 local offset = 360*rng:RandomFloat()
                 for i=1,2 do
                     local position = entity.Position + Vector(50, 0):Rotated(i*360/2+offset)
@@ -1256,6 +1301,8 @@ function mod:LunaFlipUpdate(entity)
 
         elseif sprite:IsPlaying("Attack3") then
             if sprite:IsEventTriggered("Attack1") then
+                entity:SetColor(mod.Colors.glitch, 5, 1, true, false)
+
                 local dirs
                 if not data.Dir1 then
                     dirs = {360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat(), 360*rng:RandomFloat()}
@@ -1276,6 +1323,8 @@ function mod:LunaFlipUpdate(entity)
                 sfx:Play(SoundEffect.SOUND_DOGMA_JACOBS)
 
             elseif sprite:IsEventTriggered("Attack2") then
+                entity:SetColor(mod.Colors.glitch, 30, 1, true, false)
+
                 local dirs
                 if data.Dir1 then
                     dirs = data.Dir1
@@ -2322,6 +2371,11 @@ function mod:LunaChangeState(entity, fixState)
         data.StateFrame = 0
         return
     end
+    if data.RevelationTime >= mod.LConst.revelationFrames and (fixState==nil) then
+        data.State = mod.LMSState.REVELATION
+        data.StateFrame = 0
+        return
+    end
 
 
     if fixState then
@@ -2559,7 +2613,7 @@ function mod:LunaChooseItem(itemList, itemOld, dice, entity)
 
     local itemNum = mod:LunaPick(itemList, itemOld)
 
-    local laser = itemNum == mod.LMainPassive.BRIMSTONE or itemNum == mod.LMainPassive.REVELATIONS
+    local laser = false --itemNum == mod.LMainPassive.BRIMSTONE or itemNum == mod.LMainPassive.REVELATIONS
 
     local spider = false
     if TaintedTreasure then
@@ -2604,10 +2658,6 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         tipo = data.LastItemType
     end
 
-    --tipo = mod.LItemType.SPECIAL
-    --itemNum = mod.LMainPassive.MOMS_SHOVEL
-    --mod:LunaUseActive(entity, mod.LActives.BOOK_BELIAL)
-
     if tipo == mod.LItemType.ACTIVE then
         mod:LunaUseActive(entity, itemNum)
     elseif tipo == mod.LItemType.MAIN then
@@ -2615,12 +2665,12 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
 
         data.MainP = itemNum
     elseif tipo == mod.LItemType.SECONDARY then
-        --itemNum = mod.LSecondaryPassives.SACRED_HEART
-        
+        --itemNum = mod.LSecondaryPassives.REVELATIONS
+
         data.SecondaryP = itemNum
     elseif tipo == mod.LItemType.ASSIST then
 
-        --itemNum = mod.LAssistPassives.BOWL_TEARS
+        itemNum = mod.LAssistPassives.REVELATIONS
 
         for _,k in ipairs(mod:FindByTypeMod(mod.Entity.LunaKnife)) do
             k:Remove()
@@ -2633,6 +2683,11 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
         data.HasMaw = false
         entity:GetSprite().Color = Color.Default
         data.MawColor = Color.Default
+        
+        data.RevelationTime = 0
+        data.HasRevelation = false
+        entity:GetSprite().Color = Color.Default
+        data.RevelationColor = Color.Default
 
         data.AssistP = itemNum
 
@@ -2649,6 +2704,8 @@ function mod:GiveItemLuna(entity, itemNum, tipo)
             data.HasMantle = true
         elseif itemNum == mod.LAssistPassives.MAW_VOID then
             data.HasMaw = true
+        elseif itemNum == mod.LAssistPassives.REVELATIONS then
+            data.HasRevelation = true
         end
     else --SPECIAL
         if itemNum == mod.LSpecials.MEGA_MUSH then
@@ -2667,8 +2724,7 @@ end
 function mod:LunaUseActive(entity, itemNum)
     local data = entity:GetData()
 
-    --itemNum = mod.LActives.BIBLE
-
+    --itemNum = mod.LActives.KIDNYE_BEAN
 
     if itemNum == mod.LActives.ABYSS then
         local nLocust = 0
@@ -2840,6 +2896,21 @@ function mod:LunaUseActive(entity, itemNum)
         local i = -1
         local horsemen = mod:SpawnEntity(mod.Entity.AltHorsemen, Vector(position.X, position.Y + 150*i), Vector.Zero, entity):ToNPC()
         horsemen.I1 = i/2 + 7/2
+
+    elseif itemNum == mod.LActives.KIDNYE_BEAN then
+
+        local fart = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.FART, 0, entity.Position, Vector.Zero, entity)
+        fart:GetSprite().Color = Color(1,0,1,1,0.5,0.5,0.5,1)
+
+        for i=1, 2 do
+            local sirenRag = mod:SpawnEntity(mod.Entity.SirenRag, entity.Position, Vector.Zero, entity)
+            sirenRag.Parent = entity
+            mod:SirenRagSprite(sirenRag)
+        end
+
+        sirenRag:GetData().Selfdestruct = 600
+        sirenRag:GetData().MaxFrames = true
+        sirenRag:GetData().NoPoof = true
 
     end
 end
@@ -3307,7 +3378,7 @@ mod.PConst = {--Some constant variables of Pluto
     distanceToleration = 150,
 
     projectileSpeed = 11,
-    nBones = 4+1,
+    nBones = 5+1,
     boneAngle = 15,
 }
 
@@ -3362,11 +3433,14 @@ function mod:PlutoUpdate(entity)
                     parent.Child = bone
                     bone.Parent = parent
                     bone.I1 = i
+                    bone:GetSprite().Offset = Vector(0,-math.max(0,math.min(2*(mod.PConst.nBones/2-i+1), 2)))
+                    bone.DepthOffset = -10
                     
                     parent = bone
 
                     if i==mod.PConst.nBones then
                         bone:GetSprite():Play("Spike", true)
+                        bone:GetSprite().Offset = Vector(0,-3)
                     end
                 end
 			elseif sprite:IsEventTriggered("EndAppear") then

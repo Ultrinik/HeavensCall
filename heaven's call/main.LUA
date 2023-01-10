@@ -55,6 +55,8 @@ mod.Colors = {
 	giant = Color(0.2,0.8,0.2,1),
 	ember = Color(0.6,0.1,0,1),
 	sand = Color(1,0.4,0.2,1),
+	revelation = Color(2,2,2,1),
+	glitch = Color(1,1,1,1),
 }
 function mod:ColorizeColors()
 	mod.Colors.boom:SetColorize(1.3,2,0.7,1)
@@ -80,6 +82,8 @@ function mod:ColorizeColors()
 	mod.Colors.redlight:SetColorize(4, 1, 1, 1)
 	mod.Colors.hot:SetColorize(4, 1, 0, 1)
 	mod.Colors.sand:SetColorize(4, 2.5, 1, 1)
+	mod.Colors.revelation:SetColorize(1, 1, 1, 0.4)
+	mod.Colors.glitch:SetColorize(1, 1, 1, 1)
 end
 mod:ColorizeColors()
 
@@ -626,7 +630,9 @@ function mod:AppearPlanet(entity)
 		end, 95)
 	else
 		sprite:Play("Appear",true)
-		local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position, Vector.Zero, entity)
+		if not entity:GetData().NoTrapdoor then
+			local trapdoor = mod:SpawnEntity(mod.Entity.RedTrapdoor, entity.Position, Vector.Zero, entity)
+		end
 
 		if entity.Type == mod.EntityInf[mod.Entity.Luna].ID then
 			trapdoor:GetSprite():Play("BigIdle", true)
@@ -878,7 +884,7 @@ function mod:CleanDiceRoom()
 	mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.BEETLE))
 	mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.WALL_BUG))
 	mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.BUTTERFLY))
-	--mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.BEETLE))
+	mod:DeleteEntities(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.BLOOD_SPLAT))
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function(_) --Tainted treasure room was used as the reference for managing new room types Andromeda was used as the reference for managing new room types
 	--things
@@ -1654,7 +1660,7 @@ mod:AddCallback(ModCallbacks.MC_PRE_GET_COLLECTIBLE, function(_)
 				end
 			end
 		end
-	elseif mod:IsRoomErrant(roomdesc) then
+	elseif mod:IsRoomErrant(roomdesc) then --This doenst work lol
 		if not mod.ModFlags.noPool then
 			mod:PausePool()
 			return  2^32-2

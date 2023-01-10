@@ -1623,6 +1623,8 @@ function mod:Selfdestruct(entity)
 	if data.FrameCount > data.MaxFrames then
 		if data.Die then
 			entity:Die()
+		elseif data.NoPoof then
+			entity:Remove()
 		else
 			local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
 			poof.DepthOffset = 100
@@ -2312,13 +2314,12 @@ function mod:LunaDoorUpdate(entity)
 			elseif random == 4 then
 				boss = mod:SpawnEntity(mod.Entity.Makemake, entity.Position + Vector(0,1), Vector.Zero, nil)
 			end
-			boss.Visible = false
+			boss:GetData().NoTrapdoor = true
 			boss.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 
 			mod:scheduleForUpdate(function()
 				if boss then
 					sfx:Play(SoundEffect.SOUND_SUMMONSOUND,1)
-					boss.Visible = true
 					local poof = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position + Vector(5,0), Vector.Zero, nil)
 					poof.DepthOffset = 100
 					boss.EntityCollisionClass = EntityCollisionClass.ENTCOLL_PLAYEROBJECTS
@@ -2326,6 +2327,10 @@ function mod:LunaDoorUpdate(entity)
 					boss.Position = entity.Position
 					boss.HitPoints = 120
 					boss.MaxHitPoints = 120
+
+					if boss.Child then
+						boss.Child.Visible = true
+					end
 				end
 			end,30)
 
@@ -3596,13 +3601,10 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_,entity)
 
 end, EntityType.ENTITY_CLUTCH)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_, player)
-	for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER),1,3) do
-		if e.Type == EntityType.ENTITY_LASER then
-			e=e:ToLaser()
-			print(e.Radius)
-			print(e.Size)
-			print(e.Shrink)
-			print(e.Timeout)
+	for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT)) do
+		if e.Variant ~= EffectVariant.WISP and e.Variant ~= EffectVariant.WOMB_TELEPORT and e.Variant ~= EffectVariant.WORMWOOD_HOLE then
+			print(e.Variant)
+			print(e.Subtype)
 			print()
 		end
 	end

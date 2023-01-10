@@ -27,7 +27,7 @@
             }
         ]]></vertex>
 
-        <fragment><![CDATA[
+        <fragment><![CDATA[#version 130
             varying lowp vec4 Color0;
             varying mediump vec2 TexCoord0;
             varying lowp vec4 RenderDataOut;
@@ -117,7 +117,7 @@
 
         ]]></vertex>
 
-        <fragment><![CDATA[
+        <fragment><![CDATA[#version 130
             varying lowp vec4 Color0; 
             varying mediump vec2 TexCoord0; 
             varying lowp vec4 RenderDataOut;
@@ -172,7 +172,7 @@
             }
         ]]></vertex>
 
-        <fragment><![CDATA[
+        <fragment><![CDATA[#version 130
             varying lowp vec4 Color0;
             varying mediump vec2 TexCoord0;
             varying lowp vec4 RenderDataOut;
