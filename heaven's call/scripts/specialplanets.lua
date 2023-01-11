@@ -244,8 +244,8 @@ end
 
 mod.chainL = {                    --Appear  Idle   Attack Charge Telep  Item   Boss   MegaS  Curse  Arcad  Bed    Dice   Planet Vault  Speci  Sacrfice
     [mod.LMSState.APPEAR] =         {0.000, 1.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
-    --[mod.LMSState.IDLE] =           {0.000, 0.150, 0.480, 0.000, 0.050, 0.020, 0.030, 0.040, 0.030, 0.030, 0.000, 0.030, 0.030, 0.040, 0.030, 0.040},
-    [mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 1.000},
+    [mod.LMSState.IDLE] =           {0.000, 0.150, 0.480, 0.000, 0.050, 0.020, 0.030, 0.040, 0.030, 0.030, 0.000, 0.030, 0.030, 0.040, 0.030, 0.040},
+    --[mod.LMSState.IDLE] =           {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 1.000, 0.000, 0.000, 1.000},
     [mod.LMSState.ATTACK] =         {0.000, 0.095, 0.500, 0.000, 0.000, 0.350, 0.000, 0.000, 0.000, 0.000, 0.000, 0.100, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.CHARGE] =         {0.000, 0.400, 0.400, 0.000, 0.200, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
     [mod.LMSState.TELEPORT] =       {0.000, 0.400, 0.200, 0.000, 0.000, 0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000},
@@ -2630,8 +2630,8 @@ function mod:LunaChooseItem(itemList, itemOld, dice, entity)
         (((itemNum == mod.LMainPassive.BRIMSTONE or itemNum == mod.LMainPassive.REVELATIONS) and data.SecondaryP == mod.LSecondaryPassives.CLASSIC_WORM) or (itemNum == mod.LSecondaryPassives.CLASSIC_WORM and (data.MainP == mod.LMainPassive.BRIMSTONE or data.MainP == mod.LMainPassive.REVELATIONS))) or
         ((itemNum == mod.LMainPassive.DR_FETUS and data.SecondaryP == mod.LSecondaryPassives.CONTINUUM) or (itemNum == mod.LSecondaryPassives.CONTINUUM and data.MainP == mod.LMainPassive.DR_FETUS)) or
         ((itemNum == mod.LMainPassive.C_SECTION and data.SecondaryP == mod.LSecondaryPassives.CONTINUUM) or (itemNum == mod.LSecondaryPassives.CONTINUUM and data.MainP == mod.LMainPassive.C_SECTION)) or
-        (((itemNum == mod.LMainPassive.MUTANT_SPIDER or itemNum == mod.LMainPassive.SPIDER_FREAK) and data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART) or (itemNum == mod.LSecondaryPassives.SACRED_HEART and (data.MainP == mod.LMainPassive.MUTANT_SPIDER or data.MainP == mod.LMainPassive.SPIDER_FREAK)))
-        
+        (((itemNum == mod.LMainPassive.MUTANT_SPIDER or itemNum == mod.LMainPassive.SPIDER_FREAK) and data.SecondaryP == mod.LSecondaryPassives.SACRED_HEART) or (itemNum == mod.LSecondaryPassives.SACRED_HEART and (data.MainP == mod.LMainPassive.MUTANT_SPIDER or data.MainP == mod.LMainPassive.SPIDER_FREAK))) or
+        (itemNum == mod.LActives.KIDNYE_BEAN and #Isaac.FindByType(EntityType.ENTITY_FAMILIAR)==0)        
         return incombatible
     end
 
@@ -2906,11 +2906,11 @@ function mod:LunaUseActive(entity, itemNum)
             local sirenRag = mod:SpawnEntity(mod.Entity.SirenRag, entity.Position, Vector.Zero, entity)
             sirenRag.Parent = entity
             mod:SirenRagSprite(sirenRag)
-        end
 
-        sirenRag:GetData().Selfdestruct = 600
-        sirenRag:GetData().MaxFrames = true
-        sirenRag:GetData().NoPoof = true
+            sirenRag:GetData().Selfdestruct = 600
+            sirenRag:GetData().MaxFrames = true
+            sirenRag:GetData().NoPoof = true
+        end
 
     end
 end

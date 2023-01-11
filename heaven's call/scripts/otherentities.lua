@@ -3559,6 +3559,11 @@ function mod:PlayerDamage(entity, amount, damageFlags, sourceRef, frames)
 
 	entity = entity:ToPlayer()
 
+	if entity:GetData().Invulnerable_HC then
+		entity:GetData().Invulnerable_HC = false
+		return false
+	end
+
     if source then
 
 		--Luna strenght hit
@@ -3601,11 +3606,11 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, function(_,entity)
 
 end, EntityType.ENTITY_CLUTCH)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_, player)
-	for _, e in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT)) do
-		if e.Variant ~= EffectVariant.WISP and e.Variant ~= EffectVariant.WOMB_TELEPORT and e.Variant ~= EffectVariant.WORMWOOD_HOLE then
-			print(e.Variant)
-			print(e.Subtype)
-			print()
-		end
+	for _, e in ipairs(Isaac.FindInRadius(player.Position, 30)) do
+		print(e.Type)
+		print(e.Variant)
+		print(e.SubType)
+		print()
 	end
+	
 end,0)]]

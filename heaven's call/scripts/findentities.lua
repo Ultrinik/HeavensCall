@@ -91,6 +91,7 @@ mod.Entity ={
     TrapTile = 83,
     Trap = 84,
     ErisNaue = 87,
+    JupiterJuice = 98,
 
     ---------
     
@@ -256,7 +257,8 @@ mod.EntityInf[mod.Entity.MarsGigaBomb] = {ID = EntityType.ENTITY_BOMB, VAR = Bom
 mod.EntityInf[mod.Entity.MarsRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub}
 mod.EntityInf[mod.Entity.MarsGigaRocket] = {ID = EntityType.ENTITY_BOMB, VAR = BombVariant.BOMB_ROCKET,  SUB = mod.DefaultSub+1}
 
-
+--ITEMS THINGS--------------------------------------------------------------------------------------------
+mod.EntityInf[mod.Entity.JupiterJuice] = {ID = EntityType.ENTITY_EFFECT, VAR = Isaac.GetEntityVariantByName("Jupiter Juice (HC)"),  SUB = mod.DefaultSub}
 
 --BLABLA
 mod.PlanetName = {

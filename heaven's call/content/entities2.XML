@@ -4,6 +4,9 @@
         <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0"/>
     </entity>
 
+	<entity name="Jupiter Juice (HC)" id="1000" variant="92" subtype="160" anm2path="effect_JupiterJuice.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="0" collisionRadius="46" friction="1" numGridCollisionPoints="0" shadowSize="0" stageHP="0" >
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+    </entity>
 
 	<!-- Statue -->
 	<entity name="Astral Statue" id="699" variant="370" subtype="0" anm2path="entity_AstralStatue.anm2"  baseHP="99999" stageHP="0" boss="1" champion="0" collisionDamage="0" collisionMass="1000" collisionRadius="20" friction="1" numGridCollisionPoints="12" shadowSize="0" bestiary="false" gridCollision="none" tags="nodelirium">

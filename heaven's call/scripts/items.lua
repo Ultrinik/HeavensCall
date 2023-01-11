@@ -16,6 +16,11 @@ mod.Items = {
 
 }
 
+mod.ItemsVars = {
+	jupiterPoints = {},--This is goind to behave weird in Multiplayer, but I dont care
+	nJupiterPoints = 0,
+}
+
 --Your chances will cap at 'chanceCap' when your 'luck' is geq than 'luckCap'
 function mod:LuckRoll(luck, luckCap, chanceCap)
 	chanceCap = chanceCap or 1
@@ -29,13 +34,167 @@ end
 
 
 function mod:OnUpdate()
+	local room = game:GetRoom()
 
 	for i=0, game:GetNumPlayers ()-1 do
 		local player = game:GetPlayer(i):ToPlayer()
 		
-		if player:HasCollectible(mod.Items.Mercurius) then
-			player:AddCacheFlags(CacheFlag.CACHE_FLYING)
-  			player:EvaluateItems()
+		if player:HasCollectible(mod.Items.Jupiter) then
+
+			if game:GetFrameCount() % 3 == 0 then
+				
+
+				for i=1, 4 do
+					local objective = player.Position + Vector(10,0):Rotated(i*360/4)
+				
+					if mod.ItemsVars.nJupiterPoints>=3 then
+						
+						local result = false
+						local distance = false
+
+						for i = mod.ItemsVars.nJupiterPoints-2, 1, -1 do
+
+							result = mod:PointInPoly(mod.ItemsVars.nJupiterPoints, mod.ItemsVars.jupiterPoints, objective, i)
+							distance = (mod.ItemsVars.jupiterPoints[i]:Distance(player.Position)) < 45
+
+							if result and distance then break end
+						end
+						
+						if result and distance then
+							sfx:Play(SoundEffect.SOUND_LASERRING_STRONG)
+
+							for _, e in ipairs(mod:FindByTypeMod(mod.Entity.JupiterJuice)) do
+								e:Die()
+								e:ToEffect().Timeout = 0
+							end
+		
+							for i=1, mod.ItemsVars.nJupiterPoints-1 do
+								local point1 = mod.ItemsVars.jupiterPoints[i]
+								local point2 = mod.ItemsVars.jupiterPoints[i%mod.ItemsVars.nJupiterPoints+1]
+	
+								local angle = (point1 - point2):GetAngleDegrees()
+								local laser = EntityLaser.ShootAngle(LaserVariant.THIN_RED, point2, angle, 10, Vector.Zero, player)
+								laser.MaxDistance = (point1 - point2):Length()
+								laser.DisableFollowParent = true
+								laser:GetSprite().Color = mod.Colors.jupiterLaser2
+	
+							end
+
+							local function ElectrifyEntity(entity)
+								local flag = false
+								for i = mod.ItemsVars.nJupiterPoints-2, 1, -1 do
+
+									local result = mod:PointInPoly(mod.ItemsVars.nJupiterPoints, mod.ItemsVars.jupiterPoints, entity.Position, i)
+									local distance = (mod.ItemsVars.jupiterPoints[i]:Distance(player.Position)) < 50
+		
+									if result and distance then 
+										flag = true
+										break
+									end
+								end
+
+								if flag then
+									local function SpawnThunder(position)
+										position = position or entity.Position
+										local thunder = mod:SpawnEntity(mod.Entity.Thunder, position, Vector.Zero, player)
+										thunder:GetSprite().PlaybackSpeed = 2
+										thunder.CollisionDamage = 100
+
+										return thunder
+									end
+
+									if entity:IsActiveEnemy() and not (entity:HasEntityFlags(EntityFlag.FLAG_FRIENDLY) or entity:HasEntityFlags(EntityFlag.FLAG_CHARM)) then
+										SpawnThunder()
+										for i=1, 5 do
+											local position = entity.Position + Vector(rng:RandomFloat()*100, 0):Rotated(rng:RandomFloat() * 360)
+											SpawnThunder(position)
+										end
+
+									elseif entity.Type == EntityType.ENTITY_SLOT then
+										local valid = entity.Variant == 1 or entity.Variant == 2 or entity.Variant == 3 or entity.Variant == 8 or entity.Variant == 10 or entity.Variant == 11 or
+										entity.Variant == 1020 or entity.Variant == 1032 or entity.Variant == 542 or entity.Variant == 16
+										if valid then
+											SpawnThunder():GetSprite().PlaybackSpeed = 4
+
+											if rng:RandomFloat() < 0.333 then
+												entity.Velocity = Vector(rng:RandomFloat()*10, 0):Rotated(rng:RandomFloat() * 360)
+												game:BombExplosionEffects (entity.Position, 0, TearFlags.TEAR_NORMAL, mod.Colors.jupiterLaser2, nil, 1, true, false, DamageFlag.DAMAGE_EXPLOSION )
+											else
+												mod:TriggerSlotMachine(entity, player)
+											end
+										end
+
+									elseif entity.Type == EntityType.ENTITY_SHOPKEEPER then
+										SpawnThunder():GetSprite().PlaybackSpeed = 4
+
+										mod:scheduleForUpdate(function()
+											if not entity then return end
+											local keeper
+											if rng:RandomFloat() < 0.5 then
+												keeper = Isaac.Spawn(EntityType.ENTITY_KEEPER, 0, 0, entity.Position, Vector.Zero, player)
+												keeper:AddCharmed(EntityRef(player), -1)
+											else
+												keeper = Isaac.Spawn(EntityType.ENTITY_HANGER, 0, 0, entity.Position, Vector.Zero, player)
+												keeper:AddCharmed(EntityRef(player), -1)
+
+											end
+
+											mod:scheduleForUpdate(function()
+												if not keeper then return end
+												for _, f in ipairs(Isaac.FindByType(EntityType.ENTITY_ETERNALFLY)) do
+													if f.Parent == keeper then
+														f:Die()
+													end
+												end
+											end, 2)
+
+											entity:Die()
+										end, 5)
+
+										
+									elseif entity.Type == EntityType.ENTITY_PICKUP and entity.Variant == PickupVariant.PICKUP_LIL_BATTERY then
+										SpawnThunder():GetSprite().PlaybackSpeed = 4
+
+										mod:scheduleForUpdate(function()
+											if not entity then return end
+											local random = rng:RandomFloat()
+											entity = entity:ToPickup()
+
+											if entity.SubType == BatterySubType.BATTERY_MICRO and random < 0.80 then
+												entity:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_NORMAL)
+											elseif entity.SubType == BatterySubType.BATTERY_NORMAL and random < 0.40 then
+												entity:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_MEGA)
+											elseif entity.SubType == BatterySubType.BATTERY_MEGA and random < 0.20 then
+												entity:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_LIL_BATTERY, BatterySubType.BATTERY_GOLDEN)
+											else
+												entity:Remove()
+												game:BombExplosionEffects (entity.Position, 0, TearFlags.TEAR_NORMAL, Color.Default, nil, 0.6, true, false, DamageFlag.DAMAGE_EXPLOSION)
+											end
+										end, 5)
+									end
+								end
+							end
+
+							for _, entity in ipairs(Isaac.GetRoomEntities()) do
+								ElectrifyEntity(entity)
+							end
+		
+							mod.ItemsVars.jupiterPoints = {}
+							mod.ItemsVars.nJupiterPoints = 0
+
+							break
+						end
+					end
+				end
+				
+				local juice = mod:SpawnEntity(mod.Entity.JupiterJuice, player.Position, Vector.Zero, player):ToEffect()
+				juice:GetSprite().Color = mod.Colors.jupiterLaser1
+				juice.Timeout = 30*3 + 15*1
+
+				mod.ItemsVars.nJupiterPoints = mod.ItemsVars.nJupiterPoints + 1
+				mod.ItemsVars.jupiterPoints[mod.ItemsVars.nJupiterPoints] = player.Position
+
+			end
 		end
 
 	end
@@ -96,7 +255,6 @@ function mod:OnTearUpdate(tear)
 end
 mod:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, mod.OnTearUpdate)
 
-
 mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, function(_, player, cacheFlag)
 	local data = player:GetData()
 
@@ -106,7 +264,22 @@ mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, function(_, player, cacheFlag)
 end)
 
 function mod:OnNewRoom()
+	local room = game:GetRoom()
 
+	for i=0, game:GetNumPlayers ()-1 do
+		local player = game:GetPlayer(i):ToPlayer()
+		
+		if player:HasCollectible(mod.Items.Mercurius) then
+			if rng:RandomFloat() <= 0.05 and room:IsFirstVisit() then
+				player:UseActiveItem(CollectibleType.COLLECTIBLE_MY_LITTLE_UNICORN)
+			end
+
+		elseif player:HasCollectible(mod.Items.Jupiter) then
+			mod.ItemsVars.jupiterPoints = {}
+			mod.ItemsVars.nJupiterPoints = 0
+		end
+
+	end
 
 	--Bismuth knife
 	for _, k in ipairs(Isaac.FindByType(EntityType.ENTITY_KNIFE, 0, 0)) do
@@ -154,11 +327,28 @@ end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, function(_, entity)
 	if entity:GetData().MercuriusColor then
 		entity:GetSprite().Color = mod.Colors.mercury
+
 	end
 end, FamiliarVariant.MINISAAC)
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, entity, amount)
+	if entity.Variant == FamiliarVariant.MINISAAC and entity:GetData().MercuriusColor then
+		if entity.HitPoints <= amount then
+			local creep = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.PLAYER_CREEP_RED, 0, entity.Position, Vector.Zero, entity.Player)
+			creep.SpriteScale = Vector.One * 0.01
+			creep:GetSprite().Color = mod.Colors.mercury
+		end
+	end
+end, EntityType.ENTITY_FAMILIAR)
 
 function mod:MercuriusTearCollision(tear, collider)
 	if tear:GetData().MercuriusTear and collider and collider:IsActiveEnemy() then
+		
+		local splat = Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.BLOOD_EXPLOSION, 0, tear.Position, Vector.Zero, nil)
+		game:SpawnParticles (tear.Position, EffectVariant.DIAMOND_PARTICLE, 5, 3, mod.Colors.mercury)
+		splat:GetSprite().Color = mod.Colors.mercury
+		sfx:Play(Isaac.GetSoundIdByName("BismuthBreak"), 1, 2, false, 1)
+
+
 		local player = tear.SpawnerEntity
 		if player then
 			player = player:ToPlayer() or player:ToFamiliar().Player:ToPlayer()
@@ -214,3 +404,84 @@ function mod:MercuriusBombHit(enemy, amount, flags, sourceRef)
 	end
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.MercuriusBombHit)
+
+--JUPITER
+function mod:PointInPoly(nPoints, polygon, p, nStart)
+	nStart = nStart - 1
+
+	local isInside = false;
+    local minX = polygon[nStart+1].X
+	local maxX = polygon[nStart+1].X
+    local minY = polygon[nStart+1].Y
+	local maxY = polygon[nStart+1].Y
+    for n = nStart+2, nPoints-1 do
+        local q = polygon[n]
+        minX = math.min(q.X, minX)
+        maxX = math.max(q.X, maxX)
+        minY = math.min(q.Y, minY)
+        maxY = math.max(q.Y, maxY)
+	end
+
+    if (p.X < minX or p.X > maxX or p.Y < minY or p.Y > maxY) then
+        return false;
+	end
+
+	local j = nPoints - 2
+
+    for i=nStart, nPoints-1, 1 do
+
+        if ( (polygon[i+1].Y > p.Y) ~= (polygon[j+1].Y > p.Y) and
+                p.X < (polygon[j+1].X - polygon[i+1].X) * (p.Y - polygon[i+1].X) / (polygon[j+1].Y - polygon[i+1].Y) + polygon[i+1].X )
+		then
+            isInside = not isInside
+		end
+
+		j = i
+    end
+
+    return isInside
+end
+
+function mod:JupiterDustUpdate(entity)
+	if entity.SubType == mod.EntityInf[mod.Entity.JupiterJuice].SUB and entity.Timeout == 1 then
+		entity.Timeout = 0
+		entity:Die()
+		for i=2, mod.ItemsVars.nJupiterPoints do
+			mod.ItemsVars.jupiterPoints[i-1] = mod.ItemsVars.jupiterPoints[i]
+		end
+		mod.ItemsVars.jupiterPoints[mod.ItemsVars.nJupiterPoints] = nil
+		mod.ItemsVars.nJupiterPoints = mod.ItemsVars.nJupiterPoints - 1
+	end
+end
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, mod.JupiterDustUpdate, EffectVariant.PLAYER_CREEP_BLACKPOWDER)
+
+function mod:TriggerSlotMachine(slot, mainPlayer)
+
+	local coins = mainPlayer:GetNumCoins()
+	mainPlayer:AddCoins(5)
+
+	local oldPos = mainPlayer.Position
+	mainPlayer:GetData().Invulnerable_HC = true
+
+	mainPlayer.Position = slot.Position
+
+	mod:scheduleForUpdate(function()
+		mainPlayer.Position = oldPos
+		mainPlayer:AddCoins(-999)
+		mainPlayer:AddCoins(coins)
+		mainPlayer:GetData().Invulnerable_HC = false
+	end, 2)
+
+end
+function mod:AddPlayer(player)--Unused
+	local id = game:GetNumPlayers() - 1
+	local playerType = player:GetPlayerType()
+
+	Isaac.ExecuteCommand('addplayer 15 '..player.ControllerIndex)
+	local newPlayer = Isaac.GetPlayer(id + 1)
+
+	newPlayer.Parent = player
+	game:GetHUD():AssignPlayerHUDs()
+
+	return newPlayer
+end

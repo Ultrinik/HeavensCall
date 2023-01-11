@@ -658,7 +658,7 @@ function mod:AppearPlanet(entity)
 		end
 
 		--Music
-		if mod.savedata.planetAlive then
+		if mod.savedata.planetAlive and not entity:GetData().NoTrapdoor then
 			if data.SlowSpawn then
 				mod.ModFlags.currentMusic = music:GetCurrentMusicID ()
 	
@@ -788,6 +788,10 @@ end)
 --Will the room spawn??? 👀
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function(_)
 	mod.ModFlags.SpikeHits = 0
+	
+	mod.ItemsVars.jupiterPoints = {}
+	mod.ItemsVars.nJupiterPoints = 0
+
 
 	if not mod.savedata.errantAlive then
 		mod.ModFlags.ErrantRoomSpawned = false
